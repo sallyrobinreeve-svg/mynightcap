@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { BottomNav } from "@/components/BottomNav";
+import { DeleteAccountButton } from "@/components/DeleteAccountButton";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -195,6 +196,19 @@ export default async function ProfilePage() {
               Log another night out
             </p>
           </Link>
+
+          <div className="mt-8 pt-6 border-t border-white/10">
+            <h2 className="font-display text-lg text-nightcap-muted mb-4">Account</h2>
+            <form action="/auth/signout" method="post" className="mb-4">
+              <button
+                type="submit"
+                className="w-full rounded-xl glass px-6 py-3 font-medium text-white transition hover:border-nightcap-accent/30 text-left"
+              >
+                Log out
+              </button>
+            </form>
+            <DeleteAccountButton />
+          </div>
         </div>
       </main>
       <BottomNav />
