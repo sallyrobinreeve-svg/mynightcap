@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Dancing_Script, DM_Sans } from "next/font/google";
+import { Quicksand, DM_Sans } from "next/font/google";
 import "./globals.css";
 
-const display = Dancing_Script({
+const display = Quicksand({
   weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
   variable: "--font-display",
