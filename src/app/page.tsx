@@ -35,6 +35,12 @@ export default async function HomePage() {
             Create account
           </Link>
         </div>
+        <Link
+          href="/privacy"
+          className="mt-12 inline-block text-sm text-nightcap-muted hover:text-nightcap-accent transition"
+        >
+          Privacy Policy
+        </Link>
       </div>
     </div>
   );

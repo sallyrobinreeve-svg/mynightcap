@@ -113,6 +113,11 @@ export default function SignInPage() {
               Sign up
             </Link>
           </p>
+          <p className="mt-4 text-center">
+            <Link href="/privacy" className="text-xs text-nightcap-muted hover:text-nightcap-accent transition">
+              Privacy Policy
+            </Link>
+          </p>
         </div>
       </div>
     </div>
