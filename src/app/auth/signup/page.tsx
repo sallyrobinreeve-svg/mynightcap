@@ -41,7 +41,7 @@ export default function SignUpPage() {
     <div className="min-h-screen bg-nightcap flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <Link href="/" className="inline-block font-display text-2xl text-nightcap-accent mb-8">
-          NightCap
+          NightCapt
         </Link>
         <div className="glass rounded-2xl p-8">
           <h1 className="font-display text-3xl text-white mb-6">Create account</h1>

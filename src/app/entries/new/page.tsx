@@ -17,7 +17,7 @@ export default async function NewEntryPage() {
       <nav className="glass sticky top-0 z-10 border-b border-white/5">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <a href="/" className="font-display text-2xl text-night-accent">
-            NightCap
+            NightCapt
           </a>
         </div>
       </nav>

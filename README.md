@@ -1,4 +1,4 @@
-# NightCap – Capture the Chaos
+# NightCapt – Capture the Chaos
 
 A mobile-first social app for recording and sharing night-out recaps. Spill the tea, lock in the memory.
 

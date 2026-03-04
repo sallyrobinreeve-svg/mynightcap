@@ -1,6 +1,6 @@
 workflows:
   ios-nightcap:
-    name: NightCap iOS
+    name: NightCapt iOS
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
@@ -23,6 +23,8 @@ workflows:
         script: |
           npx cap add ios --packagemanager CocoaPods
           npx cap sync ios
+      - name: Generate app icon
+        script: npx capacitor-assets generate --ios
       - name: Install CocoaPods
         script: |
           cd $CM_BUILD_DIR/ios/App

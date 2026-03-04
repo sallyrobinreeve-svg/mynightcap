@@ -5,7 +5,7 @@ const APP_URL = process.env.CAPACITOR_APP_URL || 'https://mynightcap.vercel.app'
 
 const config: CapacitorConfig = {
   appId: 'com.mynightcap.app',
-  appName: 'NightCap',
+  appName: 'NightCapt',
   webDir: 'www',
   server: {
     url: APP_URL,

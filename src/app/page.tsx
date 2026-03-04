@@ -16,7 +16,7 @@ export default async function HomePage() {
     <div className="min-h-screen bg-nightcap flex flex-col items-center justify-center px-4">
       <div className="text-center max-w-md">
         <h1 className="font-display text-6xl gradient-text mb-4">
-          NightCap
+          NightCapt
         </h1>
         <p className="text-xl text-nightcap-muted mb-12">
           Capture the chaos. Spill the tea from last night. Lock in the memory.

@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Privacy Policy | NightCap",
-  description: "NightCap privacy policy – how we collect, use, and protect your data.",
+  title: "Privacy Policy | NightCapt",
+  description: "NightCapt privacy policy – how we collect, use, and protect your data.",
 };
 
 export default function PrivacyPage() {
@@ -29,7 +29,7 @@ export default function PrivacyPage() {
                 Introduction
               </h2>
               <p>
-                NightCap (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) is a social journal app for recording and sharing your nights out. This Privacy Policy explains how we collect, use, store, and protect your information when you use our app and services.
+                NightCapt (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) is a social journal app for recording and sharing your nights out. This Privacy Policy explains how we collect, use, store, and protect your information when you use our app and services.
               </p>
             </section>
 
@@ -37,7 +37,7 @@ export default function PrivacyPage() {
               <h2 className="text-white font-display text-xl mb-2">
                 Information We Collect
               </h2>
-              <p>When you use NightCap, we may collect:</p>
+              <p>When you use NightCapt, we may collect:</p>
               <ul className="list-disc pl-6 mt-2 space-y-1">
                 <li><strong className="text-white">Account information:</strong> Email address and password when you create an account</li>
                 <li><strong className="text-white">Profile information:</strong> Display name, bio, and profile picture if you choose to add them</li>
@@ -52,7 +52,7 @@ export default function PrivacyPage() {
                 How We Use Your Information
               </h2>
               <p>
-                We use your information to provide, maintain, and improve NightCap, including:
+                We use your information to provide, maintain, and improve NightCapt, including:
               </p>
               <ul className="list-disc pl-6 mt-2 space-y-1">
                 <li>Creating and managing your account</li>
@@ -86,7 +86,7 @@ export default function PrivacyPage() {
                 Contact
               </h2>
               <p>
-                For privacy-related questions or requests, contact us at the email address associated with your NightCap account or through the app support channels.
+                For privacy-related questions or requests, contact us at the email address associated with your NightCapt account or through the app support channels.
               </p>
             </section>
           </div>

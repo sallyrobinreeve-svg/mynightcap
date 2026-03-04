@@ -14,7 +14,7 @@ const body = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "NightCap | Capture the Chaos",
+  title: "NightCapt | Capture the Chaos",
   description: "Record and share your nights out. Spill the tea, lock in the memory, capture the chaos.",
 };
 
