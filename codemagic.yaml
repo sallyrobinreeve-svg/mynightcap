@@ -35,7 +35,9 @@ workflows:
       - name: Build IPA for App Store
         script: |
           cd $CM_BUILD_DIR
-          xcode-project build-ipa --workspace ios/App/App.xcworkspace --scheme App -v
+          xcode-project build-ipa --workspace ios/App/App.xcworkspace --scheme App --ipa-directory $CM_BUILD_DIR/ios/App/build/ios/ipa -v
     artifacts:
       - ios/App/build/ios/ipa/*.ipa
+      - build/ios/ipa/*.ipa
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.ipa
       - /tmp/xcodebuild_logs/*.log
