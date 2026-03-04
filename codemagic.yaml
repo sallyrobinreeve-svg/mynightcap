@@ -19,7 +19,7 @@ workflows:
         script: mkdir -p www && echo '<!DOCTYPE html><html><body></body></html>' > www/index.html
       - name: Add iOS platform and sync
         script: |
-          npx cap add ios
+          npx cap add ios --packagemanager CocoaPods
           npx cap sync ios
       - name: Install CocoaPods
         script: |
