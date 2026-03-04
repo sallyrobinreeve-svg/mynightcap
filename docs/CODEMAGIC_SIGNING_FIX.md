@@ -7,11 +7,11 @@ If you have the **App Store Connect API key** in Codemagic:
 1. **Codemagic** → **Team settings** (gear) → **Code signing identities**
 2. **iOS provisioning profiles** tab
 3. Click **"Download selected"** or **"Fetch from Developer Portal"**
-4. Select the **App Store** profile for **com.nightcap.app**
+4. Select the **App Store** profile for **com.mynightcap.app**
 5. Enter a reference name: `nightcap-appstore`
 6. Click **Fetch profiles**
 
-This pulls the profile directly from Apple. Codemagic will only show profiles that exist. If `com.nightcap.app` doesn't appear, create the App ID and profile in Apple Developer Portal first.
+This pulls the profile directly from Apple. Codemagic will only show profiles that exist. If `com.mynightcap.app` doesn't appear, create the App ID and profile in Apple Developer Portal first.
 
 ---
 
@@ -24,7 +24,7 @@ This pulls the profile directly from Apple. Codemagic will only show profiles th
 - [ ] It shows as valid (not expired)
 
 **iOS provisioning profiles tab:**
-- [ ] You have a profile with **Bundle ID: com.nightcap.app**
+- [ ] You have a profile with **Bundle ID: com.mynightcap.app**
 - [ ] **Type: App Store** (not Development or Ad Hoc)
 - [ ] **Certificate column shows a green checkmark** ✓ (means it matches your certificate)
 - [ ] If there's a red X, the profile was created with a different certificate – create a new profile in Apple that uses YOUR certificate
@@ -39,7 +39,7 @@ This pulls the profile directly from Apple. Codemagic will only show profiles th
 
 1. [developer.apple.com](https://developer.apple.com) → **Profiles** → **+**
 2. **App Store** → Continue
-3. Select **com.nightcap.app** (create App ID first if needed)
+3. Select **com.mynightcap.app** (create App ID first if needed)
 4. Select **the exact certificate** you uploaded to Codemagic
 5. Generate → Download
 6. Upload to Codemagic

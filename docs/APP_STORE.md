@@ -65,7 +65,7 @@ This opens the Xcode project in `ios/App/`.
    - Use a tool like [appicon.co](https://appicon.co) to generate all sizes from one 1024×1024 image.
 
 3. **Bundle ID**
-   - Current: `com.nightcap.app`.
+   - Current: `com.mynightcap.app`.
    - To change it: update `appId` in `capacitor.config.ts`, then run `npx cap sync ios` again.
 
 4. **Display name**
@@ -94,7 +94,7 @@ This opens the Xcode project in `ios/App/`.
    - **Platform**: iOS
    - **Name**: NightCap
    - **Primary Language**
-   - **Bundle ID**: `com.nightcap.app` (must match Xcode)
+   - **Bundle ID**: `com.mynightcap.app` (must match Xcode)
    - **SKU**: e.g. `nightcap001`
 
 4. **App Information**

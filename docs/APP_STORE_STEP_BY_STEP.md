@@ -58,7 +58,7 @@ If your file has a different name, replace `"distribution (3).cer"` with your fi
 2. Click **Identifiers** → **+**
 3. Choose **App IDs** → **App** → **Continue**
 4. Description: **NightCap**
-5. Bundle ID: **com.nightcap.app** (type it exactly)
+5. Bundle ID: **com.mynightcap.app** (type it exactly – must match the app)
 6. Click **Register**
 
 ---
@@ -67,7 +67,7 @@ If your file has a different name, replace `"distribution (3).cer"` with your fi
 
 1. Go to **Profiles** → **+**
 2. Choose **App Store** (under Distribution) → **Continue**
-3. Select **com.nightcap.app** → **Continue**
+3. Select **com.mynightcap.app** → **Continue**
 4. Select your **Apple Distribution** certificate → **Continue**
 5. Profile name: **NightCap App Store** → **Generate**
 6. Click **Download**
@@ -151,7 +151,7 @@ In the provisioning profiles list, your profile should show a **green ✓** in t
 2. **My Apps** → **+** → **New App**
 3. Platform: **iOS**
 4. Name: **NightCap**
-5. Bundle ID: **com.nightcap.app**
+5. Bundle ID: **com.mynightcap.app**
 6. SKU: **nightcap001**
 7. Click **Create**
 
@@ -177,7 +177,7 @@ Apple usually reviews within 24–48 hours. You'll get an email when it's approv
 
 | Item | Value |
 |------|-------|
-| Bundle ID | com.nightcap.app |
+| Bundle ID | com.mynightcap.app |
 | App URL | https://mynightcap.vercel.app |
 | Privacy Policy | https://mynightcap.vercel.app/privacy |
 | Certificate password | codemagic123 |
@@ -187,5 +187,6 @@ Apple usually reviews within 24–48 hours. You'll get an email when it's approv
 ## If Something Fails
 
 - **Build fails with "No matching profiles"** → Re-check Part 5. Certificate and profile must both be uploaded, and the profile must show a green ✓.
+- **"Failed to publish App.ipa to App Store Connect"** → See [CODEMAGIC_TROUBLESHOOTING.md](CODEMAGIC_TROUBLESHOOTING.md) – usually app not created yet, bundle ID mismatch, or API key not set up.
 - **Build fails at another step** → Copy the error message from the build logs and share it for help.
 - **Transporter won't upload** → Make sure you're signed in with the same Apple ID as your Developer account.
