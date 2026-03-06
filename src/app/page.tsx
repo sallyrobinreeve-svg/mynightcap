@@ -35,14 +35,12 @@ export default async function HomePage() {
             Create account
           </Link>
         </div>
-        <div className="mt-12 flex justify-center gap-6 text-sm text-nightcap-muted">
-          <Link href="/privacy" className="hover:text-nightcap-accent transition">
-            Privacy Policy
-          </Link>
-          <Link href="/privacy#support" className="hover:text-nightcap-accent transition">
-            Support
-          </Link>
-        </div>
+        <Link
+          href="/privacy"
+          className="mt-12 inline-block text-sm text-nightcap-muted hover:text-nightcap-accent transition"
+        >
+          Terms, Privacy & Support
+        </Link>
       </div>
     </div>
   );

@@ -103,12 +103,8 @@ export default function SignUpPage() {
               />
               <span className="text-sm text-nightcap-muted">
                 I agree to the{" "}
-                <Link href="/terms" className="text-nightcap-accent hover:underline">
-                  Terms of Use
-                </Link>{" "}
-                and{" "}
                 <Link href="/privacy" className="text-nightcap-accent hover:underline">
-                  Privacy Policy
+                  Terms of Use, Privacy Policy and Support
                 </Link>
                 . I understand there is zero tolerance for objectionable content.
               </span>
@@ -132,7 +128,7 @@ export default function SignUpPage() {
           </p>
           <p className="mt-4 text-center">
             <Link href="/privacy" className="text-xs text-nightcap-muted hover:text-nightcap-accent transition">
-              Privacy Policy
+              Terms, Privacy & Support
             </Link>
           </p>
         </div>
