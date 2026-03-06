@@ -73,11 +73,11 @@ export function ProfileEditForm({
   const handleNativePhotoPick = useCallback(async () => {
     if (uploading) return;
     try {
-      const { Camera, CameraSource } = await import("@capacitor/camera");
+      const { Camera, CameraSource, CameraResultType } = await import("@capacitor/camera");
       const photo = await Camera.getPhoto({
         quality: 90,
         allowEditing: false,
-        resultType: "base64",
+        resultType: CameraResultType.Base64,
         source: CameraSource.Photos, // Gallery only – avoids "Take Photo" crash on iPad
       });
       if (!photo.base64String) return;
