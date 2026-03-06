@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Privacy Policy | NightCapt",
-  description: "NightCapt privacy policy – how we collect, use, and protect your data.",
+  title: "Privacy & Support | NightCapt",
+  description: "NightCapt privacy policy and support – how we collect, use, and protect your data. Contact us for help.",
 };
 
 export default function PrivacyPage() {
@@ -17,7 +17,7 @@ export default function PrivacyPage() {
         </Link>
         <div className="glass rounded-2xl p-8">
           <h1 className="font-display text-3xl gradient-text mb-2">
-            Privacy Policy
+            Privacy & Support
           </h1>
           <p className="text-nightcap-muted text-sm mb-8">
             Last updated: {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
@@ -102,6 +102,14 @@ export default function PrivacyPage() {
               <p className="mt-4">
                 For privacy-related questions, contact us at the email above or through the app.
               </p>
+              <p className="mt-4 font-medium text-white">Resources:</p>
+              <ul className="list-disc pl-6 mt-2 space-y-1">
+                <li>
+                  <Link href="/terms" className="text-nightcap-accent hover:underline">
+                    Terms of Use
+                  </Link>
+                </li>
+              </ul>
             </section>
           </div>
         </div>
