@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useDropzone } from "react-dropzone";
@@ -12,6 +12,17 @@ interface ProfileEditFormProps {
   displayName: string | null;
   avatarUrl: string | null;
   bio: string | null;
+}
+
+async function uploadAvatarFile(file: File, userId: string): Promise<string> {
+  const formData = new FormData();
+  formData.set("file", file);
+  formData.set("type", "avatar");
+  formData.set("userId", userId);
+  const res = await fetch("/api/upload", { method: "POST", body: formData });
+  if (!res.ok) throw new Error("Upload failed");
+  const { url } = await res.json();
+  return url;
 }
 
 export function ProfileEditForm({
@@ -27,6 +38,13 @@ export function ProfileEditForm({
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isNative, setIsNative] = useState(false);
+
+  useEffect(() => {
+    import("@capacitor/core").then(({ Capacitor }) => {
+      setIsNative(Capacitor.isNativePlatform());
+    });
+  }, []);
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -34,13 +52,7 @@ export function ProfileEditForm({
       if (!file) return;
       setUploading(true);
       try {
-        const formData = new FormData();
-        formData.set("file", file);
-        formData.set("type", "avatar");
-        formData.set("userId", userId);
-        const res = await fetch("/api/upload", { method: "POST", body: formData });
-        if (!res.ok) throw new Error("Upload failed");
-        const { url } = await res.json();
+        const url = await uploadAvatarFile(file, userId);
         setAvatarUrl(url);
       } catch {
         setError("Failed to upload photo");
@@ -57,6 +69,32 @@ export function ProfileEditForm({
     maxFiles: 1,
     disabled: uploading,
   });
+
+  const handleNativePhotoPick = useCallback(async () => {
+    if (uploading) return;
+    try {
+      const { Camera, CameraSource } = await import("@capacitor/camera");
+      const photo = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: "base64",
+        source: CameraSource.Photos, // Gallery only – avoids "Take Photo" crash on iPad
+      });
+      if (!photo.base64String) return;
+      setUploading(true);
+      const binary = atob(photo.base64String);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: `image/${photo.format || "jpeg"}` });
+      const file = new File([blob], `avatar.${photo.format || "jpg"}`, { type: blob.type });
+      const url = await uploadAvatarFile(file, userId);
+      setAvatarUrl(url);
+    } catch {
+      setError("Failed to upload photo");
+    } finally {
+      setUploading(false);
+    }
+  }, [userId, uploading]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -98,10 +136,10 @@ export function ProfileEditForm({
           <div>
             <p className="text-nightcap-muted text-sm mb-2">Profile picture</p>
             <div
-              {...getRootProps()}
+              {...(isNative ? { onClick: handleNativePhotoPick } : getRootProps())}
               className="w-28 h-28 rounded-full overflow-hidden bg-nightcap-muted border-2 border-dashed border-nightcap-muted flex items-center justify-center cursor-pointer hover:border-nightcap-accent/50 transition"
             >
-              <input {...getInputProps()} />
+              {!isNative && <input {...getInputProps()} />}
               {avatar_url ? (
                 <Image src={avatar_url} alt="" width={112} height={112} className="object-cover w-full h-full" />
               ) : uploading ? (

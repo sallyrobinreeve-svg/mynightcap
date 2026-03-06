@@ -23,6 +23,12 @@ workflows:
         script: |
           npx cap add ios --packagemanager CocoaPods
           npx cap sync ios
+      - name: Add Camera/Photo Library permissions to Info.plist
+        script: |
+          PLIST="$CM_BUILD_DIR/ios/App/App/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'NightCapt uses the camera for profile photos'" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'NightCapt needs photo library access for profile pictures and journal entries'" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string 'NightCapt saves photos to your journal entries'" "$PLIST" 2>/dev/null || true
       - name: Generate app icon
         script: npx capacitor-assets generate --ios
       - name: Install CocoaPods

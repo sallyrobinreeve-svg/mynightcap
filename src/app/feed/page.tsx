@@ -15,6 +15,12 @@ export default async function FeedPage() {
     redirect("/auth/signin");
   }
 
+  const { data: blocked } = await supabase
+    .from("blocks")
+    .select("blocked_id")
+    .eq("blocker_id", user.id);
+  const blockedIds = new Set((blocked || []).map((b) => b.blocked_id));
+
   const { data: entries, error } = await supabase
     .from("entries")
     .select("id, user_id, date_of_night, rating, prompts, created_at")
@@ -70,7 +76,8 @@ export default async function FeedPage() {
     commentCountMap.set(c.entry_id, (commentCountMap.get(c.entry_id) || 0) + 1);
   });
 
-  const feedEntries = (entries || []).map((e) => ({
+  const filteredEntries = (entries || []).filter((e) => !blockedIds.has(e.user_id));
+  const feedEntries = filteredEntries.map((e) => ({
     ...e,
     profile: profileMap.get(e.user_id),
     thumbnailUrl: photoMap.get(e.id) || null,

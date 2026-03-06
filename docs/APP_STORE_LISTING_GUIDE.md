@@ -9,6 +9,7 @@ Everything you need to fill in App Store Connect and generate screenshots.
 ### Required sizes
 - **6.9" Display (Primary):** 1320 x 2868 pixels (portrait) – upload this and Apple scales for smaller devices
 - **Alternative 6.5":** 1284 x 2778 pixels (portrait)
+- **13-inch iPad (required if app runs on iPad):** 2048 x 2732 pixels (portrait) – run `node scripts/resize-for-ipad.js` to generate from your iPhone screenshot
 
 ### Format
 - JPEG, JPG, or PNG
@@ -114,13 +115,13 @@ Welcome to NightCap! Your social journal for nights out is ready. Start capturin
 
 ---
 
-### Support URL
+### Support URL (required)
 
 ```
-https://mynightcap.vercel.app
+https://mynightcap.vercel.app/support
 ```
 
-(Or create a simple support/contact page if you have one)
+Use the dedicated support page – Apple rejects the homepage as a support URL.
 
 ---
 
@@ -137,8 +138,25 @@ https://mynightcap.vercel.app
 | Field | Value |
 |-------|-------|
 | **Version** | 1.0.0 |
-| **Copyright** | 2025 [Your Name or Company] |
+| **Copyright** | 2025 [Your Name or Company] – **Required** |
 | **Trade Representative Contact** | Your email |
+
+### Content Rights (App Information → Content Rights)
+
+- **Content Rights Information** – Required before submission
+- If users upload content: Select **Yes**, confirm you have rights or that user-generated content is allowed
+- Add any third-party content disclosures if needed
+
+### Pricing
+
+- **Price** – Choose a price tier (select **Free** for a free app)
+- App Store Connect → Your app → **Pricing and Availability** → set price
+
+### App Privacy (Admin required)
+
+- **App Privacy** – An Admin must complete this before submission
+- App Store Connect → Your app → **App Privacy** → **Get Started**
+- Declare what data you collect (e.g. account info, user content). For NightCapt: account/email, journal content, photos
 
 ---
 

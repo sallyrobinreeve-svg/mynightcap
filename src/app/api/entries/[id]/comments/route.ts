@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { containsObjectionableContent } from "@/lib/content-filter";
 
 export async function GET(
   _request: NextRequest,
@@ -60,6 +61,10 @@ export async function POST(
 
   if (!content || typeof content !== "string" || content.trim().length === 0) {
     return NextResponse.json({ error: "Content required" }, { status: 400 });
+  }
+
+  if (containsObjectionableContent(content)) {
+    return NextResponse.json({ error: "Content violates our community guidelines" }, { status: 400 });
   }
 
   const { data: comment, error } = await supabase

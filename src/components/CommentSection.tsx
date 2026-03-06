@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { format } from "date-fns";
 import { Trash2 } from "lucide-react";
+import { ReportBlockMenu } from "@/components/ReportBlockMenu";
 
 interface Comment {
   id: string;
@@ -108,15 +109,24 @@ export function CommentSection({
                 <span className="text-nightcap-muted text-sm">
                   {format(new Date(c.created_at), "MMM d, h:mm a")}
                 </span>
-                {c.user_id === currentUserId && (
-                  <button
-                    type="button"
-                    onClick={() => deleteComment(c.id)}
-                    className="ml-auto text-nightcap-muted hover:text-red-400 transition"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
+                <span className="ml-auto flex items-center gap-1">
+                  {c.user_id === currentUserId ? (
+                    <button
+                      type="button"
+                      onClick={() => deleteComment(c.id)}
+                      className="text-nightcap-muted hover:text-red-400 transition"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  ) : (
+                    <ReportBlockMenu
+                      reportedUserId={c.user_id}
+                      reportedUserName={c.profile?.display_name}
+                      commentId={c.id}
+                      variant="comment"
+                    />
+                  )}
+                </span>
               </div>
               <p className="text-white mt-1">{c.content}</p>
             </div>

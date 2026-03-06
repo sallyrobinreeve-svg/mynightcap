@@ -8,12 +8,17 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!acceptedTerms) {
+      setError("You must agree to the Terms of Use and Privacy Policy");
+      return;
+    }
     setLoading(true);
     setError(null);
     setMessage(null);
@@ -89,11 +94,30 @@ export default function SignUpPage() {
                 placeholder="••••••••"
               />
             </div>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="mt-1 rounded border-white/20"
+              />
+              <span className="text-sm text-nightcap-muted">
+                I agree to the{" "}
+                <Link href="/terms" className="text-nightcap-accent hover:underline">
+                  Terms of Use
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="text-nightcap-accent hover:underline">
+                  Privacy Policy
+                </Link>
+                . I understand there is zero tolerance for objectionable content.
+              </span>
+            </label>
             {error && <p className="text-red-400 text-sm">{error}</p>}
             {message && <p className="text-night-mint text-sm">{message}</p>}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !acceptedTerms}
               className="w-full rounded-xl bg-nightcap-accent px-4 py-3 font-medium text-white transition hover:opacity-90 disabled:opacity-50"
             >
               {loading ? "Creating account..." : "Sign up"}

@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { ReactionBar } from "@/components/ReactionBar";
 import { CommentSection } from "@/components/CommentSection";
 import { DeleteEntryButton } from "@/components/DeleteEntryButton";
+import { ReportBlockMenu } from "@/components/ReportBlockMenu";
 import { PROMPTS } from "@/lib/prompts";
 
 export default async function EntryDetailPage({
@@ -73,6 +74,14 @@ export default async function EntryDetailPage({
   if (!canView) {
     notFound();
   }
+
+  const { data: isBlocked } = await supabase
+    .from("blocks")
+    .select("blocker_id")
+    .eq("blocker_id", user.id)
+    .eq("blocked_id", entry.user_id)
+    .single();
+  if (isBlocked) notFound();
 
   const { data: authorProfile } = await supabase
     .from("profiles")
@@ -161,6 +170,13 @@ export default async function EntryDetailPage({
                 </Link>
                 <DeleteEntryButton entryId={id} variant="text" />
               </>
+            )}
+            {!isOwner && authorProfile && (
+              <ReportBlockMenu
+                reportedUserId={entry.user_id}
+                reportedUserName={authorProfile.display_name}
+                entryId={id}
+              />
             )}
             <Link href="/feed" className="text-nightcap-muted hover:text-white transition">
               Feed

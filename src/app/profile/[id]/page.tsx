@@ -3,6 +3,7 @@ import Image from "next/image";
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { FollowButton } from "@/components/FollowButton";
+import { BlockButton } from "@/components/BlockButton";
 
 export default async function UserProfilePage({
   params,
@@ -47,7 +48,7 @@ export default async function UserProfilePage({
       <nav className="glass sticky top-0 z-10 border-b border-white/5">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <Link href="/" className="font-display text-2xl text-nightcap-accent">
-            NightCaptt
+            NightCapt
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/feed" className="text-nightcap-muted hover:text-white transition">
@@ -86,7 +87,10 @@ export default async function UserProfilePage({
                 {count ?? 0} {count === 1 ? "entry" : "entries"}
               </p>
               {id !== user.id && (
-                <FollowButton userId={id} isFollowing={!!isFollowing} />
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <FollowButton userId={id} isFollowing={!!isFollowing} />
+                  <BlockButton userId={id} displayName={profile.display_name} />
+                </div>
               )}
             </div>
           </div>
