@@ -32,8 +32,9 @@ After receiving App Review feedback, these changes were made. Use this checklist
 
 **Action:** In App Store Connect, update **Support URL** to:
 ```
-https://mynightcap.vercel.app/support
+https://mynightcap.vercel.app/privacy#support
 ```
+(The Support section is on the Privacy page, which already works.)
 
 ---
 

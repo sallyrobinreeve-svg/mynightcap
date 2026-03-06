@@ -118,10 +118,10 @@ Welcome to NightCap! Your social journal for nights out is ready. Start capturin
 ### Support URL (required)
 
 ```
-https://mynightcap.vercel.app/support
+https://mynightcap.vercel.app/privacy#support
 ```
 
-Use the dedicated support page – Apple rejects the homepage as a support URL.
+The Support section is on the Privacy page (which already works). Use this URL – Apple rejects the homepage as a support URL.
 
 ---
 
