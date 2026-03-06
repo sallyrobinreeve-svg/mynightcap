@@ -87,8 +87,8 @@ export default function PrivacyPage() {
               </h2>
               <p>
                 Need help? Email us at{" "}
-                <a href="mailto:support@mynightcap.vercel.app" className="text-nightcap-accent hover:underline">
-                  support@mynightcap.vercel.app
+                <a href="mailto:nightcapt1@outlook.com" className="text-nightcap-accent hover:underline">
+                  nightcapt1@outlook.com
                 </a>
                 . We aim to respond within 24–48 hours.
               </p>

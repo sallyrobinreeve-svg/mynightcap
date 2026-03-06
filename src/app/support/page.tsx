@@ -29,10 +29,10 @@ export default function SupportPage() {
               <p>
                 For questions, feedback, or support requests, email us at{" "}
                 <a
-                  href="mailto:support@mynightcap.vercel.app"
+                  href="mailto:nightcapt1@outlook.com"
                   className="text-nightcap-accent hover:underline"
                 >
-                  support@mynightcap.vercel.app
+                  nightcapt1@outlook.com
                 </a>
               </p>
               <p className="mt-2 text-sm">

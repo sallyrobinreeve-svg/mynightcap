@@ -64,8 +64,8 @@ export default function TermsPage() {
               <h2 className="text-white font-display text-xl mb-2">Contact</h2>
               <p>
                 For questions about these terms, contact us at{" "}
-                <a href="mailto:support@mynightcap.vercel.app" className="text-nightcap-accent hover:underline">
-                  support@mynightcap.vercel.app
+                <a href="mailto:nightcapt1@outlook.com" className="text-nightcap-accent hover:underline">
+                  nightcapt1@outlook.com
                 </a>
               </p>
             </section>
