@@ -17,17 +17,22 @@ export function FollowButton({ userId, isFollowing: initialFollowing }: FollowBu
     setLoading(true);
     try {
       if (isFollowing) {
-        await fetch(`/api/friends/follow?userId=${userId}`, { method: "DELETE" });
-        setIsFollowing(false);
+        const res = await fetch(`/api/friends/follow?userId=${userId}`, { method: "DELETE" });
+        if (res.ok) {
+          setIsFollowing(false);
+          router.refresh();
+        }
       } else {
-        await fetch("/api/friends/follow", {
+        const res = await fetch("/api/friends/follow", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId }),
         });
-        setIsFollowing(true);
+        if (res.ok) {
+          setIsFollowing(true);
+          router.refresh();
+        }
       }
-      router.refresh();
     } finally {
       setLoading(false);
     }

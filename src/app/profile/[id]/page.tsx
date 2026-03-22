@@ -41,7 +41,7 @@ export default async function UserProfilePage({
     .select("following_id")
     .eq("follower_id", user.id)
     .eq("following_id", id)
-    .single();
+    .maybeSingle();
 
   return (
     <div className="min-h-screen bg-nightcap">
