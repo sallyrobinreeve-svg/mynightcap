@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { notifyDeveloperOfReport } from "@/lib/email";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -22,5 +23,14 @@ export async function POST(req: Request) {
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  notifyDeveloperOfReport({
+    reporter_id: user.id,
+    reported_user_id,
+    entry_id: entry_id || undefined,
+    comment_id: comment_id || undefined,
+    reason: reason || undefined,
+  }).catch(() => {});
+
   return NextResponse.json({ ok: true });
 }

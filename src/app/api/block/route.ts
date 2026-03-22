@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { notifyDeveloperOfBlock } from "@/lib/email";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -18,6 +19,15 @@ export async function POST(req: Request) {
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Also create report so developer is notified (Guideline 1.2)
+  await supabase.from("reports").insert({
+    reporter_id: user.id,
+    reported_user_id: blocked_id,
+    reason: "User blocked for abusive behavior",
+  });
+  notifyDeveloperOfBlock({ blocker_id: user.id, blocked_id }).catch(() => {});
+
   return NextResponse.json({ ok: true });
 }
 

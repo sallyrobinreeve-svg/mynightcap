@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { containsObjectionableContentInObject } from "@/lib/content-filter";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -40,6 +41,19 @@ export async function POST(request: NextRequest) {
   const promptsData = { ...prompts };
   if (kissedPrivate && (promptsData.kissedAnyone || promptsData.kissedWho)) {
     promptsData.kissedPrivate = true;
+  }
+
+  if (containsObjectionableContentInObject(promptsData)) {
+    return NextResponse.json(
+      { error: "Content violates our community guidelines" },
+      { status: 400 }
+    );
+  }
+  if (timelineSteps?.some((s: { notes?: string }) => containsObjectionableContentInObject(s?.notes))) {
+    return NextResponse.json(
+      { error: "Content violates our community guidelines" },
+      { status: 400 }
+    );
   }
 
   const { data: entry, error: entryError } = await supabase
