@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { format } from "date-fns";
+import { formatDateSafe } from "@/lib/format-date";
 import { MessageCircle, Flame } from "lucide-react";
 
 interface EntryCardProps {
@@ -44,7 +44,7 @@ export function EntryCard({ entry, currentUserId }: EntryCardProps) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-display text-xl text-white">
-            {format(new Date(entry.date_of_night), "EEEE, MMM d, yyyy")}
+            {formatDateSafe(entry.date_of_night, "EEEE, MMM d, yyyy")}
           </p>
           {!isOwn && entry.profile && (
             <Link

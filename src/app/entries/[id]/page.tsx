@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { format } from "date-fns";
+import { formatDateSafe } from "@/lib/format-date";
 import { ReactionBar } from "@/components/ReactionBar";
 import { CommentSection } from "@/components/CommentSection";
 import { DeleteEntryButton } from "@/components/DeleteEntryButton";
@@ -67,7 +67,7 @@ export default async function EntryDetailPage({
       .select("following_id")
       .eq("follower_id", user.id)
       .eq("following_id", entry.user_id)
-      .single();
+      .maybeSingle();
     canView = !!data;
   }
 
@@ -80,7 +80,7 @@ export default async function EntryDetailPage({
     .select("blocker_id")
     .eq("blocker_id", user.id)
     .eq("blocked_id", entry.user_id)
-    .single();
+    .maybeSingle();
   if (isBlocked) notFound();
 
   const { data: authorProfile } = await supabase
@@ -209,7 +209,7 @@ export default async function EntryDetailPage({
             </Link>
           )}
           <h1 className="font-display text-4xl text-white">
-            {format(new Date(entry.date_of_night), "EEEE, MMM d, yyyy")}
+            {formatDateSafe(entry.date_of_night, "EEEE, MMM d, yyyy")}
           </h1>
           {entry.rating && (
             <p className="text-nightcap-pink text-lg mt-2">{entry.rating} / 5 stars</p>

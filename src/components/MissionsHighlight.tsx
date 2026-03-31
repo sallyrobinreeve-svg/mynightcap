@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { format } from "date-fns";
+import { formatDateSafe } from "@/lib/format-date";
 
 export async function MissionsHighlight() {
   const supabase = await createClient();
@@ -54,7 +54,7 @@ export async function MissionsHighlight() {
             >
               <p className="text-white font-medium line-clamp-2">{mission}</p>
               <p className="text-nightcap-muted text-sm mt-1">
-                {format(new Date(e.date_of_night), "MMM d")}
+                {formatDateSafe(e.date_of_night, "MMM d")}
                 {profile && ` · ${profile.display_name || "Anonymous"}`}
               </p>
             </Link>
