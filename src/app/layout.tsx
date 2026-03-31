@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Quicksand, DM_Sans } from "next/font/google";
 import "./globals.css";
+import { EnvGate } from "@/components/EnvGate";
+import { AppProviders } from "@/components/AppProviders";
 
 const display = Quicksand({
   weight: ["400", "500", "600", "700"],
@@ -25,7 +27,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${display.variable} ${body.variable}`}>
-      <body className="font-body antialiased playful-bg min-h-screen">{children}</body>
+      <body className="font-body antialiased playful-bg min-h-screen">
+        <EnvGate>
+          <AppProviders>{children}</AppProviders>
+        </EnvGate>
+      </body>
     </html>
   );
 }

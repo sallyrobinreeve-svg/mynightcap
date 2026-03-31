@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { toFriendlySupabaseMessage } from "@/lib/supabase-friendly-error";
 import { NextRequest, NextResponse } from "next/server";
 import { containsObjectionableContent } from "@/lib/content-filter";
 
@@ -23,7 +24,7 @@ export async function GET(
     .order("created_at", { ascending: true });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: toFriendlySupabaseMessage(error.message) }, { status: 500 });
   }
 
   const userIds = Array.from(new Set((comments || []).map((c) => c.user_id)));
@@ -78,14 +79,14 @@ export async function POST(
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: toFriendlySupabaseMessage(error.message) }, { status: 500 });
   }
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("id, display_name, avatar_url")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   return NextResponse.json({
     comment: { ...comment, profile },

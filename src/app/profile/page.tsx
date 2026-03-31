@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import Image from "next/image";
+import { SafeImage } from "@/components/SafeImage";
 import { createClient } from "@/lib/supabase/server";
 import { BottomNav } from "@/components/BottomNav";
 import { DeleteAccountButton } from "@/components/DeleteAccountButton";
@@ -79,11 +79,12 @@ export default async function ProfilePage() {
               className="relative w-24 h-24 rounded-full overflow-hidden bg-nightcap-muted flex-shrink-0 block group"
             >
               {profile?.avatar_url ? (
-                <Image
+                <SafeImage
                   src={profile.avatar_url}
                   alt="Profile"
                   fill
                   className="object-cover"
+                  fallbackLetter={(profile?.display_name || user.email || "?")[0]}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-nightcap-accent font-display text-3xl">

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { toFriendlySupabaseMessage } from "@/lib/supabase-friendly-error";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     return NextResponse.json(
-      { error: error.message || "Upload failed" },
+      { error: toFriendlySupabaseMessage(error.message || "Upload failed") },
       { status: 500 }
     );
   }

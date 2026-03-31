@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { SafeImage } from "@/components/SafeImage";
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { FollowButton } from "@/components/FollowButton";
@@ -69,7 +69,13 @@ export default async function UserProfilePage({
           <div className="flex items-start gap-6">
             <div className="relative w-24 h-24 rounded-full overflow-hidden bg-nightcap-muted flex-shrink-0">
               {profile.avatar_url ? (
-                <Image src={profile.avatar_url} alt="" fill className="object-cover" />
+                <SafeImage
+                  src={profile.avatar_url}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  fallbackLetter={(profile.display_name || "?")[0]}
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-nightcap-accent font-display text-3xl">
                   {(profile.display_name || "?")[0].toUpperCase()}

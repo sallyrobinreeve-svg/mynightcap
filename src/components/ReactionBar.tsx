@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Flame, Heart, Laugh, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { ReactionType } from "@/types/database";
+import { fetchOk } from "@/lib/fetch-client";
 
 const REACTIONS: { type: ReactionType; icon: React.ElementType; label: string }[] = [
   { type: "fire", icon: Flame, label: "Fire" },
@@ -32,13 +33,19 @@ export function ReactionBar({
     }))
   );
   const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const toggle = async (type: ReactionType) => {
     const isActive = userReaction === type;
     setLoading(type);
+    setError(null);
     try {
       if (isActive) {
-        await fetch(`/api/entries/${entryId}/reactions`, { method: "DELETE" });
+        const result = await fetchOk(`/api/entries/${entryId}/reactions`, { method: "DELETE" });
+        if (!result.ok) {
+          setError(result.message);
+          return;
+        }
         setUserReaction(null);
         setCounts((prev) =>
           prev.map((c) =>
@@ -46,11 +53,15 @@ export function ReactionBar({
           )
         );
       } else {
-        await fetch(`/api/entries/${entryId}/reactions`, {
+        const result = await fetchOk(`/api/entries/${entryId}/reactions`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ type }),
         });
+        if (!result.ok) {
+          setError(result.message);
+          return;
+        }
         const prevType = userReaction;
         setUserReaction(type);
         setCounts((prev) =>
@@ -68,27 +79,34 @@ export function ReactionBar({
   };
 
   return (
-    <div className="flex gap-4 flex-wrap">
-      {REACTIONS.map(({ type, icon: Icon, label }) => {
-        const count = counts.find((c) => c.type === type)?.count || 0;
-        const isActive = userReaction === type;
-        return (
-          <button
-            key={type}
-            type="button"
-            onClick={() => toggle(type)}
-            disabled={!!loading}
-            className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm transition ${
-              isActive
-                ? "bg-nightcap-accent text-white"
-                : "bg-nightcap-card/60 text-nightcap-muted hover:text-white"
-            }`}
-          >
-            <Icon size={18} />
-            {count > 0 && <span>{count}</span>}
-          </button>
-        );
-      })}
+    <div className="space-y-2">
+      {error && (
+        <p className="text-red-400 text-sm" role="alert">
+          {error}
+        </p>
+      )}
+      <div className="flex gap-4 flex-wrap">
+        {REACTIONS.map(({ type, icon: Icon }) => {
+          const count = counts.find((c) => c.type === type)?.count || 0;
+          const isActive = userReaction === type;
+          return (
+            <button
+              key={type}
+              type="button"
+              onClick={() => toggle(type)}
+              disabled={!!loading}
+              className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm transition ${
+                isActive
+                  ? "bg-nightcap-accent text-white"
+                  : "bg-nightcap-card/60 text-nightcap-muted hover:text-white"
+              }`}
+            >
+              <Icon size={18} />
+              {count > 0 && <span>{count}</span>}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

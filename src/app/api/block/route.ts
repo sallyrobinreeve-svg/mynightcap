@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { notifyDeveloperOfBlock } from "@/lib/email";
+import { toFriendlySupabaseMessage } from "@/lib/supabase-friendly-error";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -18,7 +19,8 @@ export async function POST(req: Request) {
     blocked_id,
   });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error)
+    return NextResponse.json({ error: toFriendlySupabaseMessage(error.message) }, { status: 500 });
 
   // Also create report so developer is notified (Guideline 1.2)
   await supabase.from("reports").insert({
@@ -48,6 +50,7 @@ export async function DELETE(req: Request) {
     .eq("blocker_id", user.id)
     .eq("blocked_id", blocked_id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error)
+    return NextResponse.json({ error: toFriendlySupabaseMessage(error.message) }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

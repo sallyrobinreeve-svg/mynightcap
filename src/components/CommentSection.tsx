@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { formatDateSafe } from "@/lib/format-date";
+import { fetchJson, fetchOk } from "@/lib/fetch-client";
+import { SafeImage } from "@/components/SafeImage";
 import { Trash2 } from "lucide-react";
 import { ReportBlockMenu } from "@/components/ReportBlockMenu";
 
@@ -28,19 +29,24 @@ export function CommentSection({
   const [comments, setComments] = useState<Comment[]>(initialComments);
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
     if (!content.trim()) return;
     setLoading(true);
+    setError(null);
     try {
-      const res = await fetch(`/api/entries/${entryId}/comments`, {
+      const result = await fetchJson<{ comment?: Comment }>(`/api/entries/${entryId}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: content.trim() }),
       });
-      const data = await res.json();
-      if (data.comment) {
-        setComments((prev) => [...prev, data.comment]);
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+      if (result.data.comment) {
+        setComments((prev) => [...prev, result.data.comment!]);
         setContent("");
       }
     } finally {
@@ -49,14 +55,14 @@ export function CommentSection({
   };
 
   const deleteComment = async (commentId: string) => {
-    try {
-      await fetch(`/api/entries/${entryId}/comments/${commentId}`, {
-        method: "DELETE",
-      });
-      setComments((prev) => prev.filter((c) => c.id !== commentId));
-    } catch {
-      // ignore
+    const result = await fetchOk(`/api/entries/${entryId}/comments/${commentId}`, {
+      method: "DELETE",
+    });
+    if (!result.ok) {
+      setError(result.message);
+      return;
     }
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
   };
 
   return (
@@ -70,6 +76,11 @@ export function CommentSection({
         }}
         className="mb-6"
       >
+        {error && (
+          <p className="text-red-400 text-sm mb-2" role="alert">
+            {error}
+          </p>
+        )}
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -94,7 +105,13 @@ export function CommentSection({
           >
             <div className="relative w-10 h-10 rounded-full overflow-hidden bg-nightcap-muted flex-shrink-0">
               {c.profile?.avatar_url ? (
-                <Image src={c.profile.avatar_url} alt="" fill className="object-cover" />
+                <SafeImage
+                  src={c.profile.avatar_url}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  fallbackLetter={(c.profile?.display_name || "?")[0]}
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-nightcap-accent font-display">
                   {(c.profile?.display_name || "?")[0].toUpperCase()}

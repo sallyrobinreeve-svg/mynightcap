@@ -6,6 +6,7 @@ import Image from "next/image";
 import type { TimelineStep, TimelineStepType } from "@/types/database";
 import { GripVertical, Plus, X } from "lucide-react";
 import { PROMPTS, TIMELINE_EMOJIS } from "@/lib/prompts";
+import { fetchJson } from "@/lib/fetch-client";
 import type { WizardData } from "./EntryWizard";
 import {
   DndContext,
@@ -498,10 +499,26 @@ export function StepTagFriends({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/friends")
-      .then((r) => r.json())
-      .then((data) => setFriends(data.friends || []))
-      .finally(() => setLoading(false));
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await fetchJson<{ friends?: { id: string; display_name: string | null }[] }>(
+          "/api/friends"
+        );
+        if (!cancelled && result.ok) {
+          setFriends(result.data.friends || []);
+        } else if (!cancelled) {
+          setFriends([]);
+        }
+      } catch {
+        if (!cancelled) setFriends([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const toggle = (id: string) => {

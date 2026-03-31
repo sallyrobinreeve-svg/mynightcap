@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
 import { formatDateSafe } from "@/lib/format-date";
+import { SafeImage } from "@/components/SafeImage";
 import { MessageCircle, Flame } from "lucide-react";
 
 interface EntryCardProps {
@@ -30,11 +30,12 @@ export function EntryCard({ entry, currentUserId }: EntryCardProps) {
       <div className="flex gap-4 p-6">
         <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-nightcap-muted flex-shrink-0">
           {entry.thumbnailUrl ? (
-            <Image
+            <SafeImage
               src={entry.thumbnailUrl}
               alt=""
               fill
               className="object-cover"
+              fallbackLetter={(entry.profile?.display_name || entry.rating || "?").toString()}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-nightcap-muted text-2xl">

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { notifyDeveloperOfReport } from "@/lib/email";
+import { toFriendlySupabaseMessage } from "@/lib/supabase-friendly-error";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -22,7 +23,8 @@ export async function POST(req: Request) {
     reason: reason || null,
   });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error)
+    return NextResponse.json({ error: toFriendlySupabaseMessage(error.message) }, { status: 500 });
 
   notifyDeveloperOfReport({
     reporter_id: user.id,

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { fetchJson } from "@/lib/fetch-client";
 
 export function DeleteAccountButton() {
   const [confirming, setConfirming] = useState(false);
@@ -11,15 +12,11 @@ export function DeleteAccountButton() {
   const handleDelete = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/account/delete", { method: "POST" });
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error || "Failed to delete account");
-        setLoading(false);
+      const result = await fetchJson("/api/account/delete", { method: "POST" });
+      if (!result.ok) {
+        alert(result.message);
         return;
       }
-
       router.push("/");
       router.refresh();
     } catch {

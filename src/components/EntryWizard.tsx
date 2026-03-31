@@ -13,6 +13,7 @@ import {
 } from "./EntryWizardSteps";
 import { PromptsGrid } from "./PromptsGrid";
 import type { EntryPrompts, TimelineStep as TimelineStepType } from "@/types/database";
+import { fetchJson } from "@/lib/fetch-client";
 
 export interface WizardData {
   dateOfNight: string;
@@ -105,7 +106,7 @@ export function EntryWizard({ userId, entryId, initialData: customInitial }: Ent
     setError(null);
     try {
       const url = entryId ? `/api/entries/${entryId}` : "/api/entries";
-      const res = await fetch(url, {
+      const result = await fetchJson(url, {
         method: entryId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -122,9 +123,9 @@ export function EntryWizard({ userId, entryId, initialData: customInitial }: Ent
           visibility: data.visibility,
         }),
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to save entry");
+      if (!result.ok) {
+        setError(result.message);
+        return;
       }
       router.push(entryId ? `/entries/${entryId}` : "/entries");
       router.refresh();

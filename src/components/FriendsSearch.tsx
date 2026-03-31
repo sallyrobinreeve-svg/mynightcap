@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import { fetchJson, fetchOk } from "@/lib/fetch-client";
+import { SafeImage } from "@/components/SafeImage";
 
 interface SearchUser {
   id: string;
@@ -15,15 +16,24 @@ export function FriendsSearch() {
   const [users, setUsers] = useState<SearchUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
 
   const search = async () => {
     if (!query.trim()) return;
     setLoading(true);
+    setError(null);
     try {
-      const res = await fetch(`/api/friends/search?q=${encodeURIComponent(query.trim())}`);
-      const data = await res.json();
-      setUsers(data.users || []);
-      setFollowingIds(new Set((data.users || []).filter((u: SearchUser) => u.isFollowing).map((u: SearchUser) => u.id)));
+      const result = await fetchJson<{ users?: SearchUser[] }>(
+        `/api/friends/search?q=${encodeURIComponent(query.trim())}`
+      );
+      if (!result.ok) {
+        setError(result.message);
+        setUsers([]);
+        return;
+      }
+      const list = result.data.users || [];
+      setUsers(list);
+      setFollowingIds(new Set(list.filter((u) => u.isFollowing).map((u) => u.id)));
     } finally {
       setLoading(false);
     }
@@ -31,29 +41,43 @@ export function FriendsSearch() {
 
   const toggleFollow = async (userId: string) => {
     const isFollowing = followingIds.has(userId);
+    setError(null);
     try {
       if (isFollowing) {
-        await fetch(`/api/friends/follow?userId=${userId}`, { method: "DELETE" });
+        const result = await fetchOk(`/api/friends/follow?userId=${userId}`, { method: "DELETE" });
+        if (!result.ok) {
+          setError(result.message);
+          return;
+        }
         setFollowingIds((prev) => {
           const next = new Set(prev);
           next.delete(userId);
           return next;
         });
       } else {
-        await fetch("/api/friends/follow", {
+        const result = await fetchOk("/api/friends/follow", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId }),
         });
+        if (!result.ok) {
+          setError(result.message);
+          return;
+        }
         setFollowingIds((prev) => new Set(prev).add(userId));
       }
     } catch {
-      // ignore
+      setError("Could not update follow. Try again.");
     }
   };
 
   return (
     <div className="space-y-4">
+      {error && (
+        <p className="text-red-400 text-sm" role="alert">
+          {error}
+        </p>
+      )}
       <div className="flex gap-2">
         <input
           type="text"
@@ -82,7 +106,13 @@ export function FriendsSearch() {
               <div className="flex items-center gap-4">
                 <div className="relative w-10 h-10 rounded-full overflow-hidden bg-nightcap-muted flex-shrink-0">
                   {u.avatar_url ? (
-                    <Image src={u.avatar_url} alt="" fill className="object-cover" />
+                    <SafeImage
+                      src={u.avatar_url}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      fallbackLetter={(u.display_name || "?")[0]}
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-nightcap-accent font-display">
                       {(u.display_name || "?")[0].toUpperCase()}

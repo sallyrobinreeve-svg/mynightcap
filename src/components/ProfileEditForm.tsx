@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { SafeImage } from "@/components/SafeImage";
+import { fetchJson } from "@/lib/fetch-client";
 import { useDropzone } from "react-dropzone";
 import { BottomNav } from "@/components/BottomNav";
 import Link from "next/link";
@@ -19,10 +20,10 @@ async function uploadAvatarFile(file: File, userId: string): Promise<string> {
   formData.set("file", file);
   formData.set("type", "avatar");
   formData.set("userId", userId);
-  const res = await fetch("/api/upload", { method: "POST", body: formData });
-  if (!res.ok) throw new Error("Upload failed");
-  const { url } = await res.json();
-  return url;
+  const result = await fetchJson<{ url?: string }>("/api/upload", { method: "POST", body: formData });
+  if (!result.ok) throw new Error(result.message);
+  if (!result.data.url) throw new Error("Upload didn’t return a URL");
+  return result.data.url;
 }
 
 export function ProfileEditForm({
@@ -100,7 +101,7 @@ export function ProfileEditForm({
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch("/api/profile", {
+      const result = await fetchJson("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -109,7 +110,10 @@ export function ProfileEditForm({
           bio: bioText.trim() || null,
         }),
       });
-      if (!res.ok) throw new Error("Failed to save");
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
       router.push("/profile");
       router.refresh();
     } catch {
@@ -141,7 +145,14 @@ export function ProfileEditForm({
             >
               {!isNative && <input {...getInputProps()} />}
               {avatar_url ? (
-                <Image src={avatar_url} alt="" width={112} height={112} className="object-cover w-full h-full" />
+                <SafeImage
+                  src={avatar_url}
+                  alt=""
+                  width={112}
+                  height={112}
+                  className="object-cover w-full h-full"
+                  fallbackLetter={(display_name || "?")[0]}
+                />
               ) : uploading ? (
                 <span className="text-nightcap-muted text-sm">Uploading...</span>
               ) : (
