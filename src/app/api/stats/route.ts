@@ -15,9 +15,9 @@ export async function GET() {
     .from("user_stats")
     .select("total_entries, avg_rating, total_rated_entries, kiss_count, top_club_name, top_club_visits, updated_at")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
-  if (error && error.code !== "PGRST116") {
+  if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

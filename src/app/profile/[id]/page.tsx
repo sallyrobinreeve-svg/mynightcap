@@ -24,7 +24,7 @@ export default async function UserProfilePage({
     .from("profiles")
     .select("id, display_name, avatar_url, bio")
     .eq("id", id)
-    .single();
+    .maybeSingle();
 
   if (!profile) {
     notFound();

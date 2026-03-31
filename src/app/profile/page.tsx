@@ -19,7 +19,7 @@ export default async function ProfilePage() {
     .from("profiles")
     .select("display_name, avatar_url, bio")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   const { count } = await supabase
     .from("entries")
@@ -30,7 +30,7 @@ export default async function ProfilePage() {
     .from("user_stats")
     .select("total_entries, avg_rating, kiss_count, missions_completed, top_club_name, top_club_visits")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   const s = stats || {
     total_entries: 0,

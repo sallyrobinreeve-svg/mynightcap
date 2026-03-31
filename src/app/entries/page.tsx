@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { format } from "date-fns";
+import { formatDateSafe } from "@/lib/format-date";
 import { DeleteEntryButton } from "@/components/DeleteEntryButton";
 
 export default async function EntriesPage() {
@@ -79,7 +79,7 @@ export default async function EntriesPage() {
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="font-display text-xl text-white">
-                      {format(new Date(entry.date_of_night), "EEEE, MMM d, yyyy")}
+                      {formatDateSafe(entry.date_of_night, "EEEE, MMM d, yyyy")}
                     </p>
                     <p className="text-nightcap-muted text-sm mt-1">
                       {entry.rating
@@ -88,7 +88,7 @@ export default async function EntriesPage() {
                     </p>
                   </div>
                   <span className="text-nightcap-muted text-sm">
-                    {format(new Date(entry.created_at), "MMM d")}
+                    {formatDateSafe(entry.created_at, "MMM d")}
                   </span>
                 </div>
                 </Link>

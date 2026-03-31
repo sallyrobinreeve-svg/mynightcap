@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
-import { format } from "date-fns";
+import { formatDateSafe } from "@/lib/format-date";
 import { BottomNav } from "@/components/BottomNav";
 
 export default async function MemoriesPage() {
@@ -83,12 +83,12 @@ export default async function MemoriesPage() {
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-nightcap-muted p-2">
                       <span className="font-display text-2xl">{e.rating || "–"}</span>
-                      <span className="text-xs">{format(new Date(e.date_of_night), "MMM d")}</span>
+                      <span className="text-xs">{formatDateSafe(e.date_of_night, "MMM d")}</span>
                     </div>
                   )}
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
                     <p className="text-white text-xs font-medium truncate">
-                      {format(new Date(e.date_of_night), "MMM d, yyyy")}
+                      {formatDateSafe(e.date_of_night, "MMM d, yyyy")}
                     </p>
                   </div>
                 </div>

@@ -87,7 +87,7 @@ export default async function EntryDetailPage({
     .from("profiles")
     .select("id, display_name, avatar_url")
     .eq("id", entry.user_id)
-    .single();
+    .maybeSingle();
 
   const { data: tags } = await supabase
     .from("entry_tags")

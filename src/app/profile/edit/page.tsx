@@ -16,7 +16,7 @@ export default async function ProfileEditPage() {
     .from("profiles")
     .select("display_name, avatar_url, bio")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   return (
     <ProfileEditForm

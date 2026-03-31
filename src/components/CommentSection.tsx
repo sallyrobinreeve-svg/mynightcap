@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
-import { format } from "date-fns";
+import { formatDateSafe } from "@/lib/format-date";
 import { Trash2 } from "lucide-react";
 import { ReportBlockMenu } from "@/components/ReportBlockMenu";
 
@@ -107,7 +107,7 @@ export function CommentSection({
                   {c.profile?.display_name || "Anonymous"}
                 </span>
                 <span className="text-nightcap-muted text-sm">
-                  {format(new Date(c.created_at), "MMM d, h:mm a")}
+                  {formatDateSafe(c.created_at, "MMM d, h:mm a")}
                 </span>
                 <span className="ml-auto flex items-center gap-1">
                   {c.user_id === currentUserId ? (

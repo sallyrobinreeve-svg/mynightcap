@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Star, Camera, MessageCircle, MapPin, Users } from "lucide-react";
-import { format } from "date-fns";
 import {
   StepDate,
   StepPhotos,
@@ -39,7 +38,7 @@ const STEPS = [
 ];
 
 const initialData: WizardData = {
-  dateOfNight: format(new Date(), "yyyy-MM-dd"),
+  dateOfNight: new Date().toISOString().slice(0, 10),
   outfitPhotoUrl: null,
   favouritePhotoUrl: null,
   videoUrl: null,
