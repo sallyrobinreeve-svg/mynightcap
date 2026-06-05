@@ -67,6 +67,7 @@ export default async function EntryDetailPage({
       .select("following_id")
       .eq("follower_id", user.id)
       .eq("following_id", entry.user_id)
+      .eq("status", "accepted")
       .maybeSingle();
     canView = !!data;
   }

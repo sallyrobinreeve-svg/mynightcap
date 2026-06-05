@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { acceptedFriendIdsFromRows } from "@/lib/friends";
 import { EntryCard } from "@/components/EntryCard";
 import { MissionsHighlight } from "@/components/MissionsHighlight";
 import { BottomNav } from "@/components/BottomNav";
@@ -22,6 +23,14 @@ export default async function FeedPage() {
   const blockedIds = blockError
     ? new Set<string>()
     : new Set((blocked || []).map((b) => b.blocked_id));
+
+  const { data: friendRows } = await supabase
+    .from("follows")
+    .select("follower_id, following_id, status")
+    .eq("status", "accepted")
+    .or(`follower_id.eq.${user.id},following_id.eq.${user.id}`);
+
+  const friendIds = acceptedFriendIdsFromRows(friendRows || [], user.id);
 
   const { data: entries, error } = await supabase
     .from("entries")
@@ -81,7 +90,11 @@ export default async function FeedPage() {
     commentCountMap.set(c.entry_id, (commentCountMap.get(c.entry_id) || 0) + 1);
   });
 
-  const filteredEntries = (entries || []).filter((e) => !blockedIds.has(e.user_id));
+  const filteredEntries = (entries || []).filter(
+    (e) =>
+      !blockedIds.has(e.user_id) &&
+      (e.user_id === user.id || friendIds.has(e.user_id))
+  );
   const feedEntries = filteredEntries.map((e) => ({
     ...e,
     profile: profileMap.get(e.user_id),
@@ -125,8 +138,14 @@ export default async function FeedPage() {
           <div className="glass rounded-2xl p-12 text-center">
             <p className="text-nightcap-muted mb-6">No entries in your feed yet.</p>
             <p className="text-nightcap-muted text-sm mb-6">
-              Follow friends or create your own entry to get started!
+              Accept friend requests or add friends — their entries will appear here.
             </p>
+            <Link
+              href="/friends"
+              className="inline-flex rounded-full glass px-6 py-3 font-medium text-white transition hover:border-nightcap-accent/50 mr-3"
+            >
+              Find friends
+            </Link>
             <Link
               href="/entries/new"
               className="inline-flex rounded-full bg-nightcap-accent px-6 py-3 font-medium text-white transition hover:opacity-90"

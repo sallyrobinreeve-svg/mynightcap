@@ -2,20 +2,37 @@
 
 import { useState } from "react";
 import { fetchJson, fetchOk } from "@/lib/fetch-client";
+import type { FollowStatus } from "@/lib/friends";
 import { SafeImage } from "@/components/SafeImage";
 
 interface SearchUser {
   id: string;
   display_name: string | null;
   avatar_url: string | null;
+  followStatus?: FollowStatus;
   isFollowing?: boolean;
+}
+
+function buttonLabel(status: FollowStatus): string {
+  switch (status) {
+    case "accepted":
+      return "Friends";
+    case "pending_out":
+      return "Request sent";
+    case "pending_in":
+      return "Respond on Friends";
+    case "rejected":
+      return "Denied";
+    default:
+      return "Add friend";
+  }
 }
 
 export function FriendsSearch() {
   const [query, setQuery] = useState("");
   const [users, setUsers] = useState<SearchUser[]>([]);
+  const [statusMap, setStatusMap] = useState<Map<string, FollowStatus>>(new Map());
   const [loading, setLoading] = useState(false);
-  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
 
   const search = async () => {
@@ -33,27 +50,31 @@ export function FriendsSearch() {
       }
       const list = result.data.users || [];
       setUsers(list);
-      setFollowingIds(new Set(list.filter((u) => u.isFollowing).map((u) => u.id)));
+      setStatusMap(
+        new Map(list.map((u) => [u.id, u.followStatus || (u.isFollowing ? "accepted" : "none")]))
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const toggleFollow = async (userId: string) => {
-    const isFollowing = followingIds.has(userId);
+    const status = statusMap.get(userId) || "none";
     setError(null);
+
+    if (status === "pending_in") {
+      setError("Open the Friends page to accept or deny this request.");
+      return;
+    }
+
     try {
-      if (isFollowing) {
+      if (status === "accepted" || status === "pending_out") {
         const result = await fetchOk(`/api/friends/follow?userId=${userId}`, { method: "DELETE" });
         if (!result.ok) {
           setError(result.message);
           return;
         }
-        setFollowingIds((prev) => {
-          const next = new Set(prev);
-          next.delete(userId);
-          return next;
-        });
+        setStatusMap((prev) => new Map(prev).set(userId, "none"));
       } else {
         const result = await fetchOk("/api/friends/follow", {
           method: "POST",
@@ -64,10 +85,10 @@ export function FriendsSearch() {
           setError(result.message);
           return;
         }
-        setFollowingIds((prev) => new Set(prev).add(userId));
+        setStatusMap((prev) => new Map(prev).set(userId, "pending_out"));
       }
     } catch {
-      setError("Could not update follow. Try again.");
+      setError("Could not update friend request. Try again.");
     }
   };
 
@@ -98,42 +119,47 @@ export function FriendsSearch() {
       </div>
       {users.length > 0 && (
         <div className="space-y-2">
-          {users.map((u) => (
-            <div
-              key={u.id}
-              className="glass rounded-xl p-4 flex items-center justify-between gap-4"
-            >
-              <div className="flex items-center gap-4">
-                <div className="relative w-10 h-10 rounded-full overflow-hidden bg-nightcap-muted flex-shrink-0">
-                  {u.avatar_url ? (
-                    <SafeImage
-                      src={u.avatar_url}
-                      alt=""
-                      fill
-                      className="object-cover"
-                      fallbackLetter={(u.display_name || "?")[0]}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-nightcap-accent font-display">
-                      {(u.display_name || "?")[0].toUpperCase()}
-                    </div>
-                  )}
-                </div>
-                <span className="text-white">{u.display_name || "Unknown"}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => toggleFollow(u.id)}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                  followingIds.has(u.id)
-                    ? "bg-nightcap-muted text-nightcap-muted"
-                    : "bg-nightcap-accent text-white hover:opacity-90"
-                }`}
+          {users.map((u) => {
+            const status = statusMap.get(u.id) || "none";
+            const disabled = status === "pending_in" || status === "rejected";
+            return (
+              <div
+                key={u.id}
+                className="glass rounded-xl p-4 flex items-center justify-between gap-4"
               >
-                {followingIds.has(u.id) ? "Following" : "Follow"}
-              </button>
-            </div>
-          ))}
+                <div className="flex items-center gap-4">
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden bg-nightcap-muted flex-shrink-0">
+                    {u.avatar_url ? (
+                      <SafeImage
+                        src={u.avatar_url}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        fallbackLetter={(u.display_name || "?")[0]}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-nightcap-accent font-display">
+                        {(u.display_name || "?")[0].toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-white">{u.display_name || "Unknown"}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleFollow(u.id)}
+                  disabled={disabled}
+                  className={`rounded-lg px-4 py-2 text-sm font-medium transition disabled:opacity-50 ${
+                    status === "accepted" || status === "pending_out"
+                      ? "bg-nightcap-muted text-nightcap-muted"
+                      : "bg-nightcap-accent text-white hover:opacity-90"
+                  }`}
+                >
+                  {buttonLabel(status)}
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

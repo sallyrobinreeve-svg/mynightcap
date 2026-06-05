@@ -54,6 +54,7 @@ export interface Photo {
 export interface Follow {
   follower_id: string;
   following_id: string;
+  status: "pending" | "accepted" | "rejected";
   created_at: string;
 }
 

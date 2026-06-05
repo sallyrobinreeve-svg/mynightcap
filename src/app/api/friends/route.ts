@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { acceptedFriendIdsFromRows } from "@/lib/friends";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -11,16 +12,17 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: follows, error: followsError } = await supabase
+  const { data: friendRows, error: followsError } = await supabase
     .from("follows")
-    .select("following_id")
-    .eq("follower_id", user.id);
+    .select("follower_id, following_id, status")
+    .eq("status", "accepted")
+    .or(`follower_id.eq.${user.id},following_id.eq.${user.id}`);
 
   if (followsError) {
     return NextResponse.json({ error: followsError.message }, { status: 500 });
   }
 
-  const ids = (follows || []).map((f) => f.following_id);
+  const ids = Array.from(acceptedFriendIdsFromRows(friendRows || [], user.id));
   if (ids.length === 0) {
     return NextResponse.json({ friends: [] });
   }

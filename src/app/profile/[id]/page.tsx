@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SafeImage } from "@/components/SafeImage";
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { deriveFollowStatus } from "@/lib/friends";
 import { FollowButton } from "@/components/FollowButton";
 import { BlockButton } from "@/components/BlockButton";
 
@@ -36,12 +37,21 @@ export default async function UserProfilePage({
     .eq("user_id", id)
     .in("visibility", ["public", "friends"]);
 
-  const { data: isFollowing } = await supabase
+  const { data: outgoing } = await supabase
     .from("follows")
-    .select("following_id")
+    .select("status")
     .eq("follower_id", user.id)
     .eq("following_id", id)
     .maybeSingle();
+
+  const { data: incoming } = await supabase
+    .from("follows")
+    .select("status")
+    .eq("follower_id", id)
+    .eq("following_id", user.id)
+    .maybeSingle();
+
+  const followStatus = deriveFollowStatus(outgoing, incoming);
 
   return (
     <div className="min-h-screen bg-nightcap">
@@ -94,7 +104,7 @@ export default async function UserProfilePage({
               </p>
               {id !== user.id && (
                 <div className="flex flex-wrap items-center gap-2 mt-2">
-                  <FollowButton userId={id} isFollowing={!!isFollowing} />
+                  <FollowButton userId={id} followStatus={followStatus} />
                   <BlockButton userId={id} displayName={profile.display_name} />
                 </div>
               )}

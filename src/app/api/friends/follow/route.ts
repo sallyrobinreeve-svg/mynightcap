@@ -19,19 +19,47 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid user" }, { status: 400 });
     }
 
+    const { data: existing } = await supabase
+      .from("follows")
+      .select("status")
+      .eq("follower_id", user.id)
+      .eq("following_id", userId)
+      .maybeSingle();
+
+    if (existing?.status === "accepted") {
+      return NextResponse.json({ message: "Already friends", status: "accepted" });
+    }
+    if (existing?.status === "pending") {
+      return NextResponse.json({ message: "Request already sent", status: "pending_out" });
+    }
+
+    if (existing?.status === "rejected") {
+      const { error } = await supabase
+        .from("follows")
+        .update({ status: "pending" })
+        .eq("follower_id", user.id)
+        .eq("following_id", userId);
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+      return NextResponse.json({ success: true, status: "pending_out" });
+    }
+
     const { error } = await supabase.from("follows").insert({
       follower_id: user.id,
       following_id: userId,
+      status: "pending",
     });
 
     if (error) {
       if (error.code === "23505") {
-        return NextResponse.json({ message: "Already following" });
+        return NextResponse.json({ message: "Request already sent", status: "pending_out" });
       }
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, status: "pending_out" });
   } catch (err) {
     console.error("[follow] Error:", err);
     return NextResponse.json(
@@ -51,22 +79,27 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { searchParams } = request.nextUrl;
-  const userId = searchParams.get("userId");
-
+  const userId = request.nextUrl.searchParams.get("userId");
   if (!userId) {
     return NextResponse.json({ error: "Missing userId" }, { status: 400 });
   }
 
-  const { error } = await supabase
+  // Remove both directions of friendship / requests
+  const { error: err1 } = await supabase
     .from("follows")
     .delete()
     .eq("follower_id", user.id)
     .eq("following_id", userId);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  const { error: err2 } = await supabase
+    .from("follows")
+    .delete()
+    .eq("follower_id", userId)
+    .eq("following_id", user.id);
+
+  if (err1 && err2) {
+    return NextResponse.json({ error: err1.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, status: "none" });
 }

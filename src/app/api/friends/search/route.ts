@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { deriveFollowStatus } from "@/lib/friends";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -33,18 +34,30 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ users: profiles || [] });
   }
 
-  const { data: following } = await supabase
+  const { data: outgoing } = await supabase
     .from("follows")
-    .select("following_id")
+    .select("following_id, status")
     .eq("follower_id", user.id)
     .in("following_id", ids);
 
-  const followingIds = new Set((following || []).map((f) => f.following_id));
+  const { data: incoming } = await supabase
+    .from("follows")
+    .select("follower_id, status")
+    .eq("following_id", user.id)
+    .in("follower_id", ids);
 
-  const users = (profiles || []).map((p) => ({
-    ...p,
-    isFollowing: followingIds.has(p.id),
-  }));
+  const outgoingMap = new Map((outgoing || []).map((f) => [f.following_id, f]));
+  const incomingMap = new Map((incoming || []).map((f) => [f.follower_id, f]));
+
+  const users = (profiles || []).map((p) => {
+    const out = outgoingMap.get(p.id) || null;
+    const inc = incomingMap.get(p.id) || null;
+    return {
+      ...p,
+      followStatus: deriveFollowStatus(out, inc),
+      isFollowing: deriveFollowStatus(out, inc) === "accepted",
+    };
+  });
 
   return NextResponse.json({ users });
 }
