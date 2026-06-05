@@ -23,12 +23,12 @@ export function EntryCard({ entry, currentUserId }: EntryCardProps) {
   const mission = entry.prompts?.mission as string | undefined;
 
   return (
-    <Link
-      href={`/entries/${entry.id}`}
-      className="block glass rounded-2xl hover-lift overflow-hidden transition hover:border-nightcap-accent/30"
-    >
+    <div className="glass rounded-2xl hover-lift overflow-hidden transition hover:border-nightcap-accent/30">
       <div className="flex gap-4 p-6">
-        <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-nightcap-muted flex-shrink-0">
+        <Link
+          href={`/entries/${entry.id}`}
+          className="relative w-24 h-24 rounded-xl overflow-hidden bg-nightcap-muted flex-shrink-0"
+        >
           {entry.thumbnailUrl ? (
             <SafeImage
               src={entry.thumbnailUrl}
@@ -42,15 +42,17 @@ export function EntryCard({ entry, currentUserId }: EntryCardProps) {
               {entry.rating || "–"}
             </div>
           )}
-        </div>
+        </Link>
         <div className="flex-1 min-w-0">
-          <p className="font-display text-xl text-white">
+          <Link
+            href={`/entries/${entry.id}`}
+            className="font-display text-xl text-white hover:text-nightcap-accent transition"
+          >
             {formatDateSafe(entry.date_of_night, "EEEE, MMM d, yyyy")}
-          </p>
+          </Link>
           {!isOwn && entry.profile && (
             <Link
               href={`/profile/${entry.profile.id}`}
-              onClick={(e) => e.stopPropagation()}
               className="text-nightcap-accent hover:underline text-sm mt-1 block"
             >
               by {entry.profile.display_name || "Anonymous"}
@@ -74,6 +76,6 @@ export function EntryCard({ entry, currentUserId }: EntryCardProps) {
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

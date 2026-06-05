@@ -15,11 +15,13 @@ export default async function FeedPage() {
     redirect("/auth/signin");
   }
 
-  const { data: blocked } = await supabase
+  const { data: blocked, error: blockError } = await supabase
     .from("blocks")
     .select("blocked_id")
     .eq("blocker_id", user.id);
-  const blockedIds = new Set((blocked || []).map((b) => b.blocked_id));
+  const blockedIds = blockError
+    ? new Set<string>()
+    : new Set((blocked || []).map((b) => b.blocked_id));
 
   const { data: entries, error } = await supabase
     .from("entries")
@@ -36,18 +38,21 @@ export default async function FeedPage() {
   }
 
   const userIds = Array.from(new Set((entries || []).map((e) => e.user_id)));
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, display_name, avatar_url")
-    .in("id", userIds);
+  const { data: profiles } =
+    userIds.length > 0
+      ? await supabase
+          .from("profiles")
+          .select("id, display_name, avatar_url")
+          .in("id", userIds)
+      : { data: [] as { id: string; display_name: string | null; avatar_url: string | null }[] };
 
   const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
 
   const entryIds = (entries || []).map((e) => e.id);
-  const { data: photos } = await supabase
-    .from("photos")
-    .select("entry_id, type, url")
-    .in("entry_id", entryIds);
+  const { data: photos } =
+    entryIds.length > 0
+      ? await supabase.from("photos").select("entry_id, type, url").in("entry_id", entryIds)
+      : { data: [] as { entry_id: string; type: string; url: string }[] };
 
   const photoMap = new Map<string, string>();
   (photos || []).forEach((p) => {
@@ -56,20 +61,20 @@ export default async function FeedPage() {
     }
   });
 
-  const { data: reactions } = await supabase
-    .from("reactions")
-    .select("entry_id, type")
-    .in("entry_id", entryIds);
+  const { data: reactions } =
+    entryIds.length > 0
+      ? await supabase.from("reactions").select("entry_id, type").in("entry_id", entryIds)
+      : { data: [] as { entry_id: string; type: string }[] };
 
   const reactionCountMap = new Map<string, number>();
   (reactions || []).forEach((r) => {
     reactionCountMap.set(r.entry_id, (reactionCountMap.get(r.entry_id) || 0) + 1);
   });
 
-  const { data: commentCounts } = await supabase
-    .from("comments")
-    .select("entry_id")
-    .in("entry_id", entryIds);
+  const { data: commentCounts } =
+    entryIds.length > 0
+      ? await supabase.from("comments").select("entry_id").in("entry_id", entryIds)
+      : { data: [] as { entry_id: string }[] };
 
   const commentCountMap = new Map<string, number>();
   (commentCounts || []).forEach((c) => {
