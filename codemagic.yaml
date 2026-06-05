@@ -9,6 +9,8 @@ workflows:
       vars:
         XCODE_WORKSPACE: "App.xcworkspace"
         XCODE_SCHEME: "App"
+        # NightCapt App Store Connect app ID — fixes altool "Cannot determine Apple ID" on Xcode 26
+        APP_STORE_CONNECT_ALTOOL_ADDITIONAL_ARGUMENTS: '--apple-id "6760034499"'
       xcode: latest
       cocoapods: default
       ios_signing:
@@ -59,4 +61,5 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
+        altool_additional_arguments: '--apple-id "6760034499"'
         submit_to_testflight: true
