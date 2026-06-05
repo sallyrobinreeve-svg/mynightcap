@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { getAuthCallbackUrl } from "@/lib/auth-redirect";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SignUpPage() {
@@ -29,6 +30,7 @@ export default function SignUpPage() {
       password,
       options: {
         data: { full_name: displayName },
+        emailRedirectTo: getAuthCallbackUrl(),
       },
     });
 
