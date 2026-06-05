@@ -172,10 +172,10 @@ export default async function EntryDetailPage({
                 <DeleteEntryButton entryId={id} variant="text" />
               </>
             )}
-            {!isOwner && authorProfile && (
+            {!isOwner && (
               <ReportBlockMenu
                 reportedUserId={entry.user_id}
-                reportedUserName={authorProfile.display_name}
+                reportedUserName={authorProfile?.display_name}
                 entryId={id}
               />
             )}
@@ -364,6 +364,16 @@ export default async function EntryDetailPage({
                   ))}
                 </div>
               </div>
+            </section>
+          )}
+
+          {!isOwner && (
+            <section className="flex justify-end pt-2 border-t border-white/5">
+              <ReportBlockMenu
+                reportedUserId={entry.user_id}
+                reportedUserName={authorProfile?.display_name}
+                entryId={id}
+              />
             </section>
           )}
 

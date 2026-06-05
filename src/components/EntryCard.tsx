@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatDateSafe } from "@/lib/format-date";
 import { SafeImage } from "@/components/SafeImage";
+import { ReportBlockMenu } from "@/components/ReportBlockMenu";
 import { MessageCircle, Flame } from "lucide-react";
 
 interface EntryCardProps {
@@ -23,7 +24,16 @@ export function EntryCard({ entry, currentUserId }: EntryCardProps) {
   const mission = entry.prompts?.mission as string | undefined;
 
   return (
-    <div className="glass rounded-2xl hover-lift overflow-hidden transition hover:border-nightcap-accent/30">
+    <div className="glass rounded-2xl hover-lift overflow-hidden transition hover:border-nightcap-accent/30 relative">
+      {!isOwn && (
+        <div className="absolute top-3 right-3 z-10">
+          <ReportBlockMenu
+            reportedUserId={entry.user_id}
+            reportedUserName={entry.profile?.display_name}
+            entryId={entry.id}
+          />
+        </div>
+      )}
       <div className="flex gap-4 p-6">
         <Link
           href={`/entries/${entry.id}`}

@@ -92,7 +92,7 @@ export function ReportBlockMenu({
               disabled={reporting}
               className="w-full px-4 py-2 text-left text-sm text-white hover:bg-white/5 disabled:opacity-50"
             >
-              {reporting ? "Reporting..." : "Report content"}
+              {reporting ? "Reporting..." : entryId ? "Report post" : commentId ? "Report comment" : "Report user"}
             </button>
             <button
               onClick={handleBlock}
