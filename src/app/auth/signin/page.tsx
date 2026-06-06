@@ -94,6 +94,13 @@ export default function SignInPage() {
             </div>
             {error && <p className="text-red-400 text-sm">{error}</p>}
             {message && <p className="text-night-mint text-sm">{message}</p>}
+            <p className="text-sm text-nightcap-muted">
+              By signing in, you agree to the{" "}
+              <Link href="/privacy" className="text-nightcap-accent hover:underline">
+                Terms of Use, Privacy Policy and Support
+              </Link>
+              . There is zero tolerance for objectionable content or abusive users.
+            </p>
             <div className="flex gap-3">
               <button
                 type="submit"
@@ -121,7 +128,7 @@ export default function SignInPage() {
           </p>
           <p className="mt-4 text-center">
             <Link href="/privacy" className="text-xs text-nightcap-muted hover:text-nightcap-accent transition">
-              Privacy Policy
+              Terms, Privacy & Support
             </Link>
           </p>
         </div>
