@@ -49,6 +49,13 @@ workflows:
         script: |
           ls -la $CM_BUILD_DIR/ios/App/
           ls -la $CM_BUILD_DIR/ios/App/*.xcworkspace 2>/dev/null || true
+      - name: Set app version
+        script: |
+          VERSION="1.1"
+          PLIST="$CM_BUILD_DIR/ios/App/App/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string $VERSION" "$PLIST"
+          sed -i '' "s/MARKETING_VERSION = .*/MARKETING_VERSION = $VERSION;/g" $CM_BUILD_DIR/ios/App/App.xcodeproj/project.pbxproj
+          echo "Set CFBundleShortVersionString to $VERSION"
       - name: Set unique build number
         script: |
           BUILD_NUM=$(date +%s)
