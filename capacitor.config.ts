@@ -7,6 +7,7 @@ const config: CapacitorConfig = {
   appId: 'com.mynightcap.app',
   appName: 'NightCapt',
   webDir: 'www',
+  appendUserAgent: 'NightCaptApp',
   server: {
     url: APP_URL,
     cleartext: false,

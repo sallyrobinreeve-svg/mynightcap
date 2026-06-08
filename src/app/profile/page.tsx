@@ -171,6 +171,15 @@ export default async function ProfilePage() {
             </p>
           </Link>
           <Link
+            href="/notifications"
+            className="block glass rounded-2xl p-6 transition hover:border-nightcap-accent/30"
+          >
+            <h2 className="font-display text-xl text-white">Notifications</h2>
+            <p className="text-nightcap-muted text-sm mt-1">
+              Reactions, comments, and friend requests
+            </p>
+          </Link>
+          <Link
             href="/friends"
             className="block glass rounded-2xl p-6 transition hover:border-nightcap-accent/30"
           >

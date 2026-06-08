@@ -84,6 +84,12 @@ export function EntryCard({ entry, currentUserId }: EntryCardProps) {
               {entry.commentCount || 0}
             </span>
           </div>
+          <Link
+            href={`/entries/${entry.id}`}
+            className="inline-block mt-3 text-sm text-nightcap-accent hover:underline"
+          >
+            View photos · React & comment →
+          </Link>
         </div>
       </div>
     </div>

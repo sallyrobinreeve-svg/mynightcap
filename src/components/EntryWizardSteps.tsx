@@ -156,12 +156,13 @@ export function StepPhotos({
           >
             <input {...getOutfitInputProps()} />
             {outfitPhotoUrl ? (
-              <div className="relative w-full h-40">
+              <div className="relative w-full max-h-64 flex items-center justify-center">
                 <Image
                   src={outfitPhotoUrl}
                   alt="Outfit"
-                  fill
-                  className="object-cover rounded-lg"
+                  width={800}
+                  height={600}
+                  className="max-h-64 w-auto h-auto object-contain rounded-lg"
                 />
                 <button
                   type="button"
@@ -189,12 +190,13 @@ export function StepPhotos({
           >
             <input {...getFavouriteInputProps()} />
             {favouritePhotoUrl ? (
-              <div className="relative w-full h-40">
+              <div className="relative w-full max-h-64 flex items-center justify-center">
                 <Image
                   src={favouritePhotoUrl}
                   alt="Favourite"
-                  fill
-                  className="object-cover rounded-lg"
+                  width={800}
+                  height={600}
+                  className="max-h-64 w-auto h-auto object-contain rounded-lg"
                 />
                 <button
                   type="button"

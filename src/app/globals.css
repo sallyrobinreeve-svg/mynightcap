@@ -40,6 +40,19 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(255, 107, 157, 0.2);
   }
+  .safe-area-x {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-area-pb {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+  .page-with-nav {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
 }
 
 @keyframes subtle-pulse {

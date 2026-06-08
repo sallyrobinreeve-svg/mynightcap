@@ -1,12 +1,14 @@
 import Link from "next/link";
-import Image from "next/image";
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { canViewEntry } from "@/lib/entry-access";
 import { formatDateSafe } from "@/lib/format-date";
 import { ReactionBar } from "@/components/ReactionBar";
 import { CommentSection } from "@/components/CommentSection";
 import { DeleteEntryButton } from "@/components/DeleteEntryButton";
 import { ReportBlockMenu } from "@/components/ReportBlockMenu";
+import { EntryMediaImage } from "@/components/EntryMediaImage";
+import { BottomNav } from "@/components/BottomNav";
 import { PROMPTS } from "@/lib/prompts";
 
 export default async function EntryDetailPage({
@@ -60,17 +62,7 @@ export default async function EntryDetailPage({
     notFound();
   }
 
-  let canView = entry.user_id === user.id || entry.visibility === "public";
-  if (!canView && entry.visibility === "friends") {
-    const { data } = await supabase
-      .from("follows")
-      .select("following_id")
-      .eq("follower_id", user.id)
-      .eq("following_id", entry.user_id)
-      .eq("status", "accepted")
-      .maybeSingle();
-    canView = !!data;
-  }
+  const canView = await canViewEntry(supabase, user.id, entry);
 
   if (!canView) {
     notFound();
@@ -145,6 +137,7 @@ export default async function EntryDetailPage({
       location_name: string | null;
       time_at: string | null;
       notes: string | null;
+      photo_url?: string | null;
       sort_order: number;
     }[]) || []
   ).sort((a, b) => a.sort_order - b.sort_order);
@@ -157,20 +150,21 @@ export default async function EntryDetailPage({
   const isOwner = entry.user_id === user.id;
 
   return (
-    <div className="min-h-screen bg-nightcap">
-      <nav className="glass sticky top-0 z-10 border-b border-white/5">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <Link href="/" className="font-display text-2xl text-nightcap-accent">
-            NightCapt
+    <div className="min-h-screen bg-nightcap page-with-nav">
+      <nav className="glass sticky top-0 z-10 border-b border-white/5 safe-area-pt">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+          <Link
+            href="/feed"
+            className="text-nightcap-muted hover:text-white text-sm transition"
+          >
+            ← Back
           </Link>
-          <div className="flex items-center gap-4">
+          <span className="font-display text-lg text-nightcap-accent">NightCapt</span>
+          <div className="flex items-center gap-2">
             {isOwner && (
-              <>
-                <Link href={`/entries/${id}/edit`} className="text-nightcap-accent hover:opacity-90">
-                  Edit
-                </Link>
-                <DeleteEntryButton entryId={id} variant="text" />
-              </>
+              <Link href={`/entries/${id}/edit`} className="text-nightcap-accent text-sm">
+                Edit
+              </Link>
             )}
             {!isOwner && (
               <ReportBlockMenu
@@ -179,28 +173,12 @@ export default async function EntryDetailPage({
                 entryId={id}
               />
             )}
-            <Link href="/feed" className="text-nightcap-muted hover:text-white transition">
-              Feed
-            </Link>
-            <Link href="/entries" className="text-nightcap-muted hover:text-white transition">
-              Entries
-            </Link>
-            <Link href="/entries/new" className="text-nightcap-accent hover:opacity-90">
-              New entry
-            </Link>
           </div>
         </div>
       </nav>
 
-      <main className="mx-auto max-w-2xl px-4 py-12">
-        <Link
-          href="/feed"
-          className="text-nightcap-muted hover:text-white text-sm mb-6 inline-block"
-        >
-          ← Back to feed
-        </Link>
-
-        <header className="mb-10">
+      <main className="mx-auto max-w-2xl px-4 py-8">
+        <header className="mb-8">
           {entry.user_id !== user.id && authorProfile && (
             <Link
               href={`/profile/${authorProfile.id}`}
@@ -209,7 +187,7 @@ export default async function EntryDetailPage({
               by {authorProfile.display_name || "Anonymous"}
             </Link>
           )}
-          <h1 className="font-display text-4xl text-white">
+          <h1 className="font-display text-3xl text-white">
             {formatDateSafe(entry.date_of_night, "EEEE, MMM d, yyyy")}
           </h1>
           {entry.rating && (
@@ -228,7 +206,8 @@ export default async function EntryDetailPage({
               ))}
             </p>
           )}
-          <div className="mt-4">
+          <div className="mt-6 pt-6 border-t border-white/10">
+            <h2 className="font-display text-lg text-nightcap-accent mb-4">React & comment</h2>
             <ReactionBar
               entryId={id}
               initialReactions={Object.entries(reactionCounts).map(([type, count]) => ({
@@ -244,32 +223,20 @@ export default async function EntryDetailPage({
           {(outfitPhoto || favouritePhoto || videoUrl) && (
             <section>
               <h2 className="font-display text-xl text-nightcap-accent mb-4">Media</h2>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-6">
                 {outfitPhoto && (
-                  <div>
-                    <p className="text-nightcap-muted text-sm mb-2">Outfit of the night</p>
-                    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden">
-                      <Image
-                        src={outfitPhoto.url}
-                        alt="Outfit"
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  </div>
+                  <EntryMediaImage
+                    src={outfitPhoto.url}
+                    alt="Outfit"
+                    label="Outfit of the night"
+                  />
                 )}
                 {favouritePhoto && (
-                  <div>
-                    <p className="text-nightcap-muted text-sm mb-2">Favourite photo</p>
-                    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden">
-                      <Image
-                        src={favouritePhoto.url}
-                        alt="Favourite"
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  </div>
+                  <EntryMediaImage
+                    src={favouritePhoto.url}
+                    alt="Favourite"
+                    label="Favourite photo"
+                  />
                 )}
                 {videoUrl && (
                   <div className="sm:col-span-2">
@@ -359,6 +326,11 @@ export default async function EntryDetailPage({
                         {step.notes && (
                           <p className="text-nightcap-muted text-sm mt-2">{step.notes}</p>
                         )}
+                        {step.photo_url && (
+                          <div className="mt-3">
+                            <EntryMediaImage src={step.photo_url} alt={`${step.type} photo`} />
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -384,6 +356,7 @@ export default async function EntryDetailPage({
           />
         </div>
       </main>
+      <BottomNav />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateSafe } from "@/lib/format-date";
 import { DeleteEntryButton } from "@/components/DeleteEntryButton";
+import { BottomNav } from "@/components/BottomNav";
 
 export default async function EntriesPage() {
   const supabase = await createClient();
@@ -29,29 +30,14 @@ export default async function EntriesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-nightcap">
-      <nav className="glass sticky top-0 z-10 border-b border-white/5">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <Link href="/" className="font-display text-2xl text-nightcap-accent">
-            NightCapt
+    <div className="min-h-screen bg-nightcap page-with-nav">
+      <nav className="glass sticky top-0 z-10 border-b border-white/5 safe-area-pt">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+          <Link href="/feed" className="text-nightcap-muted hover:text-white text-sm transition">
+            ← Back
           </Link>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/entries/new"
-              className="rounded-full bg-nightcap-accent px-5 py-2.5 font-medium text-white transition hover:opacity-90"
-            >
-              New Entry
-            </Link>
-            <Link href="/feed" className="text-nightcap-muted hover:text-white transition">
-              Feed
-            </Link>
-            <Link href="/friends" className="text-nightcap-muted hover:text-white transition">
-              Friends
-            </Link>
-            <Link href="/" className="text-nightcap-muted hover:text-white transition">
-              Home
-            </Link>
-          </div>
+          <span className="font-display text-xl text-nightcap-accent">Your entries</span>
+          <span className="w-12" />
         </div>
       </nav>
 
@@ -106,6 +92,7 @@ export default async function EntriesPage() {
           </div>
         )}
       </main>
+      <BottomNav />
     </div>
   );
 }

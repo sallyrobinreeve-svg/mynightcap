@@ -5,6 +5,7 @@ import { acceptedFriendIdsFromRows } from "@/lib/friends";
 import { EntryCard } from "@/components/EntryCard";
 import { MissionsHighlight } from "@/components/MissionsHighlight";
 import { BottomNav } from "@/components/BottomNav";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export default async function FeedPage() {
   const supabase = await createClient();
@@ -46,22 +47,26 @@ export default async function FeedPage() {
     );
   }
 
+  const entryIds = (entries || []).map((e) => e.id);
   const userIds = Array.from(new Set((entries || []).map((e) => e.user_id)));
-  const { data: profiles } =
-    userIds.length > 0
-      ? await supabase
-          .from("profiles")
-          .select("id, display_name, avatar_url")
-          .in("id", userIds)
-      : { data: [] as { id: string; display_name: string | null; avatar_url: string | null }[] };
+
+  const [{ data: profiles }, { data: photos }, { data: reactions }, { data: commentCounts }] =
+    await Promise.all([
+      userIds.length > 0
+        ? supabase.from("profiles").select("id, display_name, avatar_url").in("id", userIds)
+        : Promise.resolve({ data: [] as { id: string; display_name: string | null; avatar_url: string | null }[] }),
+      entryIds.length > 0
+        ? supabase.from("photos").select("entry_id, type, url").in("entry_id", entryIds)
+        : Promise.resolve({ data: [] as { entry_id: string; type: string; url: string }[] }),
+      entryIds.length > 0
+        ? supabase.from("reactions").select("entry_id, type").in("entry_id", entryIds)
+        : Promise.resolve({ data: [] as { entry_id: string; type: string }[] }),
+      entryIds.length > 0
+        ? supabase.from("comments").select("entry_id").in("entry_id", entryIds)
+        : Promise.resolve({ data: [] as { entry_id: string }[] }),
+    ]);
 
   const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
-
-  const entryIds = (entries || []).map((e) => e.id);
-  const { data: photos } =
-    entryIds.length > 0
-      ? await supabase.from("photos").select("entry_id, type, url").in("entry_id", entryIds)
-      : { data: [] as { entry_id: string; type: string; url: string }[] };
 
   const photoMap = new Map<string, string>();
   (photos || []).forEach((p) => {
@@ -70,20 +75,10 @@ export default async function FeedPage() {
     }
   });
 
-  const { data: reactions } =
-    entryIds.length > 0
-      ? await supabase.from("reactions").select("entry_id, type").in("entry_id", entryIds)
-      : { data: [] as { entry_id: string; type: string }[] };
-
   const reactionCountMap = new Map<string, number>();
   (reactions || []).forEach((r) => {
     reactionCountMap.set(r.entry_id, (reactionCountMap.get(r.entry_id) || 0) + 1);
   });
-
-  const { data: commentCounts } =
-    entryIds.length > 0
-      ? await supabase.from("comments").select("entry_id").in("entry_id", entryIds)
-      : { data: [] as { entry_id: string }[] };
 
   const commentCountMap = new Map<string, number>();
   (commentCounts || []).forEach((c) => {
@@ -104,13 +99,15 @@ export default async function FeedPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-nightcap pb-24">
-      <nav className="glass sticky top-0 z-10 border-b border-white/5">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <Link href="/" className="font-display text-2xl text-nightcap-accent">
+    <div className="min-h-screen bg-nightcap page-with-nav">
+      <nav className="glass sticky top-0 z-10 border-b border-white/5 safe-area-pt">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+          <Link href="/" className="font-display text-xl text-nightcap-accent">
             NightCapt
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <div className="hidden md:flex items-center gap-4">
             <Link
               href="/entries/new"
               className="rounded-full bg-nightcap-accent px-5 py-2.5 font-medium text-white transition hover:opacity-90"
@@ -126,6 +123,7 @@ export default async function FeedPage() {
             <Link href="/profile" className="text-nightcap-muted hover:text-white transition">
               Profile
             </Link>
+            </div>
           </div>
         </div>
       </nav>
