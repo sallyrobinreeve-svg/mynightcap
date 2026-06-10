@@ -1,6 +1,6 @@
 {
   "name": "night-out-journal",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -15,6 +15,8 @@
   "dependencies": {
     "@capacitor/app": "^8.0.0",
     "@capacitor/camera": "^8.0.2",
+    "@capacitor/splash-screen": "^8.0.0",
+    "@capacitor/status-bar": "^8.0.0",
     "@capacitor/cli": "^8.1.0",
     "@capacitor/core": "^8.1.0",
     "@capacitor/ios": "^8.1.0",

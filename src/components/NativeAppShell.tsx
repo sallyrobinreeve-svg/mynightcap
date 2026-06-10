@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 /**
- * Capacitor: deep links open in-app; Android/iOS back navigates in WebView history.
+ * Capacitor: splash/status bar, deep links, iOS back navigation.
  */
 export function NativeAppShell() {
   const router = useRouter();
@@ -15,10 +15,37 @@ export function NativeAppShell() {
 
     void (async () => {
       try {
-        const cap = (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+        const cap = (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } })
+          .Capacitor;
         if (!cap?.isNativePlatform?.()) return;
 
-        // Installed in native builds via Codemagic; optional on web
+        document.documentElement.classList.add("native-app");
+
+        const hideSplash = async () => {
+          try {
+            // @ts-expect-error Capacitor plugin — present in iOS shell
+            const { SplashScreen } = await import(/* webpackIgnore: true */ "@capacitor/splash-screen");
+            await SplashScreen.hide();
+          } catch {
+            // optional on web
+          }
+        };
+
+        try {
+          // @ts-expect-error Capacitor plugin — present in iOS shell
+          const { StatusBar, Style } = await import(/* webpackIgnore: true */ "@capacitor/status-bar");
+          await StatusBar.setStyle({ style: Style.Dark });
+          await StatusBar.setBackgroundColor({ color: "#1e1b24" });
+        } catch {
+          // optional on web
+        }
+
+        if (document.readyState === "complete") {
+          void hideSplash();
+        } else {
+          window.addEventListener("load", () => void hideSplash(), { once: true });
+        }
+
         // @ts-expect-error Capacitor App plugin — present in iOS shell
         const { App } = await import(/* webpackIgnore: true */ "@capacitor/app");
 
@@ -48,7 +75,7 @@ export function NativeAppShell() {
         });
         removeBack = () => backHandle.remove();
       } catch {
-        // @capacitor/app not available in browser
+        // @capacitor/* not available in browser
       }
     })();
 

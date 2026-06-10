@@ -19,8 +19,8 @@ workflows:
     scripts:
       - name: Install npm dependencies
         script: npm install
-      - name: Create www directory for Capacitor
-        script: mkdir -p www && echo '<!DOCTYPE html><html><body></body></html>' > www/index.html
+      - name: Prepare Capacitor www shell
+        script: mkdir -p www
       - name: Add iOS platform and sync
         script: |
           npx cap add ios --packagemanager CocoaPods
@@ -52,7 +52,7 @@ workflows:
           ls -la $CM_BUILD_DIR/ios/App/*.xcworkspace 2>/dev/null || true
       - name: Set app version
         script: |
-          VERSION="1.1"
+          VERSION="1.2"
           PLIST="$CM_BUILD_DIR/ios/App/App/Info.plist"
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string $VERSION" "$PLIST"
           sed -i '' "s/MARKETING_VERSION = .*/MARKETING_VERSION = $VERSION;/g" $CM_BUILD_DIR/ios/App/App.xcodeproj/project.pbxproj

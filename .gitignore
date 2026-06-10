@@ -33,8 +33,9 @@ Thumbs.db
 *.swp
 *.swo
 
-# Capacitor
-www/
+# Capacitor (keep splash shell; ignore generated assets)
+www/*
+!www/index.html
 
 # iOS (generated, can re-sync from npm run ios:sync)
 ios/

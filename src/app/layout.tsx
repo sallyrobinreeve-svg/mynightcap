@@ -38,8 +38,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${display.variable} ${body.variable}`}>
-      <body className="font-body antialiased playful-bg min-h-screen safe-area-x safe-area-pt">
+    <html lang="en" className={`${display.variable} ${body.variable}`} style={{ backgroundColor: "#1e1b24" }}>
+      <body className="font-body antialiased playful-bg min-h-screen safe-area-x">
         <EnvGate>
           <AppProviders>{children}</AppProviders>
         </EnvGate>
