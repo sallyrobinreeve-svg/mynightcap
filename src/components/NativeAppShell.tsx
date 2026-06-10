@@ -23,7 +23,6 @@ export function NativeAppShell() {
 
         const hideSplash = async () => {
           try {
-            // @ts-expect-error Capacitor plugin — present in iOS shell
             const { SplashScreen } = await import(/* webpackIgnore: true */ "@capacitor/splash-screen");
             await SplashScreen.hide();
           } catch {
@@ -32,7 +31,6 @@ export function NativeAppShell() {
         };
 
         try {
-          // @ts-expect-error Capacitor plugin — present in iOS shell
           const { StatusBar, Style } = await import(/* webpackIgnore: true */ "@capacitor/status-bar");
           await StatusBar.setStyle({ style: Style.Dark });
           await StatusBar.setBackgroundColor({ color: "#1e1b24" });
@@ -46,7 +44,6 @@ export function NativeAppShell() {
           window.addEventListener("load", () => void hideSplash(), { once: true });
         }
 
-        // @ts-expect-error Capacitor App plugin — present in iOS shell
         const { App } = await import(/* webpackIgnore: true */ "@capacitor/app");
 
         const openHandle = await App.addListener("appUrlOpen", ({ url }: { url: string }) => {
