@@ -119,7 +119,10 @@ class _EntryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.push('/entries/${entry.id}'),
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,6 +187,7 @@ class _EntryCard extends StatelessWidget {
               ),
             ),
           ],
+          ),
         ),
       ),
     );

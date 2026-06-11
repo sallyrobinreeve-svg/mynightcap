@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'features/auth/sign_in_screen.dart';
 import 'features/auth/sign_up_screen.dart';
 import 'features/entries/create_entry_screen.dart';
+import 'features/entries/entry_detail_screen.dart';
 import 'features/feed/feed_screen.dart';
 import 'supabase_providers.dart';
 
@@ -30,6 +31,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/signup', builder: (_, _) => const SignUpScreen()),
       GoRoute(path: '/feed', builder: (_, _) => const FeedScreen()),
       GoRoute(path: '/create', builder: (_, _) => const CreateEntryScreen()),
+      GoRoute(
+        path: '/entries/:id',
+        builder: (_, state) => EntryDetailScreen(entryId: state.pathParameters['id']!),
+      ),
     ],
   );
 });

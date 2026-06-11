@@ -66,8 +66,13 @@ flutter test
 
 ## Scope
 
-Implemented so far (validated end-to-end against Supabase): email auth (sign up /
-sign in / sign out), auth-guarded routing, the paginated friend feed with
-infinite scroll, and creating a recap. Remaining web features (photos, timeline,
-comments, reactions, friends/requests, profiles, leaderboards, notifications,
-report/block) are still to be ported.
+Implemented so far (validated end-to-end against Supabase):
+- Email auth (sign up / sign in / sign out) + auth-guarded routing.
+- Paginated friend feed with infinite scroll.
+- Create a recap (date, rating, prompts, visibility).
+- Recap detail screen with photos/timeline display, emoji reactions
+  (one per user, toggle), and comments (add / delete own).
+
+Still to be ported from the web app: photo upload, the full timeline editor,
+friends/requests & search, profiles, leaderboards, notifications, and
+report/block moderation.
