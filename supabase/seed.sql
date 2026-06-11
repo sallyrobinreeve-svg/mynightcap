@@ -1,6 +1,28 @@
--- Local development seed: create the public `photos` storage bucket and
--- access policies the app needs for uploading outfit/favourite/profile images.
--- Runs automatically on `supabase start` / `supabase db reset`.
+-- Local development seed. Runs automatically on `supabase start` / `supabase db reset`.
+--
+-- 1) Table privileges for the API roles.
+--    The repo migrations enable RLS and define policies but never GRANT table
+--    privileges. Recent local Supabase default privileges only grant
+--    TRUNCATE/REFERENCES/TRIGGER to anon/authenticated, so DML hits
+--    "permission denied for table ...". Restore the standard Supabase grants
+--    (RLS policies still enforce row-level access on top of these).
+grant usage on schema public to anon, authenticated, service_role;
+grant select, insert, update, delete on all tables in schema public
+  to anon, authenticated, service_role;
+grant usage, select on all sequences in schema public
+  to anon, authenticated, service_role;
+grant execute on all functions in schema public
+  to anon, authenticated, service_role;
+
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to anon, authenticated, service_role;
+alter default privileges in schema public
+  grant usage, select on sequences to anon, authenticated, service_role;
+alter default privileges in schema public
+  grant execute on functions to anon, authenticated, service_role;
+
+-- 2) Create the public `photos` storage bucket and access policies the app
+--    needs for uploading outfit/favourite/profile images.
 
 insert into storage.buckets (id, name, public)
 values ('photos', 'photos', true)
