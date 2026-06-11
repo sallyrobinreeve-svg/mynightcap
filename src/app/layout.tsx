@@ -18,9 +18,18 @@ const body = DM_Sans({
 export const metadata: Metadata = {
   title: "NightCapt | Capture the Chaos",
   description: "Record and share your nights out. Spill the tea, lock in the memory, capture the chaos.",
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
+    title: "NightCapt",
     statusBarStyle: "black-translucent",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
 };
 

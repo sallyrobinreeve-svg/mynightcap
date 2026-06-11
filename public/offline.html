@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#1e1b24" />
+    <title>NightCapt — Offline</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: #1e1b24;
+        color: #f8f4ff;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem;
+      }
+      .logo { font-size: 2rem; font-weight: 700; color: #ff6b9d; letter-spacing: 0.02em; }
+      p { color: #b9b3c7; margin-top: 1rem; max-width: 22rem; line-height: 1.5; }
+      button {
+        margin-top: 1.75rem;
+        background: #ff6b9d;
+        color: #fff;
+        border: 0;
+        border-radius: 9999px;
+        padding: 0.75rem 1.75rem;
+        font-size: 1rem;
+        font-weight: 500;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="logo">NightCapt</div>
+    <p>You're offline. Reconnect to load your feed and post new recaps.</p>
+    <button onclick="location.reload()">Try again</button>
+  </body>
+</html>
