@@ -16,3 +16,11 @@ final currentUserProvider = Provider<User?>((ref) {
   ref.watch(authStateProvider);
   return ref.watch(supabaseProvider).auth.currentUser;
 });
+
+/// The current user's id (or null). Unlike [currentUserProvider] this only
+/// changes when the *identity* changes (sign in/out/switch), not on every token
+/// refresh, so user-scoped data providers can watch it to reset cleanly.
+final currentUserIdProvider = Provider<String?>((ref) {
+  ref.watch(authStateProvider);
+  return ref.watch(supabaseProvider).auth.currentUser?.id;
+});

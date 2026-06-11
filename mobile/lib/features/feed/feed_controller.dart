@@ -34,9 +34,11 @@ class FeedState {
 class FeedController extends AsyncNotifier<FeedState> {
   @override
   Future<FeedState> build() async {
-    final user = ref.watch(supabaseProvider).auth.currentUser;
-    if (user == null) return const FeedState();
-    final page = await ref.read(feedRepositoryProvider).fetchPage(userId: user.id);
+    // Rebuild whenever the signed-in identity changes so we never show a
+    // previous account's feed after switching users.
+    final userId = ref.watch(currentUserIdProvider);
+    if (userId == null) return const FeedState();
+    final page = await ref.read(feedRepositoryProvider).fetchPage(userId: userId);
     return FeedState(entries: page.entries, cursor: page.nextCursor);
   }
 
