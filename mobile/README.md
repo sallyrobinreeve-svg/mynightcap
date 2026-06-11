@@ -72,7 +72,9 @@ Implemented so far (validated end-to-end against Supabase):
 - Create a recap (date, rating, prompts, visibility).
 - Recap detail screen with photos/timeline display, emoji reactions
   (one per user, toggle), and comments (add / delete own).
+- Friends: search users, send/cancel follow requests, accept/reject incoming
+  requests (mutual accept), and remove friends. The feed is user-scoped, so it
+  resets correctly across account switches.
 
 Still to be ported from the web app: photo upload, the full timeline editor,
-friends/requests & search, profiles, leaderboards, notifications, and
-report/block moderation.
+profiles, leaderboards, notifications, and report/block moderation.

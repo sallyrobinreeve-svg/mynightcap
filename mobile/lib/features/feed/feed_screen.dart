@@ -52,6 +52,12 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
         ),
         actions: [
           IconButton(
+            key: const Key('feed_friends_button'),
+            tooltip: 'Friends',
+            icon: const Icon(Icons.people_outline),
+            onPressed: () => context.push('/friends'),
+          ),
+          IconButton(
             tooltip: 'Sign out',
             icon: const Icon(Icons.logout),
             onPressed: () => ref.read(authRepositoryProvider).signOut(),
