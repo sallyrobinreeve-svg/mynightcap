@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { EntryWizard } from "@/components/EntryWizard";
 
@@ -16,9 +17,9 @@ export default async function NewEntryPage() {
     <div className="min-h-screen bg-nightcap">
       <nav className="glass sticky top-0 z-10 border-b border-white/5">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <a href="/" className="font-display text-2xl text-night-accent">
+          <Link href="/" className="font-display text-2xl text-night-accent">
             NightCapt
-          </a>
+          </Link>
         </div>
       </nav>
 
