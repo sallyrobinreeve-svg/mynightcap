@@ -63,5 +63,5 @@ https://mynightcap.vercel.app/support
 2. [ ] Run migration `007_ugc_safeguards.sql` in Supabase
 3. [ ] Update Support URL in App Store Connect to `https://mynightcap.vercel.app/support`
 4. [ ] Upload new iPad screenshot (app-in-use, not login)
-5. [ ] Bump version/build, push, and run Codemagic build
+5. [ ] Confirm `package.json` version, push, and run Codemagic build (build number is generated automatically)
 6. [ ] Test on iPad: Profile → Edit → tap profile picture (should open photo library, not crash)
