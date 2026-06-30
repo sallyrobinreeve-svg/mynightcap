@@ -83,16 +83,33 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Flutter mobile app
+
+The native Flutter client lives in `flutter_app/`.
+
+```bash
+cd flutter_app
+flutter pub get
+flutter run \
+  --dart-define=SUPABASE_URL=https://your-project.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=your_anon_key \
+  --dart-define=SITE_URL=https://mynightcap.vercel.app
+```
+
+Use `com.mynightcap.app://auth/callback` as the native auth callback URL in Supabase.
+
 ## Mobile release
 
 - Set the same production environment variables in Vercel before building the native app.
+- For the Flutter app, set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SITE_URL` as Codemagic environment variables.
 - Run `npm run screenshots:ipad` before App Store resubmission and upload `screenshots-output/ipad-13inch.png`.
-- Codemagic builds the remote Capacitor shell from `codemagic.yaml`, reads the marketing version from `package.json`, and generates a unique build number.
+- Codemagic includes a Flutter iOS workflow for `flutter_app/`; the older Capacitor workflow remains as a fallback.
 - For App Store review, set the Support URL to `https://mynightcap.vercel.app/support` and Privacy Policy URL to `https://mynightcap.vercel.app/privacy`.
 
 ## Tech stack
 
-- **Next.js 14** (App Router)
+- **Flutter** native mobile client
+- **Next.js 16** (App Router web/admin/API fallback)
 - **Supabase** (auth, database, storage)
 - **Tailwind CSS**
 - **TypeScript**
