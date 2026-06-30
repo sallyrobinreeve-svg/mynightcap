@@ -1285,7 +1285,16 @@ class NightScaffold extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: Padding(padding: const EdgeInsets.all(18), child: child),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: child,
+              ),
+            ),
+          ),
         ),
       ),
     );
