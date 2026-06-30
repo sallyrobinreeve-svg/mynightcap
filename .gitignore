@@ -39,3 +39,5 @@ www/*
 
 # iOS (generated, can re-sync from npm run ios:sync)
 ios/
+!flutter_app/ios/
+!flutter_app/ios/**
