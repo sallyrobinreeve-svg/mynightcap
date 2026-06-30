@@ -212,4 +212,4 @@ For NightCap (Supabase auth, HTTPS): Usually **No** is correct.
 
 **Privacy Policy:** https://mynightcap.vercel.app/privacy
 
-**Support URL:** https://mynightcap.vercel.app
+**Support URL:** https://mynightcap.vercel.app/support

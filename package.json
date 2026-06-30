@@ -10,7 +10,8 @@
     "ios": "npx cap sync ios && npx cap open ios",
     "ios:sync": "npx cap sync ios",
     "screenshots": "node scripts/capture-screenshots.js",
-    "screenshots:resize": "node scripts/resize-screenshots.js"
+    "screenshots:resize": "node scripts/resize-screenshots.js",
+    "screenshots:ipad": "node scripts/resize-for-ipad.js"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.0",
