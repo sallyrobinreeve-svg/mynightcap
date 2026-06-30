@@ -4,7 +4,7 @@ import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { deriveFollowStatus } from "@/lib/friends";
 import { FollowButton } from "@/components/FollowButton";
-import { BlockButton } from "@/components/BlockButton";
+import { ReportBlockMenu } from "@/components/ReportBlockMenu";
 
 export default async function UserProfilePage({
   params,
@@ -105,7 +105,11 @@ export default async function UserProfilePage({
               {id !== user.id && (
                 <div className="flex flex-wrap items-center gap-2 mt-2">
                   <FollowButton userId={id} followStatus={followStatus} />
-                  <BlockButton userId={id} displayName={profile.display_name} />
+                  <ReportBlockMenu
+                    reportedUserId={id}
+                    reportedUserName={profile.display_name}
+                    variant="profile"
+                  />
                 </div>
               )}
             </div>

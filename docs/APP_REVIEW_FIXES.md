@@ -60,7 +60,7 @@ https://mynightcap.vercel.app/support
 ## 5. Before Resubmitting
 
 1. [ ] Deploy the latest code to Vercel
-2. [ ] Run migration `007_ugc_safeguards.sql` in Supabase
+2. [ ] Run all pending Supabase migrations through `011_terms_acceptance_profile_trigger.sql`
 3. [ ] Update Support URL in App Store Connect to `https://mynightcap.vercel.app/support`
 4. [ ] Upload new iPad screenshot (app-in-use, not login)
 5. [ ] Confirm `package.json` version, push, and run Codemagic build (build number is generated automatically)

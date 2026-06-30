@@ -102,9 +102,9 @@ export default function PrivacyPage() {
               <p className="mt-4 font-medium text-white">Common questions:</p>
               <ul className="list-disc pl-6 mt-2 space-y-1">
                 <li><strong className="text-white">Reset password:</strong> Use &quot;Forgot password&quot; on the sign-in screen.</li>
-                <li><strong className="text-white">Delete account:</strong> Profile → Settings → Delete account.</li>
-                <li><strong className="text-white">Report content:</strong> Tap ⋮ on any entry or comment → Report.</li>
-                <li><strong className="text-white">Block someone:</strong> Open their profile → Block user.</li>
+                <li><strong className="text-white">Delete account:</strong> Profile, then Account, then Delete account.</li>
+                <li><strong className="text-white">Report content:</strong> Tap the menu on any entry, comment, or profile, then Report.</li>
+                <li><strong className="text-white">Block someone:</strong> Open their profile, then choose Block user.</li>
               </ul>
               <p className="mt-4">
                 For privacy-related questions, contact us at the email above or through the app.

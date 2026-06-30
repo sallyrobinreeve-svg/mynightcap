@@ -68,10 +68,19 @@ export function StepPhotos({
   userId: string;
 }) {
   const [uploading, setUploading] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isNative, setIsNative] = useState(false);
+
+  useEffect(() => {
+    import("@capacitor/core").then(({ Capacitor }) => {
+      setIsNative(Capacitor.isNativePlatform());
+    });
+  }, []);
 
   const uploadFile = useCallback(
     async (file: File, type: "outfit" | "favourite" | "video"): Promise<string | null> => {
       setUploading(type);
+      setUploadError(null);
       try {
         const formData = new FormData();
         formData.set("file", file);
@@ -82,6 +91,7 @@ export function StepPhotos({
         const { url } = await res.json();
         return url;
       } catch {
+        setUploadError("Failed to upload. Please try again.");
         return null;
       } finally {
         setUploading(null);
@@ -120,6 +130,40 @@ export function StepPhotos({
     [outfitPhotoUrl, favouritePhotoUrl, onChange, uploadFile]
   );
 
+  const pickNativePhoto = useCallback(
+    async (type: "outfit" | "favourite") => {
+      if (uploading) return;
+      try {
+        const { Camera, CameraResultType, CameraSource } = await import("@capacitor/camera");
+        const photo = await Camera.getPhoto({
+          quality: 90,
+          allowEditing: false,
+          resultType: CameraResultType.Base64,
+          source: CameraSource.Photos,
+        });
+        if (!photo.base64String) return;
+        const binary = atob(photo.base64String);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        const format = photo.format || "jpeg";
+        const blob = new Blob([bytes], { type: `image/${format}` });
+        const file = new File([blob], `${type}.${format === "jpeg" ? "jpg" : format}`, {
+          type: blob.type,
+        });
+        const url = await uploadFile(file, type);
+        if (!url) return;
+        if (type === "outfit") {
+          onChange(url, favouritePhotoUrl, videoUrl);
+        } else {
+          onChange(outfitPhotoUrl, url, videoUrl);
+        }
+      } catch {
+        setUploadError("Failed to upload. Please try again.");
+      }
+    },
+    [favouritePhotoUrl, outfitPhotoUrl, onChange, uploadFile, uploading, videoUrl]
+  );
+
   const { getRootProps: getOutfitProps, getInputProps: getOutfitInputProps } =
     useDropzone({
       onDrop: onDropOutfit,
@@ -151,10 +195,10 @@ export function StepPhotos({
         <div>
           <p className="text-nightcap-muted text-sm mb-2">Outfit of the night</p>
           <div
-            {...getOutfitProps()}
+            {...(isNative ? { onClick: () => pickNativePhoto("outfit") } : getOutfitProps())}
             className="rounded-xl border-2 border-dashed border-nightcap-muted p-6 text-center cursor-pointer hover:border-nightcap-accent/50 transition min-h-[160px] flex items-center justify-center"
           >
-            <input {...getOutfitInputProps()} />
+            {!isNative && <input {...getOutfitInputProps()} />}
             {outfitPhotoUrl ? (
               <div className="relative w-full max-h-64 flex items-center justify-center">
                 <Image
@@ -178,17 +222,17 @@ export function StepPhotos({
             ) : uploading === "outfit" ? (
               <p className="text-nightcap-muted">Uploading...</p>
             ) : (
-              <p className="text-nightcap-muted">Drop or click to upload</p>
+              <p className="text-nightcap-muted">{isNative ? "Tap to choose from library" : "Drop or click to upload"}</p>
             )}
           </div>
         </div>
         <div>
           <p className="text-nightcap-muted text-sm mb-2">Favourite photo of the night</p>
           <div
-            {...getFavouriteProps()}
+            {...(isNative ? { onClick: () => pickNativePhoto("favourite") } : getFavouriteProps())}
             className="rounded-xl border-2 border-dashed border-nightcap-muted p-6 text-center cursor-pointer hover:border-nightcap-accent/50 transition min-h-[160px] flex items-center justify-center"
           >
-            <input {...getFavouriteInputProps()} />
+            {!isNative && <input {...getFavouriteInputProps()} />}
             {favouritePhotoUrl ? (
               <div className="relative w-full max-h-64 flex items-center justify-center">
                 <Image
@@ -212,17 +256,17 @@ export function StepPhotos({
             ) : uploading === "favourite" ? (
               <p className="text-nightcap-muted">Uploading...</p>
             ) : (
-              <p className="text-nightcap-muted">Drop or click to upload</p>
+              <p className="text-nightcap-muted">{isNative ? "Tap to choose from library" : "Drop or click to upload"}</p>
             )}
           </div>
         </div>
         <div className="sm:col-span-2">
           <p className="text-nightcap-muted text-sm mb-2">Video highlight (optional)</p>
           <div
-            {...getVideoProps()}
+            {...(isNative ? {} : getVideoProps())}
             className="rounded-xl border-2 border-dashed border-nightcap-muted p-6 text-center cursor-pointer hover:border-nightcap-accent/50 transition min-h-[120px] flex items-center justify-center"
           >
-            <input {...getVideoInputProps()} />
+            {!isNative && <input {...getVideoInputProps()} />}
             {videoUrl ? (
               <div className="flex items-center gap-3 w-full">
                 <div className="w-24 h-16 rounded-lg bg-nightcap-card flex items-center justify-center flex-shrink-0">
@@ -243,11 +287,14 @@ export function StepPhotos({
             ) : uploading === "video" ? (
               <p className="text-nightcap-muted">Uploading...</p>
             ) : (
-              <p className="text-nightcap-muted">Drop or click for video (mp4, webm, mov)</p>
+              <p className="text-nightcap-muted">
+                {isNative ? "Video upload is available on the web app" : "Drop or click for video (mp4, webm, mov)"}
+              </p>
             )}
           </div>
         </div>
       </div>
+      {uploadError && <p className="text-red-400 text-sm mt-3">{uploadError}</p>}
       <p className="text-nightcap-muted text-sm mt-2">All optional. Add what you have!</p>
     </div>
   );

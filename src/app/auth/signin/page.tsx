@@ -55,6 +55,30 @@ export default function SignInPage() {
     setLoading(false);
   };
 
+  const handlePasswordReset = async () => {
+    if (!email) {
+      setError("Enter your email address first.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    const supabase = createClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${getAuthCallbackUrl()}?next=/auth/reset-password`,
+    });
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+      return;
+    }
+
+    setMessage("Check your email for a password reset link.");
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-nightcap flex items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -80,9 +104,19 @@ export default function SignInPage() {
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm text-nightcap-muted mb-2">
-                Password
-              </label>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <label htmlFor="password" className="block text-sm text-nightcap-muted">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={handlePasswordReset}
+                  disabled={loading}
+                  className="text-xs text-nightcap-accent hover:underline disabled:opacity-50"
+                >
+                  Forgot password?
+                </button>
+              </div>
               <input
                 id="password"
                 type="password"
