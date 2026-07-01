@@ -10,7 +10,7 @@ After receiving App Review feedback, these changes were made. Use this checklist
 
 **Fix:** The `resize-for-ipad.js` script now prefers app-in-use screens (feed, profile, new entry) over the landing page.
 
-**Action:** Run `node scripts/resize-for-ipad.js` to regenerate. Ensure `screenshots-input` contains a logged-in screenshot (feed or profile). If your captures are all login screens, manually add a screenshot of the feed/profile while logged in, name it `04-feed.png` or `06-profile.png`, then run the script. Upload the new `screenshots-output/ipad-13inch.png` to App Store Connect.
+**Action:** Run `npm run screenshots:ipad` to regenerate. Ensure `screenshots-input` contains a logged-in screenshot (feed or profile). If your captures are all login screens, manually add a screenshot of the feed/profile while logged in, name it `04-feed.png` or `06-profile.png`, then run the script. Upload the new `screenshots-output/ipad-13inch.png` to App Store Connect.
 
 ---
 
@@ -32,9 +32,9 @@ After receiving App Review feedback, these changes were made. Use this checklist
 
 **Action:** In App Store Connect, update **Support URL** to:
 ```
-https://mynightcap.vercel.app/privacy#support
+https://mynightcap.vercel.app/support
 ```
-(The Support section is on the Privacy page, which already works.)
+(The dedicated Support page includes contact details, FAQs, and policy links.)
 
 ---
 
@@ -60,8 +60,8 @@ https://mynightcap.vercel.app/privacy#support
 ## 5. Before Resubmitting
 
 1. [ ] Deploy the latest code to Vercel
-2. [ ] Run migration `007_ugc_safeguards.sql` in Supabase
+2. [ ] Run all pending Supabase migrations through `011_terms_acceptance_profile_trigger.sql`
 3. [ ] Update Support URL in App Store Connect to `https://mynightcap.vercel.app/support`
 4. [ ] Upload new iPad screenshot (app-in-use, not login)
-5. [ ] Bump version/build, push, and run Codemagic build
+5. [ ] Confirm `package.json` version, push, and run Codemagic build (build number is generated automatically)
 6. [ ] Test on iPad: Profile → Edit → tap profile picture (should open photo library, not crash)

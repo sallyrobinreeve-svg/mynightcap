@@ -32,8 +32,7 @@ You have 3 screenshots. App Store needs **1242 × 2688px** or **1284 × 2778px**
 2. Copy your 3 screenshots into that folder
 3. Run:
    ```
-   npm install sharp --save-dev
-   node scripts/resize-screenshots.js
+   npm run screenshots:resize
    ```
 4. Get resized images from `screenshots-output` folder
 

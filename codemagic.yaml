@@ -1,4 +1,49 @@
 workflows:
+  ios-nightcap-flutter:
+    name: NightCapt Flutter iOS
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: Codemagic
+    environment:
+      vars:
+        APP_STORE_CONNECT_ALTOOL_ADDITIONAL_ARGUMENTS: '--apple-id "6760034499"'
+        SITE_URL: "https://mynightcap.vercel.app"
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.mynightcap.app
+    scripts:
+      - name: Install Flutter dependencies
+        script: |
+          cd flutter_app
+          flutter pub get
+      - name: Set up code signing
+        script: |
+          cd flutter_app
+          xcode-project use-profiles
+      - name: Build Flutter IPA for App Store
+        script: |
+          cd flutter_app
+          BUILD_NUM=$(date +%s)
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f1)
+          flutter build ipa --release \
+            --build-name=$VERSION \
+            --build-number=$BUILD_NUM \
+            --dart-define=SUPABASE_URL=$SUPABASE_URL \
+            --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
+            --dart-define=SITE_URL=$SITE_URL \
+            --export-options-plist=$HOME/export_options.plist
+    artifacts:
+      - flutter_app/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
   ios-nightcap:
     name: NightCapt iOS
     max_build_duration: 120
@@ -52,7 +97,7 @@ workflows:
           ls -la $CM_BUILD_DIR/ios/App/*.xcworkspace 2>/dev/null || true
       - name: Set app version
         script: |
-          VERSION="1.2"
+          VERSION=$(node -p "require('./package.json').version")
           PLIST="$CM_BUILD_DIR/ios/App/App/Info.plist"
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string $VERSION" "$PLIST"
           sed -i '' "s/MARKETING_VERSION = .*/MARKETING_VERSION = $VERSION;/g" $CM_BUILD_DIR/ios/App/App.xcodeproj/project.pbxproj

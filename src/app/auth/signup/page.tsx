@@ -25,11 +25,12 @@ export default function SignUpPage() {
     setMessage(null);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
+    const termsAcceptedAt = new Date().toISOString();
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: displayName },
+        data: { full_name: displayName, terms_accepted_at: termsAcceptedAt },
         emailRedirectTo: getAuthCallbackUrl(),
       },
     });
@@ -38,6 +39,13 @@ export default function SignUpPage() {
       setError(error.message);
       setLoading(false);
       return;
+    }
+
+    if (data.user) {
+      await supabase
+        .from("profiles")
+        .update({ terms_accepted_at: termsAcceptedAt })
+        .eq("id", data.user.id);
     }
 
     setMessage("Check your email to confirm your account!");

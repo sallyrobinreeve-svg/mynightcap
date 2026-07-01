@@ -4,14 +4,15 @@ import { useEffect, useState } from "react";
 
 /** Branded overlay on native — covers the white gap while the remote page loads. */
 export function AppBootScreen() {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
+  const [visible, setVisible] = useState(() => {
+    if (typeof window === "undefined") return false;
     const cap = (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } })
       .Capacitor;
-    if (!cap?.isNativePlatform?.()) return;
+    return Boolean(cap?.isNativePlatform?.());
+  });
 
-    setVisible(true);
+  useEffect(() => {
+    if (!visible) return;
     document.documentElement.classList.add("native-app");
 
     const hide = () => {
@@ -25,7 +26,7 @@ export function AppBootScreen() {
     }
 
     return () => window.removeEventListener("load", hide);
-  }, []);
+  }, [visible]);
 
   if (!visible) return null;
 
