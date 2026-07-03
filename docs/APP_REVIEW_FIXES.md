@@ -57,7 +57,25 @@ https://mynightcap.vercel.app/support
 
 ---
 
-## 5. Before Resubmitting
+## 5. App Store shows "Flutter app is ready for configuration"
+
+**Issue:** Users who downloaded from the App Store only saw a developer setup screen instead of sign-in.
+
+**Cause:** The Flutter iOS build was uploaded without `SUPABASE_URL` and `SUPABASE_ANON_KEY` embedded at compile time.
+
+**Fix:**
+- Added `GET /api/mobile-config` so the mobile app can load public Supabase config from production.
+- Flutter now fetches that endpoint on launch when compile-time credentials are missing.
+- Replaced the developer setup screen with a user-facing "Unable to connect" screen and retry.
+
+**Action:**
+1. Deploy the latest code to Vercel (so `/api/mobile-config` is live).
+2. Run a new Codemagic Flutter iOS build and submit to App Store Connect.
+3. Optional but recommended: set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in Codemagic environment variables for faster cold starts.
+
+---
+
+## 6. Before Resubmitting
 
 1. [ ] Deploy the latest code to Vercel
 2. [ ] Run all pending Supabase migrations through `011_terms_acceptance_profile_trigger.sql`
