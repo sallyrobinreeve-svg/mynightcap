@@ -2,25 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:nightcapt_flutter/config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
-const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
-const siteUrl = String.fromEnvironment(
-  'SITE_URL',
-  defaultValue: 'https://mynightcap.vercel.app',
-);
 const appScheme = 'com.mynightcap.app://auth/callback';
 
-bool get isSupabaseConfigured =>
-    supabaseUrl.startsWith('http') && supabaseAnonKey.isNotEmpty;
+late final AppConfig appConfig;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (isSupabaseConfigured) {
+  appConfig = await loadAppConfig();
+  if (appConfig.isConfigured) {
     await Supabase.initialize(
-      url: supabaseUrl,
-      publishableKey: supabaseAnonKey,
+      url: appConfig.supabaseUrl,
+      publishableKey: appConfig.supabaseAnonKey,
     );
   }
   runApp(const NightCaptApp());
@@ -48,7 +43,7 @@ class NightCaptApp extends StatelessWidget {
         '/terms': (_) => const TermsScreen(),
         '/reset-password': (_) => const ResetPasswordScreen(),
       },
-      home: isSupabaseConfigured
+      home: appConfig.isConfigured
           ? const AuthGate()
           : const ConfigurationScreen(),
     );
@@ -90,8 +85,49 @@ class _AuthGateState extends State<AuthGate> {
   }
 }
 
-class ConfigurationScreen extends StatelessWidget {
+class ConfigurationScreen extends StatefulWidget {
   const ConfigurationScreen({super.key});
+
+  @override
+  State<ConfigurationScreen> createState() => _ConfigurationScreenState();
+}
+
+class _ConfigurationScreenState extends State<ConfigurationScreen> {
+  bool retrying = false;
+  String? message;
+
+  Future<void> retryConnection() async {
+    setState(() {
+      retrying = true;
+      message = null;
+    });
+    try {
+      final nextConfig = await loadAppConfig();
+      if (!nextConfig.isConfigured) {
+        setState(
+          () => message =
+              'Still unable to connect. Check your internet connection and try again.',
+        );
+        return;
+      }
+      appConfig = nextConfig;
+      await Supabase.initialize(
+        url: appConfig.supabaseUrl,
+        publishableKey: appConfig.supabaseAnonKey,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(builder: (_) => const AuthGate()),
+      );
+    } catch (_) {
+      setState(
+        () => message =
+            'Could not reach NightCapt servers. Please try again in a moment.',
+      );
+    } finally {
+      if (mounted) setState(() => retrying = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,23 +139,30 @@ class ConfigurationScreen extends StatelessWidget {
             const BrandHeader(),
             const SizedBox(height: 24),
             const Text(
-              'Flutter app is ready for configuration',
+              'Unable to connect',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             const Text(
-              'Run with Supabase credentials to enable auth, feed, create, memories, and profile features.',
+              'NightCapt could not connect to its servers. Check your internet connection, then try again.',
               style: TextStyle(color: NightColors.muted),
             ),
-            const SizedBox(height: 16),
-            CodeBlock(
-              'flutter run --dart-define=SUPABASE_URL=https://xxx.supabase.co '
-              '--dart-define=SUPABASE_ANON_KEY=your_anon_key',
-            ),
+            if (message != null) StatusText(message!),
             const SizedBox(height: 20),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pushNamed('/support'),
-              child: const Text('Open support page'),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: retrying ? null : retryConnection,
+                child: Text(retrying ? 'Connecting...' : 'Try again'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(context).pushNamed('/support'),
+                child: const Text('Contact support'),
+              ),
             ),
           ],
         ),
@@ -214,7 +257,7 @@ class _SignInFormState extends State<SignInForm> {
     await runAction(() async {
       await supabase.auth.signInWithOtp(
         email: email.text.trim(),
-        emailRedirectTo: '$siteUrl/auth/callback',
+        emailRedirectTo: '${appConfig.siteUrl}/auth/callback',
       );
       setState(() => message = 'Check your email for the magic link.');
     });
@@ -323,7 +366,7 @@ class _SignUpFormState extends State<SignUpForm> {
       final response = await supabase.auth.signUp(
         email: email.text.trim(),
         password: password.text,
-        emailRedirectTo: '$siteUrl/auth/callback',
+        emailRedirectTo: '${appConfig.siteUrl}/auth/callback',
         data: {
           'full_name': displayName.text.trim(),
           'terms_accepted_at': acceptedAt,
@@ -947,7 +990,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
     try {
       final response = await http.post(
-        Uri.parse('$siteUrl/api/account/delete'),
+        Uri.parse('${appConfig.siteUrl}/api/account/delete'),
         headers: {'authorization': 'Bearer $token'},
       );
       if (response.statusCode < 200 || response.statusCode >= 300) {

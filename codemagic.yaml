@@ -24,17 +24,33 @@ workflows:
         script: |
           cd flutter_app
           xcode-project use-profiles
+      - name: Verify Supabase build credentials
+        script: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "WARNING: SUPABASE_URL or SUPABASE_ANON_KEY is not set in Codemagic."
+            echo "The app will fetch public config from $SITE_URL/api/mobile-config at runtime."
+          else
+            echo "Supabase credentials are set for compile-time embedding."
+          fi
       - name: Build Flutter IPA for App Store
         script: |
           cd flutter_app
           BUILD_NUM=$(date +%s)
           VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f1)
+          DART_DEFINES=()
+          if [ -n "$SUPABASE_URL" ]; then
+            DART_DEFINES+=(--dart-define=SUPABASE_URL=$SUPABASE_URL)
+          fi
+          if [ -n "$SUPABASE_ANON_KEY" ]; then
+            DART_DEFINES+=(--dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY)
+          fi
+          if [ -n "$SITE_URL" ]; then
+            DART_DEFINES+=(--dart-define=SITE_URL=$SITE_URL)
+          fi
           flutter build ipa --release \
             --build-name=$VERSION \
             --build-number=$BUILD_NUM \
-            --dart-define=SUPABASE_URL=$SUPABASE_URL \
-            --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
-            --dart-define=SITE_URL=$SITE_URL \
+            "${DART_DEFINES[@]}" \
             --export-options-plist=$HOME/export_options.plist
     artifacts:
       - flutter_app/build/ios/ipa/*.ipa
