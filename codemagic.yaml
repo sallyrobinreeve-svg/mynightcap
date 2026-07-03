@@ -11,6 +11,7 @@ workflows:
       vars:
         APP_STORE_CONNECT_ALTOOL_ADDITIONAL_ARGUMENTS: '--apple-id "6760034499"'
         SITE_URL: "https://mynightcap.vercel.app"
+        SUPABASE_URL: "https://wnnpbjwtmayzfcdduvhq.supabase.co"
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -28,6 +29,8 @@ workflows:
           xcode-project use-profiles
       - name: Verify Supabase build credentials
         script: |
+          echo "SUPABASE_URL is ${SUPABASE_URL:+set}${SUPABASE_URL:-MISSING}"
+          echo "SUPABASE_ANON_KEY is ${SUPABASE_ANON_KEY:+set}${SUPABASE_ANON_KEY:-MISSING}"
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
             echo "WARNING: SUPABASE_URL or SUPABASE_ANON_KEY is not set in Codemagic."
             echo "The app will fetch public config from $SITE_URL/api/mobile-config at runtime."
