@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../data/prompts.dart';
 import '../models/entry_models.dart';
+import '../services/content_filter.dart';
 import '../services/entry_service.dart';
 import '../theme.dart';
 import '../widgets/night_widgets.dart';
@@ -57,6 +58,11 @@ class _EntryDetailScreenState extends State<EntryDetailScreen> {
       await entryService.addComment(entryId: widget.entryId, content: text);
       _comment.clear();
       _reload();
+    } on ContentFilterException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(ContentFilterException.message)),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../data/prompts.dart';
 import '../models/entry_models.dart';
 import '../models/friend_models.dart';
+import '../services/content_filter.dart';
 import '../services/entry_service.dart';
 import '../services/friends_service.dart';
 import '../services/storage_service.dart';
@@ -172,6 +173,8 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
           taggedUserIds.clear();
         });
       }
+    } on ContentFilterException {
+      setState(() => message = ContentFilterException.message);
     } catch (_) {
       setState(
         () => message =

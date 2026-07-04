@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/entry_models.dart';
+import 'content_filter.dart';
 
 class EntryService {
   SupabaseClient get _client => Supabase.instance.client;
@@ -201,6 +202,11 @@ class EntryService {
     List<EditableTimelineStep> timeline = const [],
     List<String> taggedUserIds = const [],
   }) async {
+    assertEntryContentAllowed(
+      prompts: prompts,
+      timelineNotes: [for (final step in timeline) step.notes],
+    );
+
     final userId = _client.auth.currentUser!.id;
     final entry = await _client
         .from('entries')
@@ -240,6 +246,11 @@ class EntryService {
     List<EditableTimelineStep> timeline = const [],
     List<String> taggedUserIds = const [],
   }) async {
+    assertEntryContentAllowed(
+      prompts: prompts,
+      timelineNotes: [for (final step in timeline) step.notes],
+    );
+
     final userId = _client.auth.currentUser!.id;
     await _client
         .from('entries')
@@ -411,6 +422,7 @@ class EntryService {
   }) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) return;
+    assertContentAllowed(content);
     await _client.from('comments').insert({
       'entry_id': entryId,
       'user_id': userId,
