@@ -4,29 +4,77 @@ import 'package:intl/intl.dart';
 
 import '../data/prompts.dart';
 import '../models/entry_models.dart';
+import '../models/friend_models.dart';
 import '../services/entry_service.dart';
+import '../services/friends_service.dart';
 import '../services/storage_service.dart';
 import '../theme.dart';
 import '../widgets/night_widgets.dart';
+import '../widgets/timeline_editor.dart';
 
-class CreateEntryScreen extends StatefulWidget {
-  const CreateEntryScreen({super.key});
+class EntryEditorScreen extends StatefulWidget {
+  const EntryEditorScreen({this.entryId, super.key});
+
+  final String? entryId;
+
+  bool get isEditing => entryId != null;
 
   @override
-  State<CreateEntryScreen> createState() => _CreateEntryScreenState();
+  State<EntryEditorScreen> createState() => _EntryEditorScreenState();
 }
 
-class _CreateEntryScreenState extends State<CreateEntryScreen> {
+class _EntryEditorScreenState extends State<EntryEditorScreen> {
   DateTime date = DateTime.now();
   int? rating;
   String visibility = 'friends';
   PickedUpload? outfit;
   PickedUpload? favourite;
+  String? outfitUrl;
+  String? favouriteUrl;
   String? videoUrl;
   bool saving = false;
+  bool loading = false;
   String? message;
   final Map<String, dynamic> promptValues = {};
+  final List<EditableTimelineStep> timelineSteps = [];
+  final Set<String> taggedUserIds = {};
+  List<UserProfile> friends = [];
   bool showAllPrompts = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => loading = true);
+    try {
+      friends = await friendsService.friends();
+      if (widget.entryId != null) {
+        final data = await entryService.fetchForEdit(widget.entryId!);
+        date = data.date;
+        rating = data.rating;
+        visibility = data.visibility;
+        promptValues
+          ..clear()
+          ..addAll(data.prompts);
+        outfitUrl = data.outfitUrl;
+        favouriteUrl = data.favouriteUrl;
+        videoUrl = data.videoUrl;
+        timelineSteps
+          ..clear()
+          ..addAll(data.timeline);
+        taggedUserIds
+          ..clear()
+          ..addAll(data.taggedUserIds);
+      }
+    } catch (_) {
+      message = 'Could not load entry.';
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
 
   Future<void> pickPhoto(String type) async {
     final picker = ImagePicker();
@@ -41,8 +89,10 @@ class _CreateEntryScreenState extends State<CreateEntryScreen> {
       setState(() {
         if (type == 'outfit') {
           outfit = upload;
+          outfitUrl = upload.url;
         } else {
           favourite = upload;
+          favouriteUrl = upload.url;
         }
       });
     } catch (_) {
@@ -73,26 +123,55 @@ class _CreateEntryScreenState extends State<CreateEntryScreen> {
       message = null;
     });
     try {
-      await entryService.createEntry(
-        date: date,
-        rating: rating!,
-        visibility: visibility,
-        prompts: promptValues,
-        outfit: outfit,
-        favourite: favourite,
-        videoUrl: videoUrl,
-      );
+      if (widget.isEditing) {
+        await entryService.updateEntry(
+          entryId: widget.entryId!,
+          date: date,
+          rating: rating!,
+          visibility: visibility,
+          prompts: promptValues,
+          outfit: outfit,
+          favourite: favourite,
+          existingOutfitUrl: outfit == null ? outfitUrl : null,
+          existingFavouriteUrl: favourite == null ? favouriteUrl : null,
+          videoUrl: videoUrl,
+          timeline: timelineSteps,
+          taggedUserIds: taggedUserIds.toList(),
+        );
+      } else {
+        await entryService.createEntry(
+          date: date,
+          rating: rating!,
+          visibility: visibility,
+          prompts: promptValues,
+          outfit: outfit,
+          favourite: favourite,
+          videoUrl: videoUrl,
+          timeline: timelineSteps,
+          taggedUserIds: taggedUserIds.toList(),
+        );
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Entry posted.')),
+        SnackBar(
+          content: Text(widget.isEditing ? 'Entry updated.' : 'Entry posted.'),
+        ),
       );
-      setState(() {
-        rating = null;
-        outfit = null;
-        favourite = null;
-        videoUrl = null;
-        promptValues.clear();
-      });
+      if (widget.isEditing) {
+        Navigator.of(context).pop(true);
+      } else {
+        setState(() {
+          rating = null;
+          outfit = null;
+          favourite = null;
+          outfitUrl = null;
+          favouriteUrl = null;
+          videoUrl = null;
+          promptValues.clear();
+          timelineSteps.clear();
+          taggedUserIds.clear();
+        });
+      }
     } catch (_) {
       setState(
         () => message =
@@ -107,7 +186,6 @@ class _CreateEntryScreenState extends State<CreateEntryScreen> {
     if (value == null || (value is String && value.trim().isEmpty)) {
       promptValues.remove(prompt.id);
       if (prompt.privateByDefault) {
-        promptValues.remove('${prompt.id}Private');
         promptValues.remove('kissedPrivate');
       }
       return;
@@ -120,12 +198,19 @@ class _CreateEntryScreenState extends State<CreateEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (loading) {
+      return const NightScaffold(
+        title: 'Create',
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final prompts = showAllPrompts
         ? [...defaultPrompts(), ...extraPrompts()]
         : defaultPrompts();
 
     return NightScaffold(
-      title: 'Create',
+      title: widget.isEditing ? 'Edit entry' : 'Create',
       child: ListView(
         children: [
           NightCard(
@@ -166,7 +251,7 @@ class _CreateEntryScreenState extends State<CreateEntryScreen> {
                   children: [
                     Expanded(
                       child: PhotoButton(
-                        label: outfit == null ? 'Outfit photo' : 'Outfit added',
+                        label: outfitUrl == null ? 'Outfit photo' : 'Outfit added',
                         icon: Icons.checkroom,
                         onTap: () => pickPhoto('outfit'),
                       ),
@@ -174,7 +259,7 @@ class _CreateEntryScreenState extends State<CreateEntryScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: PhotoButton(
-                        label: favourite == null
+                        label: favouriteUrl == null
                             ? 'Favourite photo'
                             : 'Favourite added',
                         icon: Icons.favorite,
@@ -190,6 +275,38 @@ class _CreateEntryScreenState extends State<CreateEntryScreen> {
                   onTap: pickVideo,
                 ),
                 const SizedBox(height: 18),
+                TimelineEditor(
+                  steps: timelineSteps,
+                  onChanged: () => setState(() {}),
+                ),
+                const SizedBox(height: 18),
+                const Text('Tag friends', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                if (friends.isEmpty)
+                  const Text(
+                    'Add friends first to tag them on entries.',
+                    style: TextStyle(color: NightColors.muted),
+                  )
+                else
+                  for (final friend in friends)
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: taggedUserIds.contains(friend.id),
+                      onChanged: (checked) {
+                        setState(() {
+                          if (checked == true) {
+                            taggedUserIds.add(friend.id);
+                          } else {
+                            taggedUserIds.remove(friend.id);
+                          }
+                        });
+                      },
+                      title: Text(friend.name),
+                      subtitle: friend.username == null
+                          ? null
+                          : Text('@${friend.username}'),
+                    ),
+                const SizedBox(height: 18),
                 Row(
                   children: [
                     const Text('Prompts', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -200,7 +317,6 @@ class _CreateEntryScreenState extends State<CreateEntryScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
                 for (final prompt in prompts) ...[
                   const SizedBox(height: 10),
                   _PromptField(
@@ -227,7 +343,13 @@ class _CreateEntryScreenState extends State<CreateEntryScreen> {
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: saving ? null : saveEntry,
-                    child: Text(saving ? 'Posting...' : 'Post entry'),
+                    child: Text(
+                      saving
+                          ? 'Saving...'
+                          : widget.isEditing
+                          ? 'Save changes'
+                          : 'Post entry',
+                    ),
                   ),
                 ),
               ],
@@ -239,7 +361,7 @@ class _CreateEntryScreenState extends State<CreateEntryScreen> {
   }
 }
 
-class _PromptField extends StatelessWidget {
+class _PromptField extends StatefulWidget {
   const _PromptField({
     required this.prompt,
     required this.value,
@@ -251,7 +373,37 @@ class _PromptField extends StatelessWidget {
   final ValueChanged<dynamic> onChanged;
 
   @override
+  State<_PromptField> createState() => _PromptFieldState();
+}
+
+class _PromptFieldState extends State<_PromptField> {
+  late final TextEditingController _textController;
+
+  @override
+  void initState() {
+    super.initState();
+    _textController = TextEditingController(
+      text: widget.value?.toString() ?? '',
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant _PromptField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value?.toString() != _textController.text) {
+      _textController.text = widget.value?.toString() ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final prompt = widget.prompt;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -259,25 +411,26 @@ class _PromptField extends StatelessWidget {
         const SizedBox(height: 6),
         switch (prompt.inputType) {
           PromptInputType.textarea => TextField(
+            controller: _textController,
             maxLines: 3,
             decoration: nightInputDecoration(prompt.placeholder ?? 'Your answer'),
-            onChanged: onChanged,
+            onChanged: widget.onChanged,
           ),
           PromptInputType.slider => Slider(
-            value: (value as num?)?.toDouble() ?? prompt.sliderMin.toDouble(),
+            value: (widget.value as num?)?.toDouble() ?? prompt.sliderMin.toDouble(),
             min: prompt.sliderMin.toDouble(),
             max: prompt.sliderMax.toDouble(),
             divisions: prompt.sliderMax - prompt.sliderMin,
-            label: '${value ?? prompt.sliderMin}',
-            onChanged: onChanged,
+            label: '${widget.value ?? prompt.sliderMin}',
+            onChanged: widget.onChanged,
           ),
           PromptInputType.toggle => SegmentedButton<String>(
             segments: [
               ButtonSegment(value: prompt.toggleLabels[0], label: Text(prompt.toggleLabels[0])),
               ButtonSegment(value: prompt.toggleLabels[1], label: Text(prompt.toggleLabels[1])),
             ],
-            selected: {value?.toString() ?? prompt.toggleLabels[1]},
-            onSelectionChanged: (selection) => onChanged(selection.first),
+            selected: {widget.value?.toString() ?? prompt.toggleLabels[1]},
+            onSelectionChanged: (selection) => widget.onChanged(selection.first),
           ),
           PromptInputType.choices => Wrap(
             spacing: 8,
@@ -285,14 +438,15 @@ class _PromptField extends StatelessWidget {
               for (final choice in prompt.choices)
                 ChoiceChip(
                   label: Text(choice),
-                  selected: value == choice,
-                  onSelected: (_) => onChanged(choice),
+                  selected: widget.value == choice,
+                  onSelected: (_) => widget.onChanged(choice),
                 ),
             ],
           ),
           PromptInputType.text => TextField(
+            controller: _textController,
             decoration: nightInputDecoration(prompt.placeholder ?? 'Your answer'),
-            onChanged: onChanged,
+            onChanged: widget.onChanged,
           ),
         },
       ],

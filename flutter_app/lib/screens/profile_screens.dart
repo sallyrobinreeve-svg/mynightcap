@@ -10,6 +10,7 @@ import '../services/profile_service.dart';
 import '../services/storage_service.dart';
 import '../theme.dart';
 import '../widgets/night_widgets.dart';
+import 'notifications_leaderboard_screens.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -151,6 +152,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Navigator.of(context).pushNamed('/support'),
                           icon: const Icon(Icons.help_outline),
                           label: const Text('Support'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const LeaderboardScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.emoji_events_outlined),
+                          label: const Text('Leaderboard'),
                         ),
                       ],
                     ),

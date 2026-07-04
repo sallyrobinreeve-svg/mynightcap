@@ -3,10 +3,16 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 
 class NightScaffold extends StatelessWidget {
-  const NightScaffold({required this.child, this.title, super.key});
+  const NightScaffold({
+    required this.child,
+    this.title,
+    this.actions,
+    super.key,
+  });
 
   final Widget child;
   final String? title;
+  final List<Widget>? actions;
 
   @override
   Widget build(BuildContext context) {
@@ -17,6 +23,7 @@ class NightScaffold extends StatelessWidget {
               title: Text(title!),
               backgroundColor: NightColors.background,
               foregroundColor: Colors.white,
+              actions: actions,
             ),
       body: Container(
         decoration: const BoxDecoration(

@@ -11,6 +11,7 @@ import '../theme.dart';
 import '../widgets/night_widgets.dart';
 import '../widgets/social_widgets.dart';
 import 'entry_detail_screen.dart';
+import 'notifications_leaderboard_screens.dart';
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key});
@@ -93,6 +94,20 @@ class _FeedScreenState extends State<FeedScreen> {
   Widget build(BuildContext context) {
     return NightScaffold(
       title: 'Feed',
+      actions: [
+        IconButton(
+          tooltip: 'Leaderboard',
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const LeaderboardScreen(),
+              ),
+            );
+          },
+          icon: const Icon(Icons.emoji_events_outlined),
+        ),
+        const NotificationBell(),
+      ],
       child: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null

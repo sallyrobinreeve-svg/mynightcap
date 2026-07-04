@@ -7,6 +7,8 @@ import '../services/entry_service.dart';
 import '../theme.dart';
 import '../widgets/night_widgets.dart';
 import '../widgets/social_widgets.dart';
+import '../widgets/video_player_widget.dart';
+import 'entry_editor_screen.dart';
 
 class EntryDetailScreen extends StatefulWidget {
   const EntryDetailScreen({required this.entryId, super.key});
@@ -60,6 +62,29 @@ class _EntryDetailScreenState extends State<EntryDetailScreen> {
     }
   }
 
+  Future<void> _deleteEntry() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete entry?'),
+        content: const Text('This permanently removes this recap.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    await entryService.deleteEntry(widget.entryId);
+    if (mounted) Navigator.of(context).pop(true);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,6 +92,39 @@ class _EntryDetailScreenState extends State<EntryDetailScreen> {
         title: const Text('Recap'),
         backgroundColor: NightColors.background,
         foregroundColor: Colors.white,
+        actions: [
+          FutureBuilder<EntryDetail>(
+            future: _future,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || !snapshot.data!.isMine) {
+                return const SizedBox.shrink();
+              }
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: 'Edit',
+                    onPressed: () async {
+                      final updated = await Navigator.of(context).push<bool>(
+                        MaterialPageRoute<bool>(
+                          builder: (_) =>
+                              EntryEditorScreen(entryId: widget.entryId),
+                        ),
+                      );
+                      if (updated == true) _reload();
+                    },
+                    icon: const Icon(Icons.edit_outlined),
+                  ),
+                  IconButton(
+                    tooltip: 'Delete',
+                    onPressed: _deleteEntry,
+                    icon: const Icon(Icons.delete_outline),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -177,6 +235,13 @@ class _DetailBody extends StatelessWidget {
                 'by ${detail.authorName ?? 'NightCapt user'}',
                 style: const TextStyle(color: NightColors.accent),
               ),
+              if (detail.taggedProfiles.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'With ${detail.taggedProfiles.map((p) => p.name).join(', ')}',
+                  style: const TextStyle(color: NightColors.muted),
+                ),
+              ],
               if (detail.rating != null) ...[
                 const SizedBox(height: 10),
                 Row(
@@ -210,29 +275,7 @@ class _DetailBody extends StatelessWidget {
               ],
               if (detail.videoUrl != null) ...[
                 const SizedBox(height: 16),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    height: 200,
-                    width: double.infinity,
-                    color: NightColors.background,
-                    alignment: Alignment.center,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.videocam, size: 48, color: NightColors.accent),
-                        const SizedBox(height: 8),
-                        Text(
-                          detail.videoUrl!,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: NightColors.muted, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                NightVideoPlayer(url: detail.videoUrl!),
               ],
               for (final (label, value) in promptEntries) ...[
                 const SizedBox(height: 16),

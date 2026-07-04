@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -12,7 +13,7 @@ class EntryService {
     final entry = await _client
         .from('entries')
         .select(
-          'id, user_id, date_of_night, rating, prompts, created_at, video_url',
+          'id, user_id, date_of_night, rating, prompts, created_at, video_url, visibility',
         )
         .eq('id', entryId)
         .maybeSingle();
@@ -43,6 +44,7 @@ class EntryService {
           .select('id, user_id, content, created_at')
           .eq('entry_id', entryId)
           .order('created_at', ascending: true),
+      _client.from('entry_tags').select('user_id').eq('entry_id', entryId),
     ]);
 
     final author = results[0] as Map<String, dynamic>?;
@@ -50,6 +52,7 @@ class EntryService {
     final timelineRows = (results[2] as List).cast<Map<String, dynamic>>();
     final reactions = (results[3] as List).cast<Map<String, dynamic>>();
     final commentRows = (results[4] as List).cast<Map<String, dynamic>>();
+    final tagRows = (results[5] as List).cast<Map<String, dynamic>>();
 
     final photoUrls = [
       for (final photo in photos)
@@ -86,12 +89,7 @@ class EntryService {
           .select('id, display_name, username')
           .inFilter('id', commenterIds);
       for (final profile in (profiles as List).cast<Map<String, dynamic>>()) {
-        final displayName = profile['display_name'] as String?;
-        final username = profile['username'] as String?;
-        nameById[profile['id'] as String] =
-            displayName?.trim().isNotEmpty == true
-            ? displayName
-            : (username?.trim().isNotEmpty == true ? '@$username' : null);
+        nameById[profile['id'] as String] = _profileName(profile);
       }
     }
 
@@ -106,11 +104,10 @@ class EntryService {
         ),
     ];
 
-    final displayName = author?['display_name'] as String?;
-    final username = author?['username'] as String?;
-    final authorName = displayName?.trim().isNotEmpty == true
-        ? displayName
-        : (username?.trim().isNotEmpty == true ? '@$username' : null);
+    final taggedIds = [
+      for (final tag in tagRows) tag['user_id'] as String,
+    ];
+    final taggedProfiles = await _taggedProfiles(taggedIds);
 
     return EntryDetail(
       id: entry['id'] as String,
@@ -118,16 +115,216 @@ class EntryService {
       dateOfNight: entry['date_of_night'] as String,
       rating: entry['rating'] as int?,
       prompts: _visiblePrompts(prompts, isMine),
-      authorName: authorName,
+      authorName: author == null ? null : _profileName(author),
       photoUrls: photoUrls,
       timeline: timeline,
       reactionCounts: reactionCounts,
       myReactionType: myReactionType,
       comments: comments,
       isMine: isMine,
+      taggedProfiles: taggedProfiles,
       videoUrl: entry['video_url'] as String?,
       currentUserId: userId,
     );
+  }
+
+  Future<EntryEditData> fetchForEdit(String entryId) async {
+    final userId = _client.auth.currentUser!.id;
+    final entry = await _client
+        .from('entries')
+        .select(
+          'id, user_id, date_of_night, rating, prompts, visibility, video_url',
+        )
+        .eq('id', entryId)
+        .maybeSingle();
+
+    if (entry == null || entry['user_id'] != userId) {
+      throw StateError('Entry not found or not editable.');
+    }
+
+    final results = await Future.wait([
+      _client.from('photos').select('type, url').eq('entry_id', entryId),
+      _client
+          .from('timeline_steps')
+          .select('type, location_name, time_at, notes, emoji, sort_order')
+          .eq('entry_id', entryId)
+          .order('sort_order', ascending: true),
+      _client.from('entry_tags').select('user_id').eq('entry_id', entryId),
+    ]);
+
+    final photos = (results[0] as List).cast<Map<String, dynamic>>();
+    final timelineRows = (results[1] as List).cast<Map<String, dynamic>>();
+    final tagRows = (results[2] as List).cast<Map<String, dynamic>>();
+
+    String? outfitUrl;
+    String? favouriteUrl;
+    for (final photo in photos) {
+      if (photo['type'] == 'outfit') outfitUrl = photo['url'] as String;
+      if (photo['type'] == 'favourite') favouriteUrl = photo['url'] as String;
+    }
+
+    final timeline = [
+      for (final step in timelineRows)
+        EditableTimelineStep(
+          type: step['type'] as String,
+          emoji: step['emoji'] as String? ?? '🎉',
+          locationName: step['location_name'] as String? ?? '',
+          timeAt: _parseTime(step['time_at'] as String?),
+          notes: step['notes'] as String? ?? '',
+        ),
+    ];
+
+    return EntryEditData(
+      id: entryId,
+      date: DateTime.parse(entry['date_of_night'] as String),
+      rating: entry['rating'] as int?,
+      visibility: entry['visibility'] as String? ?? 'friends',
+      prompts: (entry['prompts'] as Map?)?.cast<String, dynamic>() ?? {},
+      outfitUrl: outfitUrl,
+      favouriteUrl: favouriteUrl,
+      videoUrl: entry['video_url'] as String?,
+      timeline: timeline,
+      taggedUserIds: [
+        for (final tag in tagRows) tag['user_id'] as String,
+      ],
+    );
+  }
+
+  Future<String> createEntry({
+    required DateTime date,
+    required int rating,
+    required String visibility,
+    required Map<String, dynamic> prompts,
+    PickedUpload? outfit,
+    PickedUpload? favourite,
+    String? videoUrl,
+    List<EditableTimelineStep> timeline = const [],
+    List<String> taggedUserIds = const [],
+  }) async {
+    final userId = _client.auth.currentUser!.id;
+    final entry = await _client
+        .from('entries')
+        .insert({
+          'user_id': userId,
+          'date_of_night': DateFormat('yyyy-MM-dd').format(date),
+          'rating': rating,
+          'prompts': prompts,
+          'visibility': visibility,
+          if (videoUrl != null) 'video_url': videoUrl,
+        })
+        .select('id')
+        .single();
+
+    final entryId = entry['id'] as String;
+    await _saveRelated(
+      entryId: entryId,
+      outfit: outfit,
+      favourite: favourite,
+      timeline: timeline,
+      taggedUserIds: taggedUserIds,
+    );
+    return entryId;
+  }
+
+  Future<void> updateEntry({
+    required String entryId,
+    required DateTime date,
+    required int rating,
+    required String visibility,
+    required Map<String, dynamic> prompts,
+    PickedUpload? outfit,
+    PickedUpload? favourite,
+    String? existingOutfitUrl,
+    String? existingFavouriteUrl,
+    String? videoUrl,
+    List<EditableTimelineStep> timeline = const [],
+    List<String> taggedUserIds = const [],
+  }) async {
+    final userId = _client.auth.currentUser!.id;
+    await _client
+        .from('entries')
+        .update({
+          'date_of_night': DateFormat('yyyy-MM-dd').format(date),
+          'rating': rating,
+          'prompts': prompts,
+          'visibility': visibility,
+          'video_url': videoUrl,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', entryId)
+        .eq('user_id', userId);
+
+    await _client.from('timeline_steps').delete().eq('entry_id', entryId);
+    await _client.from('photos').delete().eq('entry_id', entryId);
+    await _client.from('entry_tags').delete().eq('entry_id', entryId);
+
+    PickedUpload? outfitUpload = outfit;
+    PickedUpload? favouriteUpload = favourite;
+    if (outfitUpload == null && existingOutfitUrl != null) {
+      outfitUpload = PickedUpload(path: '', url: existingOutfitUrl);
+    }
+    if (favouriteUpload == null && existingFavouriteUrl != null) {
+      favouriteUpload = PickedUpload(path: '', url: existingFavouriteUrl);
+    }
+
+    await _saveRelated(
+      entryId: entryId,
+      outfit: outfitUpload,
+      favourite: favouriteUpload,
+      timeline: timeline,
+      taggedUserIds: taggedUserIds,
+    );
+  }
+
+  Future<void> deleteEntry(String entryId) async {
+    final userId = _client.auth.currentUser!.id;
+    await _client.from('entries').delete().eq('id', entryId).eq('user_id', userId);
+  }
+
+  Future<void> _saveRelated({
+    required String entryId,
+    PickedUpload? outfit,
+    PickedUpload? favourite,
+    required List<EditableTimelineStep> timeline,
+    required List<String> taggedUserIds,
+  }) async {
+    final photoRows = [
+      if (outfit != null)
+        {'entry_id': entryId, 'type': 'outfit', 'url': outfit.url},
+      if (favourite != null)
+        {'entry_id': entryId, 'type': 'favourite', 'url': favourite.url},
+    ];
+    if (photoRows.isNotEmpty) {
+      await _client.from('photos').insert(photoRows);
+    }
+
+    if (timeline.isNotEmpty) {
+      await _client.from('timeline_steps').insert([
+        for (var i = 0; i < timeline.length; i++)
+          {
+            'entry_id': entryId,
+            'type': timeline[i].type,
+            'emoji': timeline[i].emoji,
+            'location_name': timeline[i].locationName.trim().isEmpty
+                ? null
+                : timeline[i].locationName.trim(),
+            'time_at': timeline[i].timeAt == null
+                ? null
+                : _formatTime(timeline[i].timeAt!),
+            'notes': timeline[i].notes.trim().isEmpty
+                ? null
+                : timeline[i].notes.trim(),
+            'sort_order': i,
+          },
+      ]);
+    }
+
+    if (taggedUserIds.isNotEmpty) {
+      await _client.from('entry_tags').insert([
+        for (final taggedId in taggedUserIds)
+          {'entry_id': entryId, 'user_id': taggedId},
+      ]);
+    }
   }
 
   Map<String, dynamic> _visiblePrompts(
@@ -144,6 +341,45 @@ class EntryService {
     filtered.remove('kissedPrivate');
     filtered.remove('whoKissedWhoPrivate');
     return filtered;
+  }
+
+  String? _profileName(Map<String, dynamic> profile) {
+    final displayName = profile['display_name'] as String?;
+    final username = profile['username'] as String?;
+    if (displayName?.trim().isNotEmpty == true) return displayName!.trim();
+    if (username?.trim().isNotEmpty == true) return '@$username';
+    return null;
+  }
+
+  Future<List<TaggedProfile>> _taggedProfiles(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    final rows = await _client
+        .from('profiles')
+        .select('id, display_name, username')
+        .inFilter('id', ids);
+    return [
+      for (final row in rows as List)
+        TaggedProfile(
+          id: row['id'] as String,
+          name: _profileName(row as Map<String, dynamic>) ?? 'Friend',
+        ),
+    ];
+  }
+
+  TimeOfDay? _parseTime(String? value) {
+    if (value == null || value.isEmpty) return null;
+    final parts = value.split(':');
+    if (parts.length < 2) return null;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return null;
+    return TimeOfDay(hour: hour, minute: minute);
+  }
+
+  String _formatTime(TimeOfDay time) {
+    final hour = time.hour.toString().padLeft(2, '0');
+    final minute = time.minute.toString().padLeft(2, '0');
+    return '$hour:$minute:00';
   }
 
   Future<void> toggleReaction({
@@ -184,42 +420,6 @@ class EntryService {
 
   Future<void> deleteComment(String commentId) async {
     await _client.from('comments').delete().eq('id', commentId);
-  }
-
-  Future<String> createEntry({
-    required DateTime date,
-    required int rating,
-    required String visibility,
-    required Map<String, dynamic> prompts,
-    PickedUpload? outfit,
-    PickedUpload? favourite,
-    String? videoUrl,
-  }) async {
-    final userId = _client.auth.currentUser!.id;
-    final entry = await _client
-        .from('entries')
-        .insert({
-          'user_id': userId,
-          'date_of_night': DateFormat('yyyy-MM-dd').format(date),
-          'rating': rating,
-          'prompts': prompts,
-          'visibility': visibility,
-          if (videoUrl != null) 'video_url': videoUrl,
-        })
-        .select('id')
-        .single();
-
-    final entryId = entry['id'] as String;
-    final photoRows = [
-      if (outfit != null)
-        {'entry_id': entryId, 'type': 'outfit', 'url': outfit.url},
-      if (favourite != null)
-        {'entry_id': entryId, 'type': 'favourite', 'url': favourite.url},
-    ];
-    if (photoRows.isNotEmpty) {
-      await _client.from('photos').insert(photoRows);
-    }
-    return entryId;
   }
 }
 

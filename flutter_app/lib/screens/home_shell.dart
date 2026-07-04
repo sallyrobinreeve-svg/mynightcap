@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'create_entry_screen.dart';
+import 'entry_editor_screen.dart';
 import 'feed_friends_screens.dart';
 import 'profile_screens.dart';
 
@@ -19,7 +19,7 @@ class _HomeShellState extends State<HomeShell> {
     final screens = const [
       FeedScreen(),
       FriendsScreen(),
-      CreateEntryScreen(),
+      EntryEditorScreen(),
       MemoriesScreen(),
       ProfileScreen(),
     ];
