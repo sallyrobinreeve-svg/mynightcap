@@ -63,3 +63,5 @@ Future<AppConfig> loadAppConfig() async {
 
   return bakedIn;
 }
+
+late AppConfig appConfig;
