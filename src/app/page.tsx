@@ -19,7 +19,7 @@ export default async function HomePage() {
           NightCapt
         </h1>
         <p className="text-xl text-nightcap-muted mb-12">
-          Capture the chaos. Spill the tea from last night. Lock in the memory.
+          Every good night deserves a recap. The social diary where nights live on.
         </p>
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
           <Link

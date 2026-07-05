@@ -97,7 +97,7 @@ class BrandHeader extends StatelessWidget {
         ),
         SizedBox(height: 4),
         Text(
-          'The debrief that doesn\'t have to end',
+          'Every good night deserves a recap.',
           style: TextStyle(color: NightColors.muted),
         ),
       ],

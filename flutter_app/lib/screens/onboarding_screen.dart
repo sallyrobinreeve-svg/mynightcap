@@ -23,7 +23,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     (
       icon: Icons.nightlife,
       title: 'Welcome to NightCapt',
-      body: 'The debrief after the night out that doesn\'t have to end.',
+      body: 'The social diary for nights out—where the morning-after debrief lives on.',
     ),
     (
       icon: Icons.local_fire_department,
