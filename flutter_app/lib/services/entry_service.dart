@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../data/prompt_privacy.dart';
 import '../models/entry_models.dart';
 import 'content_filter.dart';
 
@@ -342,16 +343,17 @@ class EntryService {
     Map<String, dynamic> prompts,
     bool isMine,
   ) {
-    if (isMine) return prompts;
-    final filtered = Map<String, dynamic>.from(prompts);
-    if (prompts['kissedPrivate'] == true) {
-      filtered.remove('kissedAnyone');
-      filtered.remove('kissedWho');
-      filtered.remove('whoKissedWho');
+    final visible = <String, dynamic>{};
+    for (final entry in prompts.entries) {
+      final key = entry.key;
+      final value = entry.value;
+      if (isPromptMetadataKey(key)) continue;
+      if (key == 'kissedWho') continue;
+      if (value == null || value.toString().trim().isEmpty) continue;
+      if (!isMine && isPromptPrivate(prompts, key)) continue;
+      visible[key] = value;
     }
-    filtered.remove('kissedPrivate');
-    filtered.remove('whoKissedWhoPrivate');
-    return filtered;
+    return visible;
   }
 
   String? _profileName(Map<String, dynamic> profile) {

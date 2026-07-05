@@ -9,6 +9,8 @@ import '../services/moderation_service.dart';
 import '../services/profile_service.dart';
 import '../services/storage_service.dart';
 import '../theme.dart';
+import '../services/user_entries_service.dart';
+import '../widgets/entry_grid.dart';
 import '../widgets/night_widgets.dart';
 import 'notifications_leaderboard_screens.dart';
 
@@ -21,10 +23,16 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   late Future<UserProfile?> _future = profileService.currentProfile();
+  late Future<List<UserEntryTile>> _entriesFuture = userEntriesService.fetchMine();
   bool saving = false;
   String? message;
 
-  void _reload() => setState(() => _future = profileService.currentProfile());
+  void _reload() {
+    setState(() {
+      _future = profileService.currentProfile();
+      _entriesFuture = userEntriesService.fetchMine();
+    });
+  }
 
   Future<void> signOut() async => supabase.auth.signOut();
 
@@ -165,6 +173,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           label: const Text('Leaderboard'),
                         ),
                       ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              NightCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Your nights',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Tap any recap to view it.',
+                      style: TextStyle(color: NightColors.muted),
+                    ),
+                    const SizedBox(height: 12),
+                    FutureBuilder<List<UserEntryTile>>(
+                      future: _entriesFuture,
+                      builder: (context, snapshot) {
+                        final entries = snapshot.data ?? [];
+                        if (entries.isEmpty) {
+                          return const Text(
+                            'No entries yet. Post your first night from Create.',
+                            style: TextStyle(color: NightColors.muted),
+                          );
+                        }
+                        return EntryGrid(entries: entries, crossAxisCount: 3);
+                      },
                     ),
                   ],
                 ),
@@ -415,45 +454,44 @@ class MemoriesScreen extends StatefulWidget {
 }
 
 class _MemoriesScreenState extends State<MemoriesScreen> {
-  late Future<List<Map<String, dynamic>>> future = loadPhotos();
-
-  Future<List<Map<String, dynamic>>> loadPhotos() async {
-    final rows = await supabase
-        .from('photos')
-        .select('url, type, created_at')
-        .order('created_at', ascending: false)
-        .limit(60);
-    return List<Map<String, dynamic>>.from(rows);
-  }
+  late Future<List<UserEntryTile>> future = userEntriesService.fetchMine();
 
   @override
   Widget build(BuildContext context) {
     return NightScaffold(
       title: 'Memories',
-      child: FutureBuilder<List<Map<String, dynamic>>>(
+      child: FutureBuilder<List<UserEntryTile>>(
         future: future,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
           }
-          final photos = snapshot.data ?? [];
-          if (photos.isEmpty) {
+          final entries = snapshot.data ?? [];
+          if (entries.isEmpty) {
             return const EmptyState(
               icon: Icons.photo_library_outlined,
-              title: 'No photos yet',
-              body: 'Add photos to entries and they will appear here.',
+              title: 'No nights yet',
+              body: 'Post a recap with photos and they will appear here. Tap any tile to open it.',
             );
           }
-          return GridView.builder(
-            itemCount: photos.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-            ),
-            itemBuilder: (_, i) => ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: Image.network(photos[i]['url'], fit: BoxFit.cover),
+          return SizedBox(
+            height: MediaQuery.sizeOf(context).height - 180,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Your photo grid of past nights',
+                  style: TextStyle(color: NightColors.muted),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: EntryGrid(
+                    entries: entries,
+                    crossAxisCount: 2,
+                    shrinkWrap: false,
+                  ),
+                ),
+              ],
             ),
           );
         },

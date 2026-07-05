@@ -84,7 +84,7 @@ class BrandHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -96,7 +96,10 @@ class BrandHeader extends StatelessWidget {
           ),
         ),
         SizedBox(height: 4),
-        Text('Capture the chaos', style: TextStyle(color: NightColors.muted)),
+        Text(
+          'The debrief that doesn\'t have to end',
+          style: TextStyle(color: NightColors.muted),
+        ),
       ],
     );
   }

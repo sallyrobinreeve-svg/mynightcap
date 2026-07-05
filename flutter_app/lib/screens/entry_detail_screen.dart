@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../data/prompt_privacy.dart';
 import '../data/prompts.dart';
 import '../models/entry_models.dart';
 import '../services/content_filter.dart';
@@ -200,13 +201,32 @@ class _DetailBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final date = DateTime.tryParse(detail.dateOfNight);
-    final promptEntries = [
-      for (final entry in detail.prompts.entries)
-        if (entry.value != null &&
-            entry.value.toString().trim().isNotEmpty &&
-            !entry.key.endsWith('Private'))
-          (promptDisplayLabel(entry.key), entry.value.toString()),
-    ];
+    final promptEntries = <(String, String)>[];
+    for (final entry in detail.prompts.entries) {
+      final key = entry.key;
+      final value = entry.value;
+      if (isPromptMetadataKey(key)) continue;
+      if (key == 'kissedWho') continue;
+      if (value == null || value.toString().trim().isEmpty) continue;
+
+      if (!detail.isMine && isPromptPrivate(detail.prompts, key)) {
+        promptEntries.add((promptDisplayLabel(key), '(Private)'));
+        continue;
+      }
+
+      var display = value.toString();
+      if (key == 'kissedAnyone') {
+        display = kissedAnyoneValue(value) ? 'Yes' : 'No';
+        final who = detail.prompts['kissedWho'];
+        if (who != null && who.toString().trim().isNotEmpty) {
+          display = '$display — ${who.toString()}';
+        }
+      }
+      if (detail.isMine && isPromptPrivate(detail.prompts, key)) {
+        display = '$display (private)';
+      }
+      promptEntries.add((promptDisplayLabel(key), display));
+    }
 
     return ListView(
       padding: const EdgeInsets.all(18),
