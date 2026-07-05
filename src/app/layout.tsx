@@ -16,8 +16,8 @@ const body = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "NightCapt | Capture the Chaos",
-  description: "Record and share your nights out. Spill the tea, lock in the memory, capture the chaos.",
+  title: "NightCapt | Every Good Night Deserves a Recap",
+  description: "The social diary for nights out. Remember the night, relive the debrief, and turn nights out into lasting memories with friends.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

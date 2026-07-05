@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config.dart';
+import '../services/onboarding_service.dart';
+import '../services/profile_service.dart';
 import '../theme.dart';
 import '../widgets/night_widgets.dart';
 import 'home_shell.dart';
+import 'onboarding_screen.dart';
+import 'username_setup_screen.dart';
 
 const appScheme = 'com.mynightcap.app://auth/callback';
 
@@ -30,8 +34,60 @@ class _AuthGateState extends State<AuthGate> {
   Widget build(BuildContext context) {
     return supabase.auth.currentSession == null
         ? const WelcomeScreen()
-        : const HomeShell();
+        : const PostAuthGate();
   }
+}
+
+class PostAuthGate extends StatefulWidget {
+  const PostAuthGate({super.key});
+
+  @override
+  State<PostAuthGate> createState() => _PostAuthGateState();
+}
+
+class _PostAuthGateState extends State<PostAuthGate> {
+  late Future<_PostAuthState> _future = _load();
+
+  Future<_PostAuthState> _load() async {
+    final profile = await profileService.currentProfile();
+    final onboardingDone = await onboardingService.isComplete();
+    return _PostAuthState(
+      needsUsername: profile?.username == null || profile!.username!.isEmpty,
+      needsOnboarding: !onboardingDone,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<_PostAuthState>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const NightScaffold(
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        final state = snapshot.data!;
+        if (state.needsUsername) {
+          return UsernameSetupScreen(key: ValueKey(_future));
+        }
+        if (state.needsOnboarding) {
+          return const OnboardingScreen();
+        }
+        return const HomeShell();
+      },
+    );
+  }
+}
+
+class _PostAuthState {
+  const _PostAuthState({
+    required this.needsUsername,
+    required this.needsOnboarding,
+  });
+
+  final bool needsUsername;
+  final bool needsOnboarding;
 }
 
 class ConfigurationScreen extends StatefulWidget {
@@ -300,7 +356,6 @@ class SignUpForm extends StatefulWidget {
 
 class _SignUpFormState extends State<SignUpForm> {
   final displayName = TextEditingController();
-  final username = TextEditingController();
   final email = TextEditingController();
   final password = TextEditingController();
   bool acceptedTerms = false;
@@ -329,11 +384,9 @@ class _SignUpFormState extends State<SignUpForm> {
       );
       final userId = response.user?.id;
       if (userId != null) {
-        final updates = <String, dynamic>{'terms_accepted_at': acceptedAt};
-        if (username.text.trim().isNotEmpty) {
-          updates['username'] = username.text.trim().toLowerCase();
-        }
-        await supabase.from('profiles').update(updates).eq('id', userId);
+        await supabase.from('profiles').update({
+          'terms_accepted_at': acceptedAt,
+        }).eq('id', userId);
       }
       setState(() => message = 'Check your email to confirm your account.');
     } on AuthException catch (error) {
@@ -350,11 +403,6 @@ class _SignUpFormState extends State<SignUpForm> {
     return Column(
       children: [
         NightTextField(controller: displayName, label: 'Display name'),
-        const SizedBox(height: 12),
-        NightTextField(
-          controller: username,
-          label: 'Username (optional)',
-        ),
         const SizedBox(height: 12),
         NightTextField(
           controller: email,

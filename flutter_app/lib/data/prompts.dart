@@ -12,6 +12,7 @@ class PromptDefinition {
     this.toggleLabels = const ['Yes', 'No'],
     this.choices = const [],
     this.privateByDefault = false,
+    this.canBePrivate = false,
   });
 
   final String id;
@@ -24,16 +25,15 @@ class PromptDefinition {
   final List<String> toggleLabels;
   final List<String> choices;
   final bool privateByDefault;
+  final bool canBePrivate;
 }
 
 const defaultPromptIds = [
   'chaos',
   'whoWasDrunkest',
   'funniestThing',
-  'kissedAnyone',
   'songOfNight',
   'oneWordVibe',
-  'tonightsObjective',
   'generalComment',
 ];
 
@@ -49,12 +49,14 @@ const promptDefinitions = [
     label: 'MVP of messiness (who was drunkest?)',
     category: 'Recap',
     inputType: PromptInputType.text,
+    canBePrivate: true,
   ),
   PromptDefinition(
     id: 'funniestThing',
     label: 'Funniest moment',
     category: 'Recap',
     inputType: PromptInputType.textarea,
+    canBePrivate: true,
   ),
   PromptDefinition(
     id: 'quoteOfNight',
@@ -110,9 +112,10 @@ const promptDefinitions = [
   ),
   PromptDefinition(
     id: 'generalComment',
-    label: 'General thoughts about the night',
+    label: 'Notable mentions',
     category: 'Reflection',
     inputType: PromptInputType.textarea,
+    canBePrivate: true,
   ),
   PromptDefinition(
     id: 'nightMvp',
