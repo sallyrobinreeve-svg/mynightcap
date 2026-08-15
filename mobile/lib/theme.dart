@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
-const kBackground = Color(0xFF1E1B24);
-const kSurface = Color(0xFF2A2533);
-const kAccent = Color(0xFFFF6B9D);
-const kMuted = Color(0xFFB9B3C7);
+const kBackground = Color(0xFF000000);
+const kSurface = Color(0xFF0A0A0A);
+const kAccent = Color(0xFFFF2E9A);
+const kOrange = Color(0xFFFF8A3C);
+const kMuted = Color(0xFF9A9A9A);
 
 ThemeData buildTheme() {
   final base = ThemeData.dark(useMaterial3: true);
@@ -11,7 +12,7 @@ ThemeData buildTheme() {
     scaffoldBackgroundColor: kBackground,
     colorScheme: base.colorScheme.copyWith(
       primary: kAccent,
-      secondary: kAccent,
+      secondary: kOrange,
       surface: kSurface,
     ),
     appBarTheme: const AppBarTheme(
@@ -23,7 +24,10 @@ ThemeData buildTheme() {
     cardTheme: CardThemeData(
       color: kSurface,
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: Color(0x47FF2E9A)),
+      ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AuthMethod, AuthMethodToggle, UkAuthNotice } from "@/components/AuthMethodToggle";
+import { NeonLogo } from "@/components/NeonLogo";
 import { PhoneOtpForm } from "@/components/PhoneOtpForm";
 import { getAuthCallbackUrl } from "@/lib/auth-redirect";
 import { toFriendlyAuthMessage } from "@/lib/auth-errors";
@@ -97,11 +98,11 @@ export default function SignInPage() {
   return (
     <div className="min-h-screen bg-nightcap flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <Link href="/" className="inline-block font-display text-2xl text-nightcap-accent mb-8">
-          NightCapt
-        </Link>
-        <div className="glass rounded-2xl p-8">
-          <h1 className="font-display text-3xl text-white mb-2">Sign in</h1>
+        <div className="mb-8">
+          <NeonLogo className="text-4xl" />
+        </div>
+        <div className="glass rounded-2xl p-8 neon-glow">
+          <h1 className="text-3xl font-semibold text-white mb-2">Sign in</h1>
           <UkAuthNotice method={method} />
 
           <AuthMethodToggle value={method} onChange={setMethod} />

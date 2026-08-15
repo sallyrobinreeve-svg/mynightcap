@@ -6,6 +6,7 @@ import { EntryCard } from "@/components/EntryCard";
 import { MissionsHighlight } from "@/components/MissionsHighlight";
 import { BottomNav } from "@/components/BottomNav";
 import { NotificationBell } from "@/components/NotificationBell";
+import { NeonLogo } from "@/components/NeonLogo";
 
 export default async function FeedPage() {
   const supabase = await createClient();
@@ -102,9 +103,7 @@ export default async function FeedPage() {
     <div className="min-h-screen bg-nightcap page-with-nav">
       <nav className="glass sticky top-0 z-10 border-b border-white/5 safe-area-pt">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link href="/" className="font-display text-xl text-nightcap-accent">
-            NightCapt
-          </Link>
+          <NeonLogo className="text-3xl" />
           <div className="flex items-center gap-2">
             <NotificationBell />
             <div className="hidden md:flex items-center gap-4">

@@ -28,12 +28,11 @@ class NightScaffold extends StatelessWidget {
             ),
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+          gradient: RadialGradient(
+            center: Alignment.topCenter,
+            radius: 1.15,
             colors: [
-              NightColors.background,
-              Color(0xFF34243A),
+              Color(0xFF2A0018),
               NightColors.background,
             ],
           ),
@@ -71,9 +70,15 @@ class NightCard extends StatelessWidget {
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: NightColors.card.withValues(alpha: 0.86),
+        color: NightColors.card.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: NightColors.accent.withValues(alpha: 0.28)),
+        boxShadow: [
+          BoxShadow(
+            color: NightColors.accent.withValues(alpha: 0.16),
+            blurRadius: 18,
+          ),
+        ],
       ),
       child: child,
     );
@@ -85,23 +90,53 @@ class BrandHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'NightCapt',
-          style: TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.w900,
-            color: NightColors.accent,
-          ),
-        ),
-        SizedBox(height: 4),
+        NeonWordmark(fontSize: 42),
+        SizedBox(height: 8),
         Text(
           'Every good night deserves a recap.',
           style: TextStyle(color: NightColors.muted),
         ),
       ],
+    );
+  }
+}
+
+class NeonWordmark extends StatelessWidget {
+  const NeonWordmark({this.fontSize = 36, super.key});
+
+  final double fontSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: 'Night',
+            style: TextStyle(
+              fontSize: fontSize,
+              fontWeight: FontWeight.w700,
+              fontStyle: FontStyle.italic,
+              color: NightColors.accent,
+              shadows: neonShadows(NightColors.accent),
+            ),
+          ),
+          TextSpan(
+            text: 'Capt',
+            style: TextStyle(
+              fontSize: fontSize,
+              fontWeight: FontWeight.w700,
+              fontStyle: FontStyle.italic,
+              color: NightColors.orange,
+              shadows: neonShadows(NightColors.orange),
+            ),
+          ),
+        ],
+      ),
+      semanticsLabel: 'NightCapt',
     );
   }
 }

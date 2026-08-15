@@ -10,19 +10,21 @@ const config: Config = {
     extend: {
       colors: {
         nightcap: {
-          DEFAULT: "#1e1b24",
-          card: "#2a2635",
-          muted: "#9ca3af",
-          accent: "#ff6b9d",
-          pink: "#ff8c42",
+          DEFAULT: "#000000",
+          card: "#0a0a0a",
+          muted: "#9a9a9a",
+          accent: "#ff2e9a",
+          orange: "#ff8a3c",
+          pink: "#ff2e9a",
           blue: "#4ecdc4",
           yellow: "#ffd93d",
-          glow: "rgba(255, 107, 157, 0.4)",
+          glow: "rgba(255, 46, 154, 0.55)",
         },
       },
       fontFamily: {
-        display: ["var(--font-display)", "system-ui", "sans-serif"],
+        display: ["var(--font-body)", "system-ui", "sans-serif"],
         body: ["var(--font-body)", "system-ui", "sans-serif"],
+        script: ["var(--font-script)", "cursive"],
       },
     },
   },

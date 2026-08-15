@@ -16,7 +16,7 @@ void main() {
   ) async {
     await tester.pumpWidget(const NightCaptApp());
 
-    expect(find.text('NightCapt'), findsOneWidget);
+    expect(find.bySemanticsLabel('NightCapt'), findsOneWidget);
     expect(find.text('Unable to connect'), findsOneWidget);
     expect(find.text('Try again'), findsOneWidget);
     expect(find.text('Contact support'), findsOneWidget);

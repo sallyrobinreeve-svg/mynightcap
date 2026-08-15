@@ -17,7 +17,7 @@ export function AuthMethodToggle({
     }`;
 
   return (
-    <div className="mb-6 grid grid-cols-2 rounded-xl border border-white/10 bg-nightcap/80 p-1">
+    <div className="mb-6 grid grid-cols-2 rounded-xl border border-nightcap-accent/30 bg-black p-1">
       <button
         type="button"
         className={tabClass(value === "phone")}

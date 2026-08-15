@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { NeonLogo } from "@/components/NeonLogo";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function HomePage() {
@@ -15,11 +16,11 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen bg-nightcap flex flex-col items-center justify-center px-4">
       <div className="text-center max-w-md">
-        <h1 className="font-display text-6xl gradient-text mb-4">
-          NightCapt
+        <h1 className="mb-4">
+          <NeonLogo href={null} className="text-6xl" />
         </h1>
         <p className="text-xl text-nightcap-muted mb-12">
-          Every good night deserves a recap. The social diary where nights live on.
+          Every good night deserves a recap.
         </p>
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
           <Link
