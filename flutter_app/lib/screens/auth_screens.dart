@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config.dart';
+import '../phone.dart';
 import '../services/onboarding_service.dart';
 import '../services/profile_service.dart';
 import '../theme.dart';
@@ -251,7 +252,8 @@ class SignInForm extends StatefulWidget {
 class _SignInFormState extends State<SignInForm> {
   final email = TextEditingController();
   final password = TextEditingController();
-  bool usePhone = true;
+  bool usePhone = preferUkPhoneAuth();
+  bool forcedToEmail = false;
   String? message;
   bool loading = false;
 
@@ -285,15 +287,32 @@ class _SignInFormState extends State<SignInForm> {
         SegmentedButton<bool>(
           showSelectedIcon: false,
           segments: const [
-            ButtonSegment(value: true, label: Text('Phone')),
+            ButtonSegment(value: true, label: Text('UK phone')),
             ButtonSegment(value: false, label: Text('Email')),
           ],
           selected: {usePhone},
           onSelectionChanged: (value) => setState(() => usePhone = value.first),
         ),
+        const SizedBox(height: 12),
+        Text(
+          usePhone
+              ? kUkPhoneAuthCopy
+              : 'Outside the UK? Sign in with email. Phone login is for UK mobiles only.',
+          style: const TextStyle(color: NightColors.muted),
+        ),
+        if (forcedToEmail && !usePhone) ...[
+          const SizedBox(height: 12),
+          const Text('Phone login is for UK numbers only. Continue with email.'),
+        ],
         const SizedBox(height: 16),
         if (usePhone)
-          const PhoneOtpForm(shouldCreateUser: false)
+          PhoneOtpForm(
+            shouldCreateUser: false,
+            onRequireEmail: () => setState(() {
+              usePhone = false;
+              forcedToEmail = true;
+            }),
+          )
         else ...[
           NightTextField(
             controller: email,
@@ -386,7 +405,8 @@ class _SignUpFormState extends State<SignUpForm> {
   final email = TextEditingController();
   final password = TextEditingController();
   bool acceptedTerms = false;
-  bool usePhone = true;
+  bool usePhone = preferUkPhoneAuth();
+  bool forcedToEmail = false;
   bool loading = false;
   String? message;
 
@@ -441,12 +461,23 @@ class _SignUpFormState extends State<SignUpForm> {
         SegmentedButton<bool>(
           showSelectedIcon: false,
           segments: const [
-            ButtonSegment(value: true, label: Text('Phone')),
+            ButtonSegment(value: true, label: Text('UK phone')),
             ButtonSegment(value: false, label: Text('Email')),
           ],
           selected: {usePhone},
           onSelectionChanged: (value) => setState(() => usePhone = value.first),
         ),
+        const SizedBox(height: 12),
+        Text(
+          usePhone
+              ? kUkPhoneAuthCopy
+              : 'Outside the UK? Create an account with email. Phone login is for UK mobiles only.',
+          style: const TextStyle(color: NightColors.muted),
+        ),
+        if (forcedToEmail && !usePhone) ...[
+          const SizedBox(height: 12),
+          const Text('Phone login is for UK numbers only. Continue with email.'),
+        ],
         const SizedBox(height: 16),
         NightTextField(controller: displayName, label: 'Display name'),
         const SizedBox(height: 12),
@@ -489,6 +520,10 @@ class _SignUpFormState extends State<SignUpForm> {
                 'terms_accepted_at': DateTime.now().toUtc().toIso8601String(),
               }).eq('id', userId);
             },
+            onRequireEmail: () => setState(() {
+              usePhone = false;
+              forcedToEmail = true;
+            }),
           )
         else ...[
           if (message != null) StatusText(message!),

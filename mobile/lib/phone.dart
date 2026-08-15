@@ -1,4 +1,8 @@
+import 'package:flutter/widgets.dart';
+
 const kDefaultDialCode = '+44';
+const kUkPhoneAuthCopy =
+    'Phone authentication is for UK users only. If you\'re outside the UK, use email.';
 
 class DialCode {
   const DialCode(this.dial, this.label);
@@ -94,4 +98,41 @@ String friendlyAuthMessage(String message) {
     return 'Phone sign-in is not set up yet. Use email, or try again later.';
   }
   return message;
+}
+
+bool isUkMobile(String e164) => RegExp(r'^\+447\d{9}$').hasMatch(e164.trim());
+
+bool preferUkPhoneAuth([Locale? locale]) {
+  final resolved = locale ?? WidgetsBinding.instance.platformDispatcher.locale;
+  final country = (resolved.countryCode ?? '').toUpperCase();
+  if (country == 'GB' || country == 'UK') return true;
+  final tag = resolved.toLanguageTag().toLowerCase();
+  return tag.contains('-gb') || tag.contains('_gb');
+}
+
+enum UkPhoneStatus { ok, invalid, notUk }
+
+class UkPhoneResult {
+  const UkPhoneResult._(this.status, [this.phone]);
+
+  final UkPhoneStatus status;
+  final String? phone;
+}
+
+UkPhoneResult parseUkLoginPhone(String nationalNumber) {
+  final trimmed = nationalNumber.trim();
+  if (trimmed.isEmpty) {
+    return const UkPhoneResult._(UkPhoneStatus.invalid);
+  }
+  final phone = toE164(kDefaultDialCode, trimmed);
+  if (phone == null) {
+    return const UkPhoneResult._(UkPhoneStatus.invalid);
+  }
+  if (!phone.startsWith(kDefaultDialCode)) {
+    return const UkPhoneResult._(UkPhoneStatus.notUk);
+  }
+  if (!isUkMobile(phone)) {
+    return const UkPhoneResult._(UkPhoneStatus.invalid);
+  }
+  return UkPhoneResult._(UkPhoneStatus.ok, phone);
 }

@@ -101,7 +101,7 @@ export default function PrivacyPage() {
               </p>
               <p className="mt-4 font-medium text-white">Common questions:</p>
               <ul className="list-disc pl-6 mt-2 space-y-1">
-                <li><strong className="text-white">Sign in:</strong> We text a verification code to your phone. Email accounts can still use email on the sign-in screen.</li>
+                <li><strong className="text-white">Sign in:</strong> UK users can verify with a text to a UK mobile. Everyone else should use email.</li>
                 <li><strong className="text-white">Delete account:</strong> Profile, then Account, then Delete account.</li>
                 <li><strong className="text-white">Report content:</strong> Tap the menu on any entry, comment, or profile, then Report.</li>
                 <li><strong className="text-white">Block someone:</strong> Open their profile, then choose Block user.</li>

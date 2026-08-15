@@ -16,7 +16,8 @@ void main() {
       ),
     );
 
-    expect(find.text('Mobile number'), findsOneWidget);
+    expect(find.text('UK mobile number'), findsOneWidget);
+    expect(find.text('+44'), findsOneWidget);
     expect(find.text('Send verification code'), findsOneWidget);
     expect(find.text('Verification code'), findsNothing);
   });

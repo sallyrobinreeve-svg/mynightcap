@@ -26,7 +26,7 @@ If the Supabase values are omitted, the app opens a configuration screen instead
 
 This native client includes:
 
-- Phone SMS verification by default, with email/password as a fallback
+- UK phone SMS verification, with email for everyone else
 - Support and Terms screens
 - Feed, create entry, memories, and profile tabs
 - Native photo-library picking for entry/profile photos

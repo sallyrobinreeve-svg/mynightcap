@@ -15,6 +15,7 @@ class PhoneOtpForm extends StatefulWidget {
     this.userMetadata,
     this.validateBeforeSend,
     this.onVerified,
+    this.onRequireEmail,
     this.submitLabel = 'Send verification code',
   });
 
@@ -22,6 +23,7 @@ class PhoneOtpForm extends StatefulWidget {
   final Map<String, dynamic> Function()? userMetadata;
   final String? Function()? validateBeforeSend;
   final Future<void> Function()? onVerified;
+  final VoidCallback? onRequireEmail;
   final String submitLabel;
 
   @override
@@ -31,7 +33,6 @@ class PhoneOtpForm extends StatefulWidget {
 class _PhoneOtpFormState extends State<PhoneOtpForm> {
   final number = TextEditingController();
   final otp = TextEditingController();
-  String dialCode = kDefaultDialCode;
   String? sentTo;
   String? message;
   bool loading = false;
@@ -70,11 +71,17 @@ class _PhoneOtpFormState extends State<PhoneOtpForm> {
       return;
     }
 
-    final phone = toE164(dialCode, number.text);
-    if (phone == null) {
-      setState(() => message = 'Enter a valid mobile number.');
+    final parsed = parseUkLoginPhone(number.text);
+    if (parsed.status == UkPhoneStatus.notUk) {
+      setState(() => message = 'Phone login is for UK numbers only. Use email instead.');
+      widget.onRequireEmail?.call();
       return;
     }
+    if (parsed.status != UkPhoneStatus.ok || parsed.phone == null) {
+      setState(() => message = 'Enter a valid UK mobile number, or use email.');
+      return;
+    }
+    final phone = parsed.phone!;
 
     setState(() {
       loading = true;
@@ -141,30 +148,20 @@ class _PhoneOtpFormState extends State<PhoneOtpForm> {
       children: [
         Row(
           children: [
-            SizedBox(
-              width: 128,
-              child: DropdownButtonFormField<String>(
-                initialValue: dialCode,
-                isExpanded: true,
-                decoration: nightInputDecoration('Code'),
-                items: [
-                  for (final country in kDialCodes)
-                    DropdownMenuItem(
-                      value: country.dial,
-                      child: Text(country.label, overflow: TextOverflow.ellipsis),
-                    ),
-                ],
-                onChanged: sentTo != null || loading
-                    ? null
-                    : (value) =>
-                        setState(() => dialCode = value ?? kDefaultDialCode),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+              decoration: BoxDecoration(
+                color: NightColors.background.withValues(alpha: 0.68),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
               ),
+              child: const Text('+44'),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: NightTextField(
                 controller: number,
-                label: 'Mobile number',
+                label: 'UK mobile number',
                 keyboardType: TextInputType.phone,
                 enabled: sentTo == null && !loading,
                 autofillHints: const [AutofillHints.telephoneNumber],
