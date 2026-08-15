@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { toFriendlyAuthMessage } from "@/lib/auth-errors";
-import { isValidOtp, maskPhone } from "@/lib/phone";
-import { UK_DIAL_CODE, parseUkLoginPhone } from "@/lib/uk-auth";
+import { isValidOtp, maskPhone, parseUkLoginPhone } from "@/lib/phone";
+import { UK_DIAL_CODE } from "@/lib/uk-auth";
 import { createClient } from "@/lib/supabase/client";
 
 const inputClass =
