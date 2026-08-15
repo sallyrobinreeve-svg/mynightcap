@@ -207,7 +207,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         SizedBox(
                           width: 128,
                           child: DropdownButtonFormField<String>(
-                            value: _dialCode,
+                            initialValue: _dialCode,
                             items: [
                               for (final country in kDialCodes)
                                 DropdownMenuItem(

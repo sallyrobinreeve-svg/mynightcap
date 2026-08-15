@@ -144,7 +144,7 @@ class _PhoneOtpFormState extends State<PhoneOtpForm> {
             SizedBox(
               width: 128,
               child: DropdownButtonFormField<String>(
-                value: dialCode,
+                initialValue: dialCode,
                 isExpanded: true,
                 decoration: nightInputDecoration('Code'),
                 items: [
