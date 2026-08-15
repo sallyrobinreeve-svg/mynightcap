@@ -46,7 +46,7 @@ export default function PrivacyPage() {
               </h2>
               <p>When you use NightCapt, we may collect:</p>
               <ul className="list-disc pl-6 mt-2 space-y-1">
-                <li><strong className="text-white">Account information:</strong> Email address and password when you create an account</li>
+                <li><strong className="text-white">Account information:</strong> Phone number for SMS verification, or email and password if you use email sign-in</li>
                 <li><strong className="text-white">Profile information:</strong> Display name, bio, and profile picture if you choose to add them</li>
                 <li><strong className="text-white">Journal entries:</strong> Dates, ratings, photos, videos, text prompts, and timeline details you post</li>
                 <li><strong className="text-white">Social data:</strong> Friends, comments, and reactions you share</li>
@@ -101,7 +101,7 @@ export default function PrivacyPage() {
               </p>
               <p className="mt-4 font-medium text-white">Common questions:</p>
               <ul className="list-disc pl-6 mt-2 space-y-1">
-                <li><strong className="text-white">Reset password:</strong> Use &quot;Forgot password&quot; on the sign-in screen.</li>
+                <li><strong className="text-white">Sign in:</strong> We text a verification code to your phone. Email accounts can still use email on the sign-in screen.</li>
                 <li><strong className="text-white">Delete account:</strong> Profile, then Account, then Delete account.</li>
                 <li><strong className="text-white">Report content:</strong> Tap the menu on any entry, comment, or profile, then Report.</li>
                 <li><strong className="text-white">Block someone:</strong> Open their profile, then choose Block user.</li>

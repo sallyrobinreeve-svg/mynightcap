@@ -31,7 +31,7 @@ export default function SupportPage() {
             <section>
               <h2 className="text-white font-display text-xl mb-2">Common questions</h2>
               <ul className="list-disc pl-6 space-y-1">
-                <li>Reset password: use Forgot password on the sign-in screen.</li>
+                <li>Sign in: we text a verification code to your phone. Email accounts can use the Email tab.</li>
                 <li>Delete account: go to Profile, then Account, then Delete account.</li>
                 <li>Report content: tap the menu on an entry, comment, or profile, then Report.</li>
                 <li>Block someone: open their profile and choose Block user.</li>

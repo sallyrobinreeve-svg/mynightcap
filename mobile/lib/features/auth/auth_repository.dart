@@ -27,6 +27,30 @@ class AuthRepository {
     await _client.auth.signInWithPassword(email: email, password: password);
   }
 
+  Future<void> sendPhoneOtp({
+    required String phone,
+    required bool shouldCreateUser,
+    Map<String, dynamic>? data,
+  }) async {
+    await _client.auth.signInWithOtp(
+      phone: phone,
+      shouldCreateUser: shouldCreateUser,
+      data: data,
+      channel: OtpChannel.sms,
+    );
+  }
+
+  Future<void> verifyPhoneOtp({
+    required String phone,
+    required String token,
+  }) async {
+    await _client.auth.verifyOTP(
+      phone: phone,
+      token: token,
+      type: OtpType.sms,
+    );
+  }
+
   Future<void> signOut() => _client.auth.signOut();
 }
 

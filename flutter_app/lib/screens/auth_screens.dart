@@ -8,6 +8,7 @@ import '../theme.dart';
 import '../widgets/night_widgets.dart';
 import 'home_shell.dart';
 import 'onboarding_screen.dart';
+import 'phone_otp_form.dart';
 import 'username_setup_screen.dart';
 
 const appScheme = 'com.mynightcap.app://auth/callback';
@@ -250,8 +251,16 @@ class SignInForm extends StatefulWidget {
 class _SignInFormState extends State<SignInForm> {
   final email = TextEditingController();
   final password = TextEditingController();
+  bool usePhone = true;
   String? message;
   bool loading = false;
+
+  @override
+  void dispose() {
+    email.dispose();
+    password.dispose();
+    super.dispose();
+  }
 
   Future<void> runAction(Future<void> Function() action) async {
     setState(() {
@@ -273,75 +282,93 @@ class _SignInFormState extends State<SignInForm> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        NightTextField(
-          controller: email,
-          label: 'Email',
-          keyboardType: TextInputType.emailAddress,
+        SegmentedButton<bool>(
+          showSelectedIcon: false,
+          segments: const [
+            ButtonSegment(value: true, label: Text('Phone')),
+            ButtonSegment(value: false, label: Text('Email')),
+          ],
+          selected: {usePhone},
+          onSelectionChanged: (value) => setState(() => usePhone = value.first),
         ),
-        const SizedBox(height: 12),
-        NightTextField(
-          controller: password,
-          label: 'Password',
-          obscureText: true,
-        ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            onPressed: loading
-                ? null
-                : () async {
-                    if (email.text.trim().isEmpty) {
-                      setState(() => message = 'Enter your email address first.');
-                      return;
-                    }
-                    await runAction(() async {
-                      await supabase.auth.resetPasswordForEmail(
-                        email.text.trim(),
-                        redirectTo: appScheme,
-                      );
-                      setState(
-                        () => message =
-                            'Check your email for a password reset link.',
-                      );
-                    });
-                  },
-            child: const Text('Forgot password?'),
+        const SizedBox(height: 16),
+        if (usePhone)
+          const PhoneOtpForm(shouldCreateUser: false)
+        else ...[
+          NightTextField(
+            controller: email,
+            label: 'Email',
+            keyboardType: TextInputType.emailAddress,
           ),
-        ),
-        if (message != null) StatusText(message!),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: FilledButton(
-                onPressed: loading
-                    ? null
-                    : () => runAction(
-                        () => supabase.auth.signInWithPassword(
-                          email: email.text.trim(),
-                          password: password.text,
-                        ),
-                      ),
-                child: Text(loading ? 'Signing in...' : 'Sign in'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            OutlinedButton(
+          const SizedBox(height: 12),
+          NightTextField(
+            controller: password,
+            label: 'Password',
+            obscureText: true,
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
               onPressed: loading
                   ? null
-                  : () => runAction(() async {
-                      await supabase.auth.signInWithOtp(
-                        email: email.text.trim(),
-                        emailRedirectTo: '${appConfig.siteUrl}/auth/callback',
-                      );
-                      setState(
-                        () => message = 'Check your email for the magic link.',
-                      );
-                    }),
-              child: const Text('Magic link'),
+                  : () async {
+                      if (email.text.trim().isEmpty) {
+                        setState(
+                          () => message = 'Enter your email address first.',
+                        );
+                        return;
+                      }
+                      await runAction(() async {
+                        await supabase.auth.resetPasswordForEmail(
+                          email.text.trim(),
+                          redirectTo: appScheme,
+                        );
+                        setState(
+                          () => message =
+                              'Check your email for a password reset link.',
+                        );
+                      });
+                    },
+              child: const Text('Forgot password?'),
             ),
-          ],
-        ),
+          ),
+          if (message != null) StatusText(message!),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  onPressed: loading
+                      ? null
+                      : () => runAction(
+                            () => supabase.auth.signInWithPassword(
+                              email: email.text.trim(),
+                              password: password.text,
+                            ),
+                          ),
+                  child: Text(loading ? 'Signing in...' : 'Sign in'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton(
+                onPressed: loading
+                    ? null
+                    : () => runAction(() async {
+                          await supabase.auth.signInWithOtp(
+                            email: email.text.trim(),
+                            emailRedirectTo:
+                                '${appConfig.siteUrl}/auth/callback',
+                          );
+                          setState(
+                            () => message =
+                                'Check your email for the magic link.',
+                          );
+                        }),
+                child: const Text('Magic link'),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -359,8 +386,17 @@ class _SignUpFormState extends State<SignUpForm> {
   final email = TextEditingController();
   final password = TextEditingController();
   bool acceptedTerms = false;
+  bool usePhone = true;
   bool loading = false;
   String? message;
+
+  @override
+  void dispose() {
+    displayName.dispose();
+    email.dispose();
+    password.dispose();
+    super.dispose();
+  }
 
   Future<void> signUp() async {
     if (!acceptedTerms) {
@@ -402,19 +438,31 @@ class _SignUpFormState extends State<SignUpForm> {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        SegmentedButton<bool>(
+          showSelectedIcon: false,
+          segments: const [
+            ButtonSegment(value: true, label: Text('Phone')),
+            ButtonSegment(value: false, label: Text('Email')),
+          ],
+          selected: {usePhone},
+          onSelectionChanged: (value) => setState(() => usePhone = value.first),
+        ),
+        const SizedBox(height: 16),
         NightTextField(controller: displayName, label: 'Display name'),
         const SizedBox(height: 12),
-        NightTextField(
-          controller: email,
-          label: 'Email',
-          keyboardType: TextInputType.emailAddress,
-        ),
-        const SizedBox(height: 12),
-        NightTextField(
-          controller: password,
-          label: 'Password',
-          obscureText: true,
-        ),
+        if (!usePhone) ...[
+          NightTextField(
+            controller: email,
+            label: 'Email',
+            keyboardType: TextInputType.emailAddress,
+          ),
+          const SizedBox(height: 12),
+          NightTextField(
+            controller: password,
+            label: 'Password',
+            obscureText: true,
+          ),
+        ],
         CheckboxListTile(
           value: acceptedTerms,
           onChanged: (value) => setState(() => acceptedTerms = value ?? false),
@@ -424,15 +472,35 @@ class _SignUpFormState extends State<SignUpForm> {
             'I accept the Terms, Privacy Policy, and zero-tolerance safety policy.',
           ),
         ),
-        if (message != null) StatusText(message!),
-        const SizedBox(height: 8),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: loading ? null : signUp,
-            child: Text(loading ? 'Creating account...' : 'Sign up'),
+        if (usePhone)
+          PhoneOtpForm(
+            shouldCreateUser: true,
+            userMetadata: () => {
+              'full_name': displayName.text.trim(),
+              'terms_accepted_at': DateTime.now().toUtc().toIso8601String(),
+            },
+            validateBeforeSend: () => acceptedTerms
+                ? null
+                : 'You must accept the Terms and Privacy Policy.',
+            onVerified: () async {
+              final userId = supabase.auth.currentUser?.id;
+              if (userId == null) return;
+              await supabase.from('profiles').update({
+                'terms_accepted_at': DateTime.now().toUtc().toIso8601String(),
+              }).eq('id', userId);
+            },
+          )
+        else ...[
+          if (message != null) StatusText(message!),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: loading ? null : signUp,
+              child: Text(loading ? 'Creating account...' : 'Sign up'),
+            ),
           ),
-        ),
+        ],
       ],
     );
   }

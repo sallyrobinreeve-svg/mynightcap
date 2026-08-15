@@ -41,8 +41,9 @@ export default function TermsPage() {
             <section>
               <h2 className="text-white font-display text-xl mb-2">Accounts</h2>
               <p>
-                You can update your profile, reset your password, or delete your account from within
-                the app. Deleting your account removes your account and associated app data.
+                You can update your profile or delete your account from within the app. Email
+                accounts can reset a password from the sign-in screen. Deleting your account removes
+                your account and associated app data.
               </p>
             </section>
 

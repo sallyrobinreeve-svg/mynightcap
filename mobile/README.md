@@ -67,7 +67,7 @@ flutter test
 ## Scope
 
 Implemented so far (validated end-to-end against Supabase):
-- Email auth (sign up / sign in / sign out) + auth-guarded routing.
+- Phone SMS verification (sign up / sign in) with email as a fallback + auth-guarded routing.
 - Paginated friend feed with infinite scroll.
 - Create a recap (date, rating, prompts, visibility).
 - Recap detail screen with photos/timeline display, emoji reactions

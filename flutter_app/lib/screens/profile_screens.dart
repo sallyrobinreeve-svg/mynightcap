@@ -110,7 +110,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      profile?.name ?? user?.email ?? 'NightCapt user',
+                      profile?.name ?? user?.phone ?? user?.email ?? 'NightCapt user',
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -130,7 +130,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: const TextStyle(color: NightColors.muted),
                         ),
                       ),
-                    if (user?.email != null)
+                    if (user?.phone != null)
+                      Text(
+                        user!.phone!,
+                        style: const TextStyle(color: NightColors.muted),
+                      )
+                    else if (user?.email != null)
                       Text(
                         user!.email!,
                         style: const TextStyle(color: NightColors.muted),
@@ -516,7 +521,7 @@ class SupportScreen extends StatelessWidget {
         InfoSection(
           title: 'Common questions',
           body:
-              'Reset password from the sign-in screen. Delete account from Profile > Account. Report entries, comments, and profiles from their menus.',
+              'Sign in with the code we text to your phone. Email accounts can still use the Email tab. Delete account from Profile > Account. Report entries, comments, and profiles from their menus.',
         ),
         InfoSection(
           title: 'Safety',
@@ -549,7 +554,7 @@ class TermsScreen extends StatelessWidget {
         InfoSection(
           title: 'Accounts',
           body:
-              'You can update your profile, reset your password, and request account deletion.',
+              'You can update your profile and request account deletion.',
         ),
       ],
     );
@@ -567,7 +572,7 @@ class PrivacyScreen extends StatelessWidget {
         InfoSection(
           title: 'Data we collect',
           body:
-              'Account email, profile details, photos, videos, and journal entries you choose to save.',
+              'Account phone number (or email if you use email sign-in), profile details, photos, videos, and journal entries you choose to save.',
         ),
         InfoSection(
           title: 'How we use it',

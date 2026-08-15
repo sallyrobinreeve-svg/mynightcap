@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SafeImage } from "@/components/SafeImage";
+import { accountContact, accountFallbackName, accountInitial } from "@/lib/account-identity";
 import { createClient } from "@/lib/supabase/server";
 import { BottomNav } from "@/components/BottomNav";
 import { DeleteAccountButton } from "@/components/DeleteAccountButton";
@@ -84,11 +85,11 @@ export default async function ProfilePage() {
                   alt="Profile"
                   fill
                   className="object-cover"
-                  fallbackLetter={(profile?.display_name || user.email || "?")[0]}
+                  fallbackLetter={accountInitial(user, profile?.display_name)}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-nightcap-accent font-display text-3xl">
-                  {(profile?.display_name || user.email || "?")[0].toUpperCase()}
+                  {accountInitial(user, profile?.display_name)}
                 </div>
               )}
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
@@ -98,7 +99,7 @@ export default async function ProfilePage() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="font-display text-3xl text-white">
-                  {profile?.display_name || user.email?.split("@")[0] || "You"}
+                  {profile?.display_name || accountFallbackName(user)}
                 </h1>
                 <Link
                   href="/profile/edit"
@@ -107,8 +108,8 @@ export default async function ProfilePage() {
                   Edit profile
                 </Link>
               </div>
-              {user.email && (
-                <p className="text-nightcap-muted text-sm mt-1">{user.email}</p>
+              {accountContact(user) && (
+                <p className="text-nightcap-muted text-sm mt-1">{accountContact(user)}</p>
               )}
               {profile?.bio && (
                 <p className="text-nightcap-muted mt-4">{profile.bio}</p>
