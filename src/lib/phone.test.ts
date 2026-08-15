@@ -51,6 +51,7 @@ describe("parseUkLoginPhone", () => {
 
   it("flags a US number so the UI can switch to email", () => {
     assert.deepEqual(parseUkLoginPhone("+1 415 555 2671"), { status: "not_uk" });
+    assert.deepEqual(parseUkLoginPhone("4155552671"), { status: "not_uk" });
   });
 
   it("rejects a UK landline-shaped number", () => {

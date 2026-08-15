@@ -51,6 +51,7 @@ void main() {
     expect(parseUkLoginPhone('07123 456789').status, UkPhoneStatus.ok);
     expect(parseUkLoginPhone('07123 456789').phone, '+447123456789');
     expect(parseUkLoginPhone('+1 415 555 2671').status, UkPhoneStatus.notUk);
+    expect(parseUkLoginPhone('4155552671').status, UkPhoneStatus.notUk);
     expect(parseUkLoginPhone('020 7946 0958').status, UkPhoneStatus.invalid);
   });
 }

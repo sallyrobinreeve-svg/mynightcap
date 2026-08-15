@@ -195,6 +195,11 @@ class _PhoneOtpFormState extends State<PhoneOtpForm> {
             ),
           ),
         ),
+        if (widget.onRequireEmail != null)
+          TextButton(
+            onPressed: loading ? null : widget.onRequireEmail,
+            child: const Text('Outside the UK? Use email instead'),
+          ),
         if (sentTo != null)
           Row(
             children: [

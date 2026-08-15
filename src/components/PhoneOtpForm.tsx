@@ -191,6 +191,17 @@ export function PhoneOtpForm({
             : submitLabel}
       </button>
 
+      {onRequireEmail && (
+        <button
+          type="button"
+          disabled={loading}
+          onClick={onRequireEmail}
+          className="w-full text-sm text-nightcap-accent hover:underline disabled:opacity-50"
+        >
+          Outside the UK? Use email instead
+        </button>
+      )}
+
       {sentTo && (
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
           <button

@@ -124,6 +124,22 @@ UkPhoneResult parseUkLoginPhone(String nationalNumber) {
   if (trimmed.isEmpty) {
     return const UkPhoneResult._(UkPhoneStatus.invalid);
   }
+  if (trimmed.startsWith('+') && !trimmed.startsWith('+44')) {
+    return const UkPhoneResult._(UkPhoneStatus.notUk);
+  }
+  final digits = digitsOnly(trimmed);
+  final withoutLeadingZero =
+      digits.startsWith('0') ? digits.substring(1) : digits;
+  if (digits.startsWith('1') && digits.length == 11) {
+    return const UkPhoneResult._(UkPhoneStatus.notUk);
+  }
+  if (withoutLeadingZero.length == 10 && !withoutLeadingZero.startsWith('7')) {
+    if (withoutLeadingZero.startsWith('1') ||
+        withoutLeadingZero.startsWith('2')) {
+      return const UkPhoneResult._(UkPhoneStatus.invalid);
+    }
+    return const UkPhoneResult._(UkPhoneStatus.notUk);
+  }
   final phone = toE164(kDefaultDialCode, trimmed);
   if (phone == null) {
     return const UkPhoneResult._(UkPhoneStatus.invalid);

@@ -78,6 +78,20 @@ export function parseUkLoginPhone(nationalNumber: string): UkPhoneResult {
   const trimmed = nationalNumber.trim();
   if (!trimmed) return { status: "invalid" };
 
+  if (trimmed.startsWith("+") && !trimmed.startsWith("+44")) {
+    return { status: "not_uk" };
+  }
+
+  const digits = digitsOnly(trimmed);
+  const withoutLeadingZero = digits.startsWith("0") ? digits.slice(1) : digits;
+  if (digits.startsWith("1") && digits.length === 11) {
+    return { status: "not_uk" };
+  }
+  if (withoutLeadingZero.length === 10 && !withoutLeadingZero.startsWith("7")) {
+    if (/^[12]/.test(withoutLeadingZero)) return { status: "invalid" };
+    return { status: "not_uk" };
+  }
+
   const phone = toE164(DEFAULT_DIAL_CODE, trimmed);
   if (!phone) return { status: "invalid" };
   if (!phone.startsWith(DEFAULT_DIAL_CODE)) return { status: "not_uk" };
