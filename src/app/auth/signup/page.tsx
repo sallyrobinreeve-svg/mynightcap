@@ -2,10 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { AuthMethod, AuthMethodToggle } from "@/components/AuthMethodToggle";
+import { PhoneOtpForm } from "@/components/PhoneOtpForm";
 import { getAuthCallbackUrl } from "@/lib/auth-redirect";
+import { toFriendlyAuthMessage } from "@/lib/auth-errors";
 import { createClient } from "@/lib/supabase/client";
 
+const inputClass =
+  "w-full rounded-xl bg-nightcap/80 border border-white/10 px-4 py-3 text-white placeholder:text-nightcap-muted focus:border-nightcap-accent focus:outline-none";
+
 export default function SignUpPage() {
+  const [method, setMethod] = useState<AuthMethod>("phone");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -14,7 +21,14 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const termsAcceptedAt = () => new Date().toISOString();
+
+  const persistTerms = async (userId: string, acceptedAt: string) => {
+    const supabase = createClient();
+    await supabase.from("profiles").update({ terms_accepted_at: acceptedAt }).eq("id", userId);
+  };
+
+  const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!acceptedTerms) {
       setError("You must agree to the Terms of Use and Privacy Policy");
@@ -25,27 +39,24 @@ export default function SignUpPage() {
     setMessage(null);
 
     const supabase = createClient();
-    const termsAcceptedAt = new Date().toISOString();
+    const acceptedAt = termsAcceptedAt();
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: displayName, terms_accepted_at: termsAcceptedAt },
+        data: { full_name: displayName, terms_accepted_at: acceptedAt },
         emailRedirectTo: getAuthCallbackUrl(),
       },
     });
 
     if (error) {
-      setError(error.message);
+      setError(toFriendlyAuthMessage(error.message));
       setLoading(false);
       return;
     }
 
     if (data.user) {
-      await supabase
-        .from("profiles")
-        .update({ terms_accepted_at: termsAcceptedAt })
-        .eq("id", data.user.id);
+      await persistTerms(data.user.id, acceptedAt);
     }
 
     setMessage("Check your email to confirm your account!");
@@ -59,9 +70,14 @@ export default function SignUpPage() {
           NightCapt
         </Link>
         <div className="glass rounded-2xl p-8">
-          <h1 className="font-display text-3xl text-white mb-6">Create account</h1>
+          <h1 className="font-display text-3xl text-white mb-2">Create account</h1>
+          <p className="text-sm text-nightcap-muted mb-6">
+            We&apos;ll text you a code to verify your number. No email required.
+          </p>
 
-          <form onSubmit={handleSignUp} className="space-y-4">
+          <AuthMethodToggle value={method} onChange={setMethod} />
+
+          <div className="space-y-4">
             <div>
               <label htmlFor="displayName" className="block text-sm text-nightcap-muted mb-2">
                 Display name
@@ -71,39 +87,11 @@ export default function SignUpPage() {
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                className="w-full rounded-xl bg-nightcap/80 border border-white/10 px-4 py-3 text-white placeholder:text-nightcap-muted focus:border-nightcap-accent focus:outline-none"
+                className={inputClass}
                 placeholder="Your name"
               />
             </div>
-            <div>
-              <label htmlFor="email" className="block text-sm text-nightcap-muted mb-2">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full rounded-xl bg-nightcap/80 border border-white/10 px-4 py-3 text-white placeholder:text-nightcap-muted focus:border-nightcap-accent focus:outline-none"
-                placeholder="you@example.com"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm text-nightcap-muted mb-2">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="w-full rounded-xl bg-nightcap/80 border border-white/10 px-4 py-3 text-white placeholder:text-nightcap-muted focus:border-nightcap-accent focus:outline-none"
-                placeholder="••••••••"
-              />
-            </div>
+
             <label className="flex items-start gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -119,16 +107,65 @@ export default function SignUpPage() {
                 . I understand there is zero tolerance for objectionable content.
               </span>
             </label>
-            {error && <p className="text-red-400 text-sm">{error}</p>}
-            {message && <p className="text-night-mint text-sm">{message}</p>}
-            <button
-              type="submit"
-              disabled={loading || !acceptedTerms}
-              className="w-full rounded-xl bg-nightcap-accent px-4 py-3 font-medium text-white transition hover:opacity-90 disabled:opacity-50"
-            >
-              {loading ? "Creating account..." : "Sign up"}
-            </button>
-          </form>
+
+            {method === "phone" ? (
+              <PhoneOtpForm
+                shouldCreateUser
+                submitLabel="Send verification code"
+                metadata={() => ({
+                  full_name: displayName,
+                  terms_accepted_at: termsAcceptedAt(),
+                })}
+                validateBeforeSend={() =>
+                  acceptedTerms ? null : "You must agree to the Terms of Use and Privacy Policy"
+                }
+                onVerified={async (userId) => {
+                  await persistTerms(userId, termsAcceptedAt());
+                }}
+              />
+            ) : (
+              <form onSubmit={handleEmailSignUp} className="space-y-4">
+                <div>
+                  <label htmlFor="email" className="block text-sm text-nightcap-muted mb-2">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className={inputClass}
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="password" className="block text-sm text-nightcap-muted mb-2">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className={inputClass}
+                    placeholder="••••••••"
+                  />
+                </div>
+                {error && <p className="text-red-400 text-sm">{error}</p>}
+                {message && <p className="text-night-mint text-sm">{message}</p>}
+                <button
+                  type="submit"
+                  disabled={loading || !acceptedTerms}
+                  className="w-full rounded-xl bg-nightcap-accent px-4 py-3 font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+                >
+                  {loading ? "Creating account..." : "Sign up"}
+                </button>
+              </form>
+            )}
+          </div>
 
           <p className="mt-6 text-center text-sm text-nightcap-muted">
             Already have an account?{" "}

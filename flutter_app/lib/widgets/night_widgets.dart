@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme.dart';
 
@@ -112,6 +113,9 @@ class NightTextField extends StatelessWidget {
     this.obscureText = false,
     this.keyboardType,
     this.maxLines = 1,
+    this.enabled = true,
+    this.autofillHints,
+    this.inputFormatters,
     super.key,
   });
 
@@ -120,6 +124,9 @@ class NightTextField extends StatelessWidget {
   final bool obscureText;
   final TextInputType? keyboardType;
   final int maxLines;
+  final bool enabled;
+  final Iterable<String>? autofillHints;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   Widget build(BuildContext context) {
@@ -128,6 +135,9 @@ class NightTextField extends StatelessWidget {
       obscureText: obscureText,
       keyboardType: keyboardType,
       maxLines: maxLines,
+      enabled: enabled,
+      autofillHints: autofillHints,
+      inputFormatters: inputFormatters,
       decoration: nightInputDecoration(label),
     );
   }

@@ -76,7 +76,7 @@ class _UsernameSetupScreenState extends State<UsernameSetupScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Friends can find you by @username instead of your email.',
+              'Friends can find you by @username.',
               style: TextStyle(color: NightColors.muted),
             ),
             const SizedBox(height: 20),

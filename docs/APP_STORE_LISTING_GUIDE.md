@@ -156,7 +156,7 @@ https://mynightcap.vercel.app
 
 - **App Privacy** – An Admin must complete this before submission
 - App Store Connect → Your app → **App Privacy** → **Get Started**
-- Declare what data you collect (e.g. account info, user content). For NightCapt: account/email, journal content, photos
+- Declare what data you collect (e.g. account info, user content). For NightCapt: account/phone number, journal content, photos
 
 ---
 

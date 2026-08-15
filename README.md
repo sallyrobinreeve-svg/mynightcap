@@ -6,7 +6,7 @@ A social journal app for recording and sharing post-night-out memories: outfit p
 
 ## Features (MVP)
 
-- **Auth** – Email sign up / sign in (including magic link)
+- **Auth** – Phone number verification (SMS code) by default, with email sign-in as a fallback
 - **Entry creation** – Step-by-step wizard:
   - Date of night
   - Photos (outfit + favourite)
@@ -51,6 +51,7 @@ npm install
    - `supabase/migrations/009_photos_timeline_view.sql`
    - `supabase/migrations/010_notifications_seen.sql`
    - `supabase/migrations/011_terms_acceptance_profile_trigger.sql`
+   - `supabase/migrations/012_phone_auth_profile.sql`
 
 3. Create a storage bucket:
    - Go to Storage → New bucket
@@ -64,7 +65,12 @@ npm install
    - Add `https://mynightcap.vercel.app/auth/callback` to Redirect URLs
    - Add `com.mynightcap.app://auth/callback` to Redirect URLs
 
-5. Copy `.env.local.example` to `.env.local` and add your Supabase URL and keys:
+5. Enable phone sign-in:
+   - Authentication → Providers → Phone → Enable
+   - Add an SMS provider (Twilio, MessageBird, Vonage, or Textlocal)
+   - Confirm that phone sign-ups and SMS OTP are enabled
+
+6. Copy `.env.local.example` to `.env.local` and add your Supabase URL and keys:
 
    ```
    NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
