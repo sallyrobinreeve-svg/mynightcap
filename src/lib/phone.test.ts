@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { isValidOtp, maskPhone, toE164 } from "./phone.ts";
+import { isValidOtp, maskPhone, parseUkLoginPhone, toE164 } from "./phone.ts";
 
 describe("toE164", () => {
   it("formats a UK number and strips the leading 0", () => {
@@ -38,5 +38,22 @@ describe("isValidOtp", () => {
 describe("maskPhone", () => {
   it("keeps the country prefix and last three digits", () => {
     assert.equal(maskPhone("+447123456789"), "+447••••••789");
+  });
+});
+
+describe("parseUkLoginPhone", () => {
+  it("accepts a UK mobile", () => {
+    assert.deepEqual(parseUkLoginPhone("07123 456789"), {
+      status: "ok",
+      phone: "+447123456789",
+    });
+  });
+
+  it("flags a US number so the UI can switch to email", () => {
+    assert.deepEqual(parseUkLoginPhone("+1 415 555 2671"), { status: "not_uk" });
+  });
+
+  it("rejects a UK landline-shaped number", () => {
+    assert.deepEqual(parseUkLoginPhone("020 7946 0958"), { status: "invalid" });
   });
 });
