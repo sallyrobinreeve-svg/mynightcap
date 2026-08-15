@@ -1,5 +1,7 @@
 "use client";
 
+import { UK_PHONE_AUTH_COPY } from "@/lib/uk-auth";
+
 export type AuthMethod = "phone" | "email";
 
 export function AuthMethodToggle({
@@ -44,7 +46,7 @@ export function UkAuthNotice({
   return (
     <p className="mb-6 text-sm text-nightcap-muted">
       {method === "phone"
-        ? "Phone authentication is for UK users only. If you're outside the UK, use email."
+        ? UK_PHONE_AUTH_COPY
         : intent === "signup"
           ? "Outside the UK? Create an account with email. Phone login is for UK mobiles only."
           : "Outside the UK? Sign in with email. Phone login is for UK mobiles only."}

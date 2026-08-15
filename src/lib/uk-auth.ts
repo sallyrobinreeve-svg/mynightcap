@@ -1,7 +1,7 @@
 export const UK_DIAL_CODE = "+44";
 
 export const UK_PHONE_AUTH_COPY =
-  "Phone authentication is for UK numbers only. If you're outside the UK, use email.";
+  "Phone authentication is for UK users only. If you're outside the UK, use email.";
 
 const UK_TIME_ZONES = new Set([
   "Europe/London",
