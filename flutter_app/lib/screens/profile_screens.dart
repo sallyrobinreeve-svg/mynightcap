@@ -521,7 +521,7 @@ class SupportScreen extends StatelessWidget {
         InfoSection(
           title: 'Common questions',
           body:
-              'Sign in with the code we text to your phone. Email accounts can still use the Email tab. Delete account from Profile > Account. Report entries, comments, and profiles from their menus.',
+              'Sign in with a UK mobile code, or email if you are outside the UK. Delete account from Profile > Account. Report entries, comments, and profiles from their menus.',
         ),
         InfoSection(
           title: 'Safety',

@@ -21,7 +21,7 @@ export function AuthMethodToggle({
         className={tabClass(value === "phone")}
         onClick={() => onChange("phone")}
       >
-        Phone
+        UK phone
       </button>
       <button
         type="button"
@@ -31,5 +31,23 @@ export function AuthMethodToggle({
         Email
       </button>
     </div>
+  );
+}
+
+export function UkAuthNotice({
+  method,
+  intent = "signin",
+}: {
+  method: AuthMethod;
+  intent?: "signin" | "signup";
+}) {
+  return (
+    <p className="mb-6 text-sm text-nightcap-muted">
+      {method === "phone"
+        ? "Phone authentication is for UK users only. If you're outside the UK, use email."
+        : intent === "signup"
+          ? "Outside the UK? Create an account with email. Phone login is for UK mobiles only."
+          : "Outside the UK? Sign in with email. Phone login is for UK mobiles only."}
+    </p>
   );
 }

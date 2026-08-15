@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AuthMethod, AuthMethodToggle } from "@/components/AuthMethodToggle";
+import { AuthMethod, AuthMethodToggle, UkAuthNotice } from "@/components/AuthMethodToggle";
 import { PhoneOtpForm } from "@/components/PhoneOtpForm";
 import { getAuthCallbackUrl } from "@/lib/auth-redirect";
 import { toFriendlyAuthMessage } from "@/lib/auth-errors";
+import { prefersUkPhoneAuth } from "@/lib/uk-auth";
 import { createClient } from "@/lib/supabase/client";
 
 const inputClass =
@@ -13,6 +14,7 @@ const inputClass =
 
 export default function SignUpPage() {
   const [method, setMethod] = useState<AuthMethod>("phone");
+  const [forcedToEmail, setForcedToEmail] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -20,6 +22,12 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!prefersUkPhoneAuth()) {
+      setMethod("email");
+    }
+  }, []);
 
   const termsAcceptedAt = () => new Date().toISOString();
 
@@ -71,11 +79,15 @@ export default function SignUpPage() {
         </Link>
         <div className="glass rounded-2xl p-8">
           <h1 className="font-display text-3xl text-white mb-2">Create account</h1>
-          <p className="text-sm text-nightcap-muted mb-6">
-            We&apos;ll text you a code to verify your number. No email required.
-          </p>
+          <UkAuthNotice method={method} intent="signup" />
 
           <AuthMethodToggle value={method} onChange={setMethod} />
+
+          {forcedToEmail && method === "email" && (
+            <p className="mb-4 rounded-xl border border-nightcap-accent/40 bg-nightcap-accent/10 px-4 py-3 text-sm text-white">
+              Phone login is for UK numbers only. Continue with email.
+            </p>
+          )}
 
           <div className="space-y-4">
             <div>
@@ -121,6 +133,10 @@ export default function SignUpPage() {
                 }
                 onVerified={async (userId) => {
                   await persistTerms(userId, termsAcceptedAt());
+                }}
+                onRequireEmail={() => {
+                  setForcedToEmail(true);
+                  setMethod("email");
                 }}
               />
             ) : (

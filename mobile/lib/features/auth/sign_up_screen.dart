@@ -24,8 +24,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _password = TextEditingController();
   final _phone = TextEditingController();
   final _otp = TextEditingController();
-  bool _usePhone = true;
-  String _dialCode = kDefaultDialCode;
+  bool _usePhone = preferUkPhoneAuth();
+  bool _forcedToEmail = false;
   String? _sentTo;
   int _cooldown = 0;
   Timer? _timer;
@@ -67,11 +67,20 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       setState(() => _error = 'Please agree to the Terms and Privacy Policy.');
       return;
     }
-    final phone = toE164(_dialCode, _phone.text);
-    if (phone == null) {
-      setState(() => _error = 'Enter a valid mobile number.');
+    final parsed = parseUkLoginPhone(_phone.text);
+    if (parsed.status == UkPhoneStatus.notUk) {
+      setState(() {
+        _error = 'Phone login is for UK numbers only. Use email instead.';
+        _usePhone = false;
+        _forcedToEmail = true;
+      });
       return;
     }
+    if (parsed.status != UkPhoneStatus.ok || parsed.phone == null) {
+      setState(() => _error = 'Enter a valid UK mobile number, or use email.');
+      return;
+    }
+    final phone = parsed.phone!;
     setState(() {
       _loading = true;
       _error = null;
@@ -181,19 +190,23 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    "We'll text you a code to verify your number.",
+                    'Phone authentication is for UK users only. If you\'re outside the UK, use email.',
                     style: TextStyle(color: kMuted),
                   ),
                   const SizedBox(height: 24),
                   SegmentedButton<bool>(
                     showSelectedIcon: false,
                     segments: const [
-                      ButtonSegment(value: true, label: Text('Phone')),
+                      ButtonSegment(value: true, label: Text('UK phone')),
                       ButtonSegment(value: false, label: Text('Email')),
                     ],
                     selected: {_usePhone},
                     onSelectionChanged: (value) => setState(() => _usePhone = value.first),
                   ),
+                  if (_forcedToEmail && !_usePhone) ...[
+                    const SizedBox(height: 12),
+                    const Text('Phone login is for UK numbers only. Continue with email.'),
+                  ],
                   const SizedBox(height: 24),
                   TextField(
                     key: const Key('signup_name'),
@@ -204,21 +217,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   if (_usePhone) ...[
                     Row(
                       children: [
-                        SizedBox(
-                          width: 128,
-                          child: DropdownButtonFormField<String>(
-                            initialValue: _dialCode,
-                            items: [
-                              for (final country in kDialCodes)
-                                DropdownMenuItem(
-                                  value: country.dial,
-                                  child: Text(country.label, overflow: TextOverflow.ellipsis),
-                                ),
-                            ],
-                            onChanged: _sentTo != null
-                                ? null
-                                : (value) => setState(() => _dialCode = value ?? kDefaultDialCode),
-                          ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                          child: const Text('+44'),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
