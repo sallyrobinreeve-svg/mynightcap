@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { acceptedFriendIdsFromRows } from "@/lib/friends";
 import { BottomNav } from "@/components/BottomNav";
 import { Trophy } from "lucide-react";
+import { NeonLogo } from "@/components/NeonLogo";
 
 export default async function LeaderboardPage() {
   const supabase = await createClient();
@@ -64,9 +65,7 @@ export default async function LeaderboardPage() {
     <div className="min-h-screen bg-nightcap pb-24">
       <nav className="glass sticky top-0 z-10 border-b border-white/5">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <Link href="/" className="font-display text-2xl text-nightcap-accent">
-            NightCapt
-          </Link>
+          <NeonLogo className="text-3xl" />
           <div className="flex items-center gap-4">
             <Link href="/profile" className="text-nightcap-muted hover:text-white transition">
               Profile
@@ -114,7 +113,7 @@ export default async function LeaderboardPage() {
               formatValue={(v) => `${Number(v).toFixed(1)} / 5`}
             />
             <LeaderboardSection
-              title="Missions completed"
+              title="Plans that landed"
               items={byMissions}
               valueKey="missions_completed"
               formatValue={(v) => `${v} ${v === 1 ? "mission" : "missions"}`}

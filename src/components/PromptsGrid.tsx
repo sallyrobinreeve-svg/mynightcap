@@ -83,7 +83,7 @@ export function PromptsGrid({
               )}
               {p.id === "tonightsObjective" && prompts.missionCompleted !== undefined && (
                 <p className="text-nightcap-muted text-xs mt-1">
-                  {prompts.missionCompleted ? "Completed ✓" : "Not completed"}
+                  {prompts.missionCompleted ? "Landed" : "Didn't land"}
                 </p>
               )}
             </button>
@@ -251,7 +251,7 @@ function PromptModal({
 
         {prompt.id === "tonightsObjective" && onMissionCompletedChange && (
           <div className="mt-4">
-            <p className="text-nightcap-muted text-sm mb-2">Completed?</p>
+            <p className="text-nightcap-muted text-sm mb-2">Did it happen?</p>
             <div className="flex gap-4">
               {([true, false] as const).map((v) => (
                 <button

@@ -72,7 +72,7 @@ export function EntryCard({ entry, currentUserId }: EntryCardProps) {
             <p className="text-nightcap-pink text-sm mt-1">{entry.rating} / 5 stars</p>
           )}
           {mission && (
-            <p className="text-nightcap-muted text-sm mt-1 line-clamp-1">Mission: {mission}</p>
+            <p className="text-nightcap-muted text-sm mt-1 line-clamp-1">The plan: {mission}</p>
           )}
           <div className="flex gap-4 mt-2 text-nightcap-muted text-sm">
             <span className="flex items-center gap-1">

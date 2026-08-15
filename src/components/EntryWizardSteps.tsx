@@ -655,7 +655,7 @@ export function StepReview({
                     : String(data.prompts[p.id])}
                   {(p.id === "kissedAnyone" || p.id === "kissedWho") && data.kissedPrivate && " (private)"}
                   {p.id === "tonightsObjective" && data.prompts.missionCompleted !== undefined && (
-                    data.prompts.missionCompleted ? " ✓ Completed" : " (not completed)"
+                    data.prompts.missionCompleted ? " · landed" : " · didn't land"
                   )}
                 </li>
               ))}

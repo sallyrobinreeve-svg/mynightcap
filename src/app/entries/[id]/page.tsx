@@ -10,6 +10,7 @@ import { ReportBlockMenu } from "@/components/ReportBlockMenu";
 import { EntryMediaImage } from "@/components/EntryMediaImage";
 import { BottomNav } from "@/components/BottomNav";
 import { PROMPTS } from "@/lib/prompts";
+import { NeonLogo } from "@/components/NeonLogo";
 
 export default async function EntryDetailPage({
   params,
@@ -159,7 +160,7 @@ export default async function EntryDetailPage({
           >
             ← Back
           </Link>
-          <span className="font-display text-lg text-nightcap-accent">NightCapt</span>
+          <NeonLogo href={null} className="text-2xl" />
           <div className="flex items-center gap-2">
             {isOwner && (
               <Link href={`/entries/${id}/edit`} className="text-nightcap-accent text-sm">
@@ -292,7 +293,7 @@ export default async function EntryDetailPage({
                       <p className="text-white">{displayValue}</p>
                       {isMission && (completed || notCompleted) && (
                         <p className="text-nightcap-muted text-xs mt-1">
-                          {completed ? "Completed ✓" : "Not completed"}
+                          {completed ? "Landed" : "Didn't land"}
                         </p>
                       )}
                     </div>
