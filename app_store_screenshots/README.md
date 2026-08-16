@@ -25,15 +25,35 @@ Do **not** upload the old 1320 × 2868 files into this slot. Those are 6.9" only
 
 Landscape (2688 × 1242 or 2778 × 1284) is only if you captured the app sideways. These shots are portrait — use the portrait sizes.
 
-## iPad 13" (2048 × 2732)
+## iPad 12.9" / 13" — drag these 3 screenshots
 
-App Store Connect → 12.9-inch iPad Pro / 13-inch iPad. **Logged-in screens only.**
+Skip **app previews** (those are videos). You only need screenshots.
 
-| Order | File | Caption (optional) |
+Apple accepts **2064 × 2752** or **2048 × 2732** portrait (landscape is 2752 × 2064 or 2732 × 2048). These are portrait. Do not rotate them.
+
+**Logged-in only.** No Sign in on iPad — Apple already rejected that.
+
+### If Connect wants 2064 × 2752 (13")
+
+Upload from `ipad_2064x2752/`:
+
+| Order | File | Size |
 | --- | --- | --- |
-| 1 | `07_ipad_13_feed.png` | Recap the night. See your friends’ nights. |
-| 2 | `08_ipad_13_create.png` | Rate the night. Keep any answer private. |
-| 3 | `09_ipad_13_profile.png` | Your profile. Your lore. |
+| 1 | `01_ipad_feed_2064x2752.png` | 2064 × 2752 |
+| 2 | `02_ipad_create_2064x2752.png` | 2064 × 2752 |
+| 3 | `03_ipad_profile_2064x2752.png` | 2064 × 2752 |
+
+### If Connect wants 2048 × 2732 (12.9")
+
+Upload from `ipad_2048x2732/` (same screens as `07` / `08` / `09` at repo root):
+
+| Order | File | Size |
+| --- | --- | --- |
+| 1 | `01_ipad_feed_2048x2732.png` | 2048 × 2732 |
+| 2 | `02_ipad_create_2048x2732.png` | 2048 × 2732 |
+| 3 | `03_ipad_profile_2048x2732.png` | 2048 × 2732 |
+
+Try **2064 × 2752** first if that is the size listed in the drop zone. If it rejects, use **2048 × 2732**.
 
 ## Better if you have TestFlight
 
