@@ -31,7 +31,7 @@ export interface WizardData {
 const STEPS = [
   { id: "date", label: "Date", icon: null },
   { id: "photos", label: "Photos", icon: Camera },
-  { id: "rating", label: "Rating", icon: Star },
+  { id: "rating", label: "Rate the night", icon: Star },
   { id: "prompts", label: "Prompts", icon: MessageCircle },
   { id: "timeline", label: "Timeline", icon: MapPin },
   { id: "tags", label: "Tag friends", icon: Users },

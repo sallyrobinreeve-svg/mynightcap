@@ -9,7 +9,9 @@ import {
 } from "@/lib/prompts";
 import type { EntryPrompts } from "@/types/database";
 
-const DISPLAY_PROMPTS = PROMPTS.filter((p) => DEFAULT_PROMPT_IDS.includes(p.id));
+const DISPLAY_PROMPTS = PROMPTS.filter(
+  (p) => DEFAULT_PROMPT_IDS.includes(p.id) && p.id !== "chaos"
+);
 
 interface PromptsGridProps {
   prompts: EntryPrompts;
@@ -83,7 +85,7 @@ export function PromptsGrid({
               )}
               {p.id === "tonightsObjective" && prompts.missionCompleted !== undefined && (
                 <p className="text-nightcap-muted text-xs mt-1">
-                  {prompts.missionCompleted ? "Landed" : "Didn't land"}
+                  {prompts.missionCompleted ? "Completed ✓" : "Not completed"}
                 </p>
               )}
             </button>
@@ -251,7 +253,7 @@ function PromptModal({
 
         {prompt.id === "tonightsObjective" && onMissionCompletedChange && (
           <div className="mt-4">
-            <p className="text-nightcap-muted text-sm mb-2">Did it happen?</p>
+            <p className="text-nightcap-muted text-sm mb-2">Completed?</p>
             <div className="flex gap-4">
               {([true, false] as const).map((v) => (
                 <button

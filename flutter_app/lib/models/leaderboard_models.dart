@@ -34,7 +34,7 @@ extension LeaderboardSortLabel on LeaderboardSort {
   String get title => switch (this) {
     LeaderboardSort.entries => 'Most entries',
     LeaderboardSort.rating => 'Highest avg rating',
-    LeaderboardSort.missions => 'Plans that landed',
+    LeaderboardSort.missions => 'Missions completed',
     LeaderboardSort.kisses => 'Kiss count',
     LeaderboardSort.clubVisits => 'Top club visits',
   };

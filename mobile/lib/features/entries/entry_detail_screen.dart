@@ -8,10 +8,10 @@ import 'entry_detail.dart';
 import 'entry_detail_repository.dart';
 
 const _promptLabels = <String, String>{
-  'drunkest': 'Who was most gone',
+  'drunkest': 'Who was the drunkest',
   'funniest': 'The funniest bit',
-  'mission': 'The plan',
-  'success': 'Did it land?',
+  'mission': 'Mission of the night',
+  'success': 'Mission accomplished?',
   'kissedWho': 'Who with?',
 };
 

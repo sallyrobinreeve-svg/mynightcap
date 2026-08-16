@@ -235,7 +235,7 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
                   },
                 ),
                 const SizedBox(height: 12),
-                const Text('Rating'),
+                const Text('Rate the night'),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,

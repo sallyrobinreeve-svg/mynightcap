@@ -171,7 +171,7 @@ class _EntryCard extends StatelessWidget {
                   if (entry.mission != null && entry.mission!.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
-                      'The plan: ${entry.mission}',
+                      'Mission: ${entry.mission}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: kMuted, fontSize: 13),

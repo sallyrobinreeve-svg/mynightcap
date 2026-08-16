@@ -293,7 +293,7 @@ export default async function EntryDetailPage({
                       <p className="text-white">{displayValue}</p>
                       {isMission && (completed || notCompleted) && (
                         <p className="text-nightcap-muted text-xs mt-1">
-                          {completed ? "Landed" : "Didn't land"}
+                          {completed ? "Completed ✓" : "Not completed"}
                         </p>
                       )}
                     </div>

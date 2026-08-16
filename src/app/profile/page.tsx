@@ -136,7 +136,7 @@ export default async function ProfilePage() {
               </div>
               {(s.missions_completed ?? 0) > 0 && (
                 <div>
-                  <p className="text-nightcap-muted text-sm">Plans that landed</p>
+                  <p className="text-nightcap-muted text-sm">Missions completed</p>
                   <p className="text-white text-2xl font-display">{s.missions_completed}</p>
                 </div>
               )}

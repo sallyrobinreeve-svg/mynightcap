@@ -28,8 +28,9 @@ class PromptDefinition {
   final bool canBePrivate;
 }
 
+const hiddenPromptIds = {'chaos'};
+
 const defaultPromptIds = [
-  'chaos',
   'whoWasDrunkest',
   'funniestThing',
   'songOfNight',
@@ -39,14 +40,8 @@ const defaultPromptIds = [
 
 const promptDefinitions = [
   PromptDefinition(
-    id: 'chaos',
-    label: 'Chaos level',
-    category: 'Recap',
-    inputType: PromptInputType.slider,
-  ),
-  PromptDefinition(
     id: 'whoWasDrunkest',
-    label: 'Who was most gone',
+    label: 'Who was the drunkest',
     category: 'Recap',
     inputType: PromptInputType.text,
     placeholder: 'Name',
@@ -105,23 +100,23 @@ const promptDefinitions = [
   ),
   PromptDefinition(
     id: 'tonightsObjective',
-    label: 'The plan',
-    category: 'The plan',
+    label: 'Mission of the night',
+    category: 'Mission',
     inputType: PromptInputType.text,
-    placeholder: 'What you were going for',
+    placeholder: 'What was the mission?',
   ),
   PromptDefinition(
     id: 'missionResult',
-    label: 'Did it land?',
-    category: 'The plan',
+    label: 'Mission result',
+    category: 'Mission',
     inputType: PromptInputType.text,
   ),
   PromptDefinition(
     id: 'generalComment',
-    label: 'Anything else',
+    label: 'Notable mentions',
     category: 'Reflection',
     inputType: PromptInputType.textarea,
-    placeholder: 'The rest of it',
+    placeholder: 'Anyone or anything else worth logging',
     canBePrivate: true,
   ),
   PromptDefinition(
@@ -160,7 +155,8 @@ List<PromptDefinition> extraPrompts() {
   final defaults = defaultPromptIds.toSet();
   return [
     for (final prompt in promptDefinitions)
-      if (!defaults.contains(prompt.id)) prompt,
+      if (!defaults.contains(prompt.id) && !hiddenPromptIds.contains(prompt.id))
+        prompt,
   ];
 }
 

@@ -61,9 +61,9 @@ class _MissionPromptSectionState extends State<MissionPromptSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('The plan', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text('Mission', style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        const Text('Did you have a plan?', style: TextStyle(color: NightColors.muted)),
+        const Text('Was there a mission?', style: TextStyle(color: NightColors.muted)),
         const SizedBox(height: 6),
         SegmentedButton<bool>(
           segments: const [
@@ -79,7 +79,7 @@ class _MissionPromptSectionState extends State<MissionPromptSection> {
           const SizedBox(height: 6),
           TextField(
             controller: _missionController,
-            decoration: nightInputDecoration('What you were going for'),
+            decoration: nightInputDecoration('Mission of the night'),
             onChanged: (value) {
               if (value.trim().isEmpty) {
                 widget.promptValues.remove('tonightsObjective');
@@ -90,7 +90,7 @@ class _MissionPromptSectionState extends State<MissionPromptSection> {
             },
           ),
           const SizedBox(height: 14),
-          const Text('Did it happen?', style: TextStyle(color: NightColors.muted)),
+          const Text('Was it completed?', style: TextStyle(color: NightColors.muted)),
           const SizedBox(height: 6),
           SegmentedButton<bool>(
             segments: const [
@@ -103,7 +103,7 @@ class _MissionPromptSectionState extends State<MissionPromptSection> {
           ),
           const SizedBox(height: 8),
           _SectionPrivacyToggle(
-            label: 'Keep this private',
+            label: 'Keep mission private',
             value: isPromptPrivate(widget.promptValues, 'tonightsObjective'),
             onChanged: (value) {
               if (value) {

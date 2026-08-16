@@ -246,7 +246,7 @@ class FeedEntryCard extends StatelessWidget {
             if (entry.mission != null && entry.mission!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
-                'The plan: ${entry.mission}',
+                'Mission: ${entry.mission}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(color: NightColors.muted),

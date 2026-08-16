@@ -20,21 +20,13 @@ export const PROMPT_CATEGORIES = [
   "Party",
   "Chaotic",
   "Reflection",
-  "The plan",
+  "Mission",
 ] as const;
 
 export const PROMPTS: PromptDefinition[] = [
   {
-    id: "chaos",
-    label: "Chaos level",
-    category: "Recap",
-    inputType: "slider",
-    sliderMin: 1,
-    sliderMax: 10,
-  },
-  {
     id: "whoWasDrunkest",
-    label: "Who was most gone",
+    label: "Who was the drunkest",
     category: "Recap",
     inputType: "text",
     placeholder: "Name",
@@ -210,34 +202,41 @@ export const PROMPTS: PromptDefinition[] = [
   },
   {
     id: "tonightsObjective",
-    label: "The plan",
-    category: "The plan",
+    label: "Mission of the night",
+    category: "Mission",
     inputType: "text",
-    placeholder: "What you were going for",
+    placeholder: "What was the mission?",
   },
   {
     id: "missionResult",
-    label: "Did it land?",
-    category: "The plan",
+    label: "Mission result",
+    category: "Mission",
     inputType: "text",
   },
   {
     id: "bonusAchievement",
-    label: "Unplanned win",
-    category: "The plan",
+    label: "Bonus achievement",
+    category: "Mission",
     inputType: "text",
   },
   {
     id: "generalComment",
-    label: "Anything else",
+    label: "Notable mentions",
     category: "Reflection",
     inputType: "textarea",
-    placeholder: "The rest of it",
+    placeholder: "Anyone or anything else worth logging",
+  },
+  {
+    id: "chaos",
+    label: "Chaos",
+    category: "Recap",
+    inputType: "slider",
+    sliderMin: 1,
+    sliderMax: 10,
   },
 ];
 
 export const DEFAULT_PROMPT_IDS = [
-  "chaos",
   "whoWasDrunkest",
   "funniestThing",
   "kissedAnyone",

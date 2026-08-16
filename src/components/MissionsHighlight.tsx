@@ -39,7 +39,7 @@ export async function MissionsHighlight() {
   return (
     <section className="mb-10">
       <h2 className="font-display text-2xl text-nightcap-pink mb-4">
-        This week&apos;s plans
+        Top missions this week
       </h2>
       <div className="grid gap-4 sm:grid-cols-2">
         {missionEntries.slice(0, 6).map((e) => {

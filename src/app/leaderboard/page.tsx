@@ -113,7 +113,7 @@ export default async function LeaderboardPage() {
               formatValue={(v) => `${Number(v).toFixed(1)} / 5`}
             />
             <LeaderboardSection
-              title="Plans that landed"
+              title="Missions completed"
               items={byMissions}
               valueKey="missions_completed"
               formatValue={(v) => `${v} ${v === 1 ? "mission" : "missions"}`}

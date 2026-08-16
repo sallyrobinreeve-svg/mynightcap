@@ -629,7 +629,7 @@ export function StepReview({
           <p className="text-white">{data.dateOfNight}</p>
         </div>
         <div>
-          <span className="text-nightcap-muted text-sm">Rating</span>
+          <span className="text-nightcap-muted text-sm">Rate the night</span>
           <p className="text-white">{data.rating ? `${data.rating} / 5` : "–"}</p>
         </div>
         {data.videoUrl && (
@@ -655,7 +655,7 @@ export function StepReview({
                     : String(data.prompts[p.id])}
                   {(p.id === "kissedAnyone" || p.id === "kissedWho") && data.kissedPrivate && " (private)"}
                   {p.id === "tonightsObjective" && data.prompts.missionCompleted !== undefined && (
-                    data.prompts.missionCompleted ? " · landed" : " · didn't land"
+                    data.prompts.missionCompleted ? " ✓ Completed" : " (not completed)"
                   )}
                 </li>
               ))}
