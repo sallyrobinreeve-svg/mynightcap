@@ -112,7 +112,7 @@ Upload **logged-in** screens first, not Sign in.
 
 Files are in `app_store_screenshots/` (see the README there for order and captions).
 
-- iPhone 6.9" (1320 × 2868): Feed → Create → Memories → Profile → Friends → UK phone sign-in last
+- iPhone 6.5" (**1284 × 2778**): `01_iphone_feed.png` → Create → Memories → Profile → Friends → UK phone sign-in last. If Connect wants 1242 × 2688, use `iphone_1242x2688/`.
 - iPad 13" (2048 × 2732): Feed → Create → Profile. No login shot on iPad. Apple previously rejected that.
 
 Best: recapture the same screens from TestFlight on a real iPhone and replace the mockups.

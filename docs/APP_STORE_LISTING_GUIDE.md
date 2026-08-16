@@ -7,9 +7,9 @@ Everything you need to fill in App Store Connect and generate screenshots.
 ## Part 1: Screenshot Requirements (2024)
 
 ### Required sizes
-- **6.9" Display (Primary):** 1320 x 2868 pixels (portrait) – upload this and Apple scales for smaller devices
-- **Alternative 6.5":** 1284 x 2778 pixels (portrait)
-- **13-inch iPad (required if app runs on iPad):** 2048 x 2732 pixels (portrait) – run `node scripts/resize-for-ipad.js` to generate from your iPhone screenshot
+- **iPhone 6.5" (this listing):** 1284 × 2778 or 1242 × 2688 portrait (landscape: 2778 × 1284 or 2688 × 1242). Upload **1284 × 2778** from `app_store_screenshots/`.
+- **iPhone 6.9" (only if Connect shows that slot):** 1320 × 2868 — extras in `app_store_screenshots/iphone_69_1320x2868/`
+- **13-inch iPad (required if app runs on iPad):** 2048 × 2732 pixels (portrait)
 
 ### Format
 - JPEG, JPG, or PNG
@@ -53,7 +53,7 @@ Everything you need to fill in App Store Connect and generate screenshots.
 
 Use `app_store_screenshots/` in this repo. Upload order and captions are in `app_store_screenshots/README.md`.
 
-- **iPhone 6.9"** (1320 × 2868): Feed, Create, Memories, Profile, Friends, then UK phone sign-in last
+- **iPhone 6.5"** (1284 × 2778): Feed, Create, Memories, Profile, Friends, then UK phone sign-in last. Alternate size: `iphone_1242x2688/` (1242 × 2688).
 - **iPad 13"** (2048 × 2732): Feed, Create, Profile — **logged-in only**. Apple rejected a login-only iPad shot before.
 
 If TestFlight is on your phone, capture the real Flutter screens at those sizes and replace the mockups.
