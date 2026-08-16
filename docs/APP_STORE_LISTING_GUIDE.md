@@ -1,4 +1,4 @@
-# NightCap – Complete App Store Listing Guide
+# NightCapt – Complete App Store Listing Guide
 
 Everything you need to fill in App Store Connect and generate screenshots.
 
@@ -49,12 +49,22 @@ Everything you need to fill in App Store Connect and generate screenshots.
 5. Navigate to each screen, take screenshots (**Ctrl+Shift+P** → "Capture screenshot")
 6. Resize images to 1320 x 2868 using [Photopea](https://www.photopea.com/) (free online Photoshop) or any image editor
 
+### Ready-to-upload files
+
+Use `app_store_screenshots/` in this repo. Upload order and captions are in `app_store_screenshots/README.md`.
+
+- **iPhone 6.9"** (1320 × 2868): Feed, Create, Memories, Profile, Friends, then UK phone sign-in last
+- **iPad 13"** (2048 × 2732): Feed, Create, Profile — **logged-in only**. Apple rejected a login-only iPad shot before.
+
+If TestFlight is on your phone, capture the real Flutter screens at those sizes and replace the mockups.
+
 ### Screens to capture (in order)
-1. **Feed** – Main social feed
-2. **Journal entry** – A sample entry view
-3. **New entry** – Create new journal entry
-4. **Profile** – User profile
-5. **Memories or Leaderboard** – Another feature screen
+1. **Feed** – logged-in recap feed (this should be first)
+2. **Create** – recap prompts, stars, Keep this private
+3. **Memories** – photo grid
+4. **Profile** – 3-column grid
+5. **Friends** – optional
+6. **UK phone sign-in** – last, not first; skip this on iPad
 
 ---
 
@@ -107,12 +117,27 @@ Capture the chaos. Spill the tea from last night. Your social journal for nights
 
 ---
 
-### What's New (for updates, 4000 chars)
+### What's New (paste this for 1.8.0)
 
-For first release, you can use:
+App Store Connect → this version → **What's New**. 4000 characters max. Keep it short.
+
+**Use this:**
+
 ```
-Welcome to NightCapt. Recap the night, keep private answers private, and share with friends. UK phone login for UK mobiles, email for everyone else.
+UK phone login for UK mobiles, email for everyone else. New neon look. Recap prompts including Rate the night, mission, and Keep this private on every answer.
 ```
+
+Slightly longer option:
+
+```
+Sign in with a UK mobile code, or email if you’re outside the UK.
+
+Fresh neon NightCapt look.
+
+Recap the night with Rate the night, Who was the drunkest, The funniest bit, Anyone get kissed, mission, and Keep this private on every answer.
+```
+
+Do not mention Twilio, TestFlight, or Apple review workarounds here. Users see this on the product page.
 
 ---
 
@@ -138,7 +163,7 @@ https://mynightcap.vercel.app
 
 | Field | Value |
 |-------|-------|
-| **Version** | 1.0.0 |
+| **Version** | 1.8.0 |
 | **Copyright** | 2025 [Your Name or Company] – **Required** |
 | **Trade Representative Contact** | Your email |
 
@@ -207,7 +232,9 @@ For NightCap (Supabase auth, HTTPS): Usually **No** is correct.
 
 ## Quick Copy-Paste Summary
 
-**Description (short):** NightCap is your social journal for nights out. Capture the chaos, spill the tea, and lock in the memory with friends.
+**What's New:** UK phone login for UK mobiles, email for everyone else. New neon look. Recap prompts including Rate the night, mission, and Keep this private on every answer.
+
+**Description (short):** NightCapt is your social journal for nights out. Capture the recap, keep the private bits private, and lock in the memory with friends.
 
 **Keywords:** journal,social,night out,memories,friends,diary,stories,photos,nightlife
 
