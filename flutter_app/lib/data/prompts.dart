@@ -12,7 +12,7 @@ class PromptDefinition {
     this.toggleLabels = const ['Yes', 'No'],
     this.choices = const [],
     this.privateByDefault = false,
-    this.canBePrivate = false,
+    this.canBePrivate = true,
   });
 
   final String id;
@@ -45,7 +45,6 @@ const promptDefinitions = [
     category: 'Recap',
     inputType: PromptInputType.text,
     placeholder: 'Name',
-    canBePrivate: true,
   ),
   PromptDefinition(
     id: 'funniestThing',
@@ -53,7 +52,6 @@ const promptDefinitions = [
     category: 'Recap',
     inputType: PromptInputType.textarea,
     placeholder: "The one you'll all repeat tomorrow",
-    canBePrivate: true,
   ),
   PromptDefinition(
     id: 'quoteOfNight',
@@ -117,7 +115,6 @@ const promptDefinitions = [
     category: 'Reflection',
     inputType: PromptInputType.textarea,
     placeholder: 'Anyone or anything else worth logging',
-    canBePrivate: true,
   ),
   PromptDefinition(
     id: 'nightMvp',

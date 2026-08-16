@@ -7,6 +7,7 @@ import {
   DEFAULT_PROMPT_IDS,
   type PromptDefinition,
 } from "@/lib/prompts";
+import { isPromptPrivate, privacyKeyFor } from "@/lib/prompt-privacy";
 import type { EntryPrompts } from "@/types/database";
 
 const DISPLAY_PROMPTS = PROMPTS.filter(
@@ -87,6 +88,9 @@ export function PromptsGrid({
                 <p className="text-nightcap-muted text-xs mt-1">
                   {prompts.missionCompleted ? "Completed ✓" : "Not completed"}
                 </p>
+              )}
+              {isPromptPrivate(prompts, p.id) && (
+                <p className="text-nightcap-muted text-xs mt-1">Private</p>
               )}
             </button>
           );
@@ -271,6 +275,24 @@ function PromptModal({
               ))}
             </div>
           </div>
+        )}
+
+        {prompt.id !== "kissedAnyone" && prompt.id !== "chaos" && (
+          <label className="flex items-center gap-2 text-sm text-nightcap-muted cursor-pointer mt-4">
+            <input
+              type="checkbox"
+              checked={isPromptPrivate(prompts, prompt.id)}
+              onChange={(e) => {
+                const next = { ...prompts };
+                const key = privacyKeyFor(prompt.id);
+                if (e.target.checked) next[key] = true;
+                else delete next[key];
+                onChange(next, kissedPrivate ?? true);
+              }}
+              className="rounded"
+            />
+            Keep this private
+          </label>
         )}
 
         <button

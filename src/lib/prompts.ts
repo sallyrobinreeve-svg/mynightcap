@@ -11,6 +11,7 @@ export interface PromptDefinition {
   toggleLabels?: [string, string];
   choices?: string[];
   privateByDefault?: boolean;
+  canBePrivate?: boolean;
 }
 
 export const PROMPT_CATEGORIES = [

@@ -10,6 +10,7 @@ import { ReportBlockMenu } from "@/components/ReportBlockMenu";
 import { EntryMediaImage } from "@/components/EntryMediaImage";
 import { BottomNav } from "@/components/BottomNav";
 import { PROMPTS } from "@/lib/prompts";
+import { isPromptMetadataKey, isPromptPrivate } from "@/lib/prompt-privacy";
 import { NeonLogo } from "@/components/NeonLogo";
 
 export default async function EntryDetailPage({
@@ -253,12 +254,12 @@ export default async function EntryDetailPage({
             </section>
           )}
 
-          {Object.keys(prompts).filter((k) => !["kissedPrivate", "missionCompleted", "whoKissedWhoPrivate"].includes(k) && prompts[k] !== undefined && prompts[k] !== "" && prompts[k] !== null).length > 0 && (
+          {Object.keys(prompts).filter((k) => !isPromptMetadataKey(k) && prompts[k] !== undefined && prompts[k] !== "" && prompts[k] !== null).length > 0 && (
             <section>
               <h2 className="font-display text-xl text-nightcap-accent mb-4">Prompts</h2>
               <div className="glass rounded-2xl p-6 space-y-4">
                 {Object.entries(prompts)
-                  .filter(([k, v]) => !["kissedPrivate", "missionCompleted", "whoKissedWhoPrivate"].includes(k) && v !== undefined && v !== "" && v !== null)
+                  .filter(([k, v]) => !isPromptMetadataKey(k) && v !== undefined && v !== "" && v !== null)
                   .map(([key, value]) => {
                   const def = PROMPTS.find((p) => p.id === key);
                   const label = def?.label ?? (key === "whoKissedWho" ? "Who kissed who" : key);
@@ -267,20 +268,12 @@ export default async function EntryDetailPage({
                       ? value ? def.toggleLabels[0] : def.toggleLabels[1]
                       : String(value)
                     : String(value);
-                  const isKissedPrivate = (key === "kissedAnyone" || key === "kissedWho" || key === "whoKissedWho") && (prompts.kissedPrivate || prompts.whoKissedWhoPrivate) && entry.user_id !== user.id;
-                  if (isKissedPrivate) {
+                  const privateAnswer = isPromptPrivate(prompts, key);
+                  if (privateAnswer && entry.user_id !== user.id) {
                     return (
                       <div key={key}>
                         <p className="text-nightcap-muted text-sm">{label}</p>
                         <p className="text-nightcap-muted italic">(Private)</p>
-                      </div>
-                    );
-                  }
-                  if ((key === "kissedAnyone" || key === "kissedWho" || key === "whoKissedWho") && (prompts.kissedPrivate || prompts.whoKissedWhoPrivate) && entry.user_id === user.id) {
-                    return (
-                      <div key={key}>
-                        <p className="text-nightcap-muted text-sm">{label} (private)</p>
-                        <p className="text-white">{displayValue}</p>
                       </div>
                     );
                   }
@@ -289,7 +282,10 @@ export default async function EntryDetailPage({
                   const notCompleted = isMission && prompts.missionCompleted === false;
                   return (
                     <div key={key}>
-                      <p className="text-nightcap-muted text-sm">{label}</p>
+                      <p className="text-nightcap-muted text-sm">
+                        {label}
+                        {privateAnswer ? " (private)" : ""}
+                      </p>
                       <p className="text-white">{displayValue}</p>
                       {isMission && (completed || notCompleted) && (
                         <p className="text-nightcap-muted text-xs mt-1">

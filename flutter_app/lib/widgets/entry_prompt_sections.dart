@@ -158,7 +158,6 @@ class _KissPromptSectionState extends State<KissPromptSection> {
     widget.promptValues['kissedAnyone'] = value;
     if (!value) {
       widget.promptValues.remove('kissedWho');
-      widget.promptValues.remove('kissedPrivate');
       _whoController.clear();
     } else {
       widget.promptValues['kissedPrivate'] =
@@ -200,21 +199,21 @@ class _KissPromptSectionState extends State<KissPromptSection> {
               widget.onChanged();
             },
           ),
-          const SizedBox(height: 8),
-          _SectionPrivacyToggle(
-            label: 'Keep this private',
-            value: isPromptPrivate(widget.promptValues, 'kissedAnyone'),
-            onChanged: (value) {
-              if (value) {
-                widget.promptValues['kissedPrivate'] = true;
-              } else {
-                widget.promptValues.remove('kissedPrivate');
-              }
-              widget.onChanged();
-              setState(() {});
-            },
-          ),
         ],
+        const SizedBox(height: 8),
+        _SectionPrivacyToggle(
+          label: 'Keep this private',
+          value: isPromptPrivate(widget.promptValues, 'kissedAnyone'),
+          onChanged: (value) {
+            if (value) {
+              widget.promptValues['kissedPrivate'] = true;
+            } else {
+              widget.promptValues.remove('kissedPrivate');
+            }
+            widget.onChanged();
+            setState(() {});
+          },
+        ),
       ],
     );
   }
@@ -329,9 +328,7 @@ class _PromptFieldWithPrivacyState extends State<PromptFieldWithPrivacy> {
             onChanged: _setValue,
           ),
         },
-        if (prompt.canBePrivate &&
-            value != null &&
-            value.toString().trim().isNotEmpty) ...[
+        if (prompt.canBePrivate) ...[
           const SizedBox(height: 6),
           _SectionPrivacyToggle(
             label: 'Keep this private',
