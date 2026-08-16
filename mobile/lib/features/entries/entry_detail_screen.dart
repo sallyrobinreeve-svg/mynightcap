@@ -8,11 +8,11 @@ import 'entry_detail.dart';
 import 'entry_detail_repository.dart';
 
 const _promptLabels = <String, String>{
-  'drunkest': 'Who was drunkest',
-  'funniest': 'Funniest moment',
+  'drunkest': 'Who was the drunkest',
+  'funniest': 'The funniest bit',
   'mission': 'Mission of the night',
   'success': 'Mission accomplished?',
-  'kissedWho': 'Who kissed who',
+  'kissedWho': 'Who with?',
 };
 
 class EntryDetailScreen extends ConsumerStatefulWidget {

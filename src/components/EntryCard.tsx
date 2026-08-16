@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatDateSafe } from "@/lib/format-date";
 import { SafeImage } from "@/components/SafeImage";
 import { ReportBlockMenu } from "@/components/ReportBlockMenu";
+import { isPromptPrivate } from "@/lib/prompt-privacy";
 import { MessageCircle, Flame } from "lucide-react";
 
 interface EntryCardProps {
@@ -21,7 +22,13 @@ interface EntryCardProps {
 
 export function EntryCard({ entry, currentUserId }: EntryCardProps) {
   const isOwn = entry.user_id === currentUserId;
-  const mission = entry.prompts?.mission as string | undefined;
+  const prompts = entry.prompts ?? {};
+  const mission =
+    (prompts.tonightsObjective as string | undefined) ||
+    (prompts.mission as string | undefined);
+  const showMission =
+    mission &&
+    (isOwn || !isPromptPrivate(prompts, "tonightsObjective"));
 
   return (
     <div className="glass rounded-2xl hover-lift overflow-hidden transition hover:border-nightcap-accent/30 relative">
@@ -71,7 +78,7 @@ export function EntryCard({ entry, currentUserId }: EntryCardProps) {
           {entry.rating && (
             <p className="text-nightcap-pink text-sm mt-1">{entry.rating} / 5 stars</p>
           )}
-          {mission && (
+          {showMission && (
             <p className="text-nightcap-muted text-sm mt-1 line-clamp-1">Mission: {mission}</p>
           )}
           <div className="flex gap-4 mt-2 text-nightcap-muted text-sm">

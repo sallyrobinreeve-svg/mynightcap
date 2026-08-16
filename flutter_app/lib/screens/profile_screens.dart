@@ -23,7 +23,8 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   late Future<UserProfile?> _future = profileService.currentProfile();
-  late Future<List<UserEntryTile>> _entriesFuture = userEntriesService.fetchMine();
+  late Future<List<UserEntryTile>> _entriesFuture = userEntriesService
+      .fetchMine();
   bool saving = false;
   String? message;
 
@@ -61,7 +62,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final token = supabase.auth.currentSession?.accessToken;
     if (token == null) {
       setState(
-        () => message = 'You need to sign in again before deleting your account.',
+        () =>
+            message = 'You need to sign in again before deleting your account.',
       );
       return;
     }
@@ -103,63 +105,103 @@ class _ProfileScreenState extends State<ProfileScreen> {
               NightCard(
                 child: Column(
                   children: [
-                    UserAvatar(
-                      name: profile?.name ?? 'NightCapt',
-                      avatarUrl: profile?.avatarUrl,
-                      radius: 46,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      profile?.name ?? user?.phone ?? user?.email ?? 'NightCapt user',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    if (profile?.username != null)
-                      Text(
-                        '@${profile!.username}',
-                        style: const TextStyle(color: NightColors.muted),
-                      ),
-                    if (profile?.bio != null && profile!.bio!.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          profile.bio!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: NightColors.muted),
+                    Row(
+                      children: [
+                        UserAvatar(
+                          name: profile?.name ?? 'NightCapt',
+                          avatarUrl: profile?.avatarUrl,
+                          radius: 42,
                         ),
-                      ),
-                    if (user?.phone != null)
-                      Text(
-                        user!.phone!,
-                        style: const TextStyle(color: NightColors.muted),
-                      )
-                    else if (user?.email != null)
-                      Text(
-                        user!.email!,
-                        style: const TextStyle(color: NightColors.muted),
-                      ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                profile?.name ??
+                                    user?.phone ??
+                                    user?.email ??
+                                    'NightCapt user',
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (profile?.username != null)
+                                Text(
+                                  '@${profile!.username}',
+                                  style: const TextStyle(
+                                    color: NightColors.muted,
+                                  ),
+                                ),
+                              if (profile?.bio != null &&
+                                  profile!.bio!.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 6),
+                                  child: Text(profile.bio!),
+                                ),
+                              if (user?.phone != null)
+                                Text(
+                                  user!.phone!,
+                                  style: const TextStyle(
+                                    color: NightColors.muted,
+                                  ),
+                                )
+                              else if (user?.email != null)
+                                Text(
+                                  user!.email!,
+                                  style: const TextStyle(
+                                    color: NightColors.muted,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                     if (message != null) StatusText(message!),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 16),
+                    FutureBuilder<List<UserEntryTile>>(
+                      future: _entriesFuture,
+                      builder: (context, snapshot) {
+                        final entries = snapshot.data ?? [];
+                        final photos = entries
+                            .where((e) => e.photoUrl != null)
+                            .length;
+                        return Row(
+                          children: [
+                            _ProfileStat(
+                              value: '${entries.length}',
+                              label: 'nights',
+                            ),
+                            _ProfileStat(value: '$photos', label: 'memories'),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => ProfileEditScreen(
+                                profile: profile,
+                                onSaved: _reload,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.edit_outlined),
+                        label: const Text('Edit profile'),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Wrap(
                       alignment: WrapAlignment.center,
                       spacing: 12,
                       children: [
-                        OutlinedButton.icon(
-                          onPressed: () async {
-                            await Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => ProfileEditScreen(
-                                  profile: profile,
-                                  onSaved: _reload,
-                                ),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.edit_outlined),
-                          label: const Text('Edit profile'),
-                        ),
                         OutlinedButton.icon(
                           onPressed: () =>
                               Navigator.of(context).pushNamed('/support'),
@@ -189,7 +231,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     const Text(
                       'Your nights',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     const Text(
@@ -218,7 +263,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Safety', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Safety',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     const Text(
                       'Report or block users from posts and comments. Blocked users are hidden from your feed.',
@@ -241,7 +292,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Account', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Account',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
@@ -269,8 +326,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
+class _ProfileStat extends StatelessWidget {
+  const _ProfileStat({required this.value, required this.label});
+
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+          ),
+          Text(label, style: const TextStyle(color: NightColors.muted)),
+        ],
+      ),
+    );
+  }
+}
+
 class ProfileEditScreen extends StatefulWidget {
-  const ProfileEditScreen({required this.profile, required this.onSaved, super.key});
+  const ProfileEditScreen({
+    required this.profile,
+    required this.onSaved,
+    super.key,
+  });
 
   final UserProfile? profile;
   final VoidCallback onSaved;
@@ -280,8 +363,12 @@ class ProfileEditScreen extends StatefulWidget {
 }
 
 class _ProfileEditScreenState extends State<ProfileEditScreen> {
-  late final displayName = TextEditingController(text: widget.profile?.displayName ?? '');
-  late final username = TextEditingController(text: widget.profile?.username ?? '');
+  late final displayName = TextEditingController(
+    text: widget.profile?.displayName ?? '',
+  );
+  late final username = TextEditingController(
+    text: widget.profile?.username ?? '',
+  );
   late final bio = TextEditingController(text: widget.profile?.bio ?? '');
   bool saving = false;
   String? message;
@@ -460,6 +547,7 @@ class MemoriesScreen extends StatefulWidget {
 
 class _MemoriesScreenState extends State<MemoriesScreen> {
   late Future<List<UserEntryTile>> future = userEntriesService.fetchMine();
+  int? yearFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -474,32 +562,91 @@ class _MemoriesScreenState extends State<MemoriesScreen> {
           final entries = snapshot.data ?? [];
           if (entries.isEmpty) {
             return const EmptyState(
-              icon: Icons.photo_library_outlined,
+              icon: Icons.favorite_border,
               title: 'No nights yet',
-              body: 'Post a recap with photos and they will appear here. Tap any tile to open it.',
+              body:
+                  'Post a recap with photos and they will appear here. Tap any tile to open it.',
             );
           }
-          return SizedBox(
-            height: MediaQuery.sizeOf(context).height - 180,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Your photo grid of past nights',
-                  style: TextStyle(color: NightColors.muted),
+          final years = {
+            for (final entry in entries)
+              if (DateTime.tryParse(entry.dateOfNight) != null)
+                DateTime.parse(entry.dateOfNight).year,
+          }.toList()..sort((a, b) => b.compareTo(a));
+          final visible = yearFilter == null
+              ? entries
+              : [
+                  for (final entry in entries)
+                    if (DateTime.tryParse(entry.dateOfNight)?.year ==
+                        yearFilter)
+                      entry,
+                ];
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _YearChip(
+                      label: 'All',
+                      selected: yearFilter == null,
+                      onTap: () => setState(() => yearFilter = null),
+                    ),
+                    for (final year in years)
+                      _YearChip(
+                        label: '$year',
+                        selected: yearFilter == year,
+                        onTap: () => setState(() => yearFilter = year),
+                      ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: EntryGrid(
-                    entries: entries,
-                    crossAxisCount: 2,
-                    shrinkWrap: false,
-                  ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: EntryGrid(
+                  entries: visible,
+                  crossAxisCount: 3,
+                  shrinkWrap: false,
                 ),
-              ],
-            ),
+              ),
+            ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _YearChip extends StatelessWidget {
+  const _YearChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: selected ? NightColors.accent : Colors.white24,
+            ),
+            boxShadow: selected ? neonGlow() : null,
+          ),
+          child: Text(label),
+        ),
       ),
     );
   }
@@ -521,7 +668,7 @@ class SupportScreen extends StatelessWidget {
         InfoSection(
           title: 'Common questions',
           body:
-              'Sign in with the code we text to your phone. Email accounts can still use the Email tab. Delete account from Profile > Account. Report entries, comments, and profiles from their menus.',
+              'Sign in with a UK mobile code, or email if you are outside the UK. Delete account from Profile > Account. Report entries, comments, and profiles from their menus.',
         ),
         InfoSection(
           title: 'Safety',
@@ -553,8 +700,7 @@ class TermsScreen extends StatelessWidget {
         ),
         InfoSection(
           title: 'Accounts',
-          body:
-              'You can update your profile and request account deletion.',
+          body: 'You can update your profile and request account deletion.',
         ),
       ],
     );
@@ -607,7 +753,10 @@ class InfoScreen extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 ...children,
@@ -633,7 +782,10 @@ class InfoSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 6),
           Text(body, style: const TextStyle(color: NightColors.muted)),
         ],

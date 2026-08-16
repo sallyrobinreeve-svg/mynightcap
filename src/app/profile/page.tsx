@@ -5,6 +5,7 @@ import { accountContact, accountFallbackName, accountInitial } from "@/lib/accou
 import { createClient } from "@/lib/supabase/server";
 import { BottomNav } from "@/components/BottomNav";
 import { DeleteAccountButton } from "@/components/DeleteAccountButton";
+import { NeonLogo } from "@/components/NeonLogo";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -46,9 +47,7 @@ export default async function ProfilePage() {
     <div className="min-h-screen bg-nightcap pb-24">
       <nav className="glass sticky top-0 z-10 border-b border-white/5">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <Link href="/" className="font-display text-2xl text-nightcap-accent">
-            NightCapt
-          </Link>
+          <NeonLogo className="text-3xl" />
           <div className="flex items-center gap-4">
             <Link href="/feed" className="text-nightcap-muted hover:text-white transition">
               Feed
@@ -132,7 +131,7 @@ export default async function ProfilePage() {
                 </div>
               )}
               <div>
-                <p className="text-nightcap-muted text-sm">Romance logged</p>
+                  <p className="text-nightcap-muted text-sm">Nights with a kiss</p>
                 <p className="text-white text-2xl font-display">{s.kiss_count} {s.kiss_count === 1 ? "entry" : "entries"}</p>
               </div>
               {(s.missions_completed ?? 0) > 0 && (

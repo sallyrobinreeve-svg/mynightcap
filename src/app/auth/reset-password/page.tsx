@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { NeonLogo } from "@/components/NeonLogo";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -46,11 +47,11 @@ export default function ResetPasswordPage() {
   return (
     <div className="min-h-screen bg-nightcap flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <Link href="/" className="inline-block font-display text-2xl text-nightcap-accent mb-8">
-          NightCapt
-        </Link>
-        <div className="glass rounded-2xl p-8">
-          <h1 className="font-display text-3xl text-white mb-6">Reset password</h1>
+        <div className="mb-8">
+          <NeonLogo className="text-4xl" />
+        </div>
+        <div className="glass rounded-2xl p-8 neon-glow">
+          <h1 className="text-3xl font-semibold text-white mb-6">Reset password</h1>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="password" className="block text-sm text-nightcap-muted mb-2">

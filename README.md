@@ -6,7 +6,7 @@ A social journal app for recording and sharing post-night-out memories: outfit p
 
 ## Features (MVP)
 
-- **Auth** – Phone number verification (SMS code) by default, with email sign-in as a fallback
+- **Auth** – UK phone SMS verification, with email for everyone else
 - **Entry creation** – Step-by-step wizard:
   - Date of night
   - Photos (outfit + favourite)

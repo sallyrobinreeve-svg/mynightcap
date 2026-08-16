@@ -64,28 +64,29 @@ Everything you need to fill in App Store Connect and generate screenshots.
 
 | Field | What to enter |
 |-------|----------------|
-| **Name** | NightCap |
-| **Subtitle** | (Optional, 30 chars max) e.g. "Your Night Out Journal" |
+| **Name** | NightCapt |
+| **Subtitle** | (Optional, 30 chars max) e.g. "Nights out, recapped" |
 | **Privacy Policy URL** | https://mynightcap.vercel.app/privacy |
+| **Support URL** | https://mynightcap.vercel.app/support |
 | **Category** | Primary: **Social Networking** or **Lifestyle** |
 | **Secondary Category** | (Optional) **Photo & Video** or **Entertainment** |
 | **Content Rights** | Check if you have rights to all content |
-| **Age Rating** | Complete the questionnaire (likely 12+ or 17+ if alcohol-related) |
+| **Age Rating** | **17+**. Answer yes for mature/suggestive themes, alcohol references, and user-generated content. |
 
 ---
 
 ### Description (4000 chars max)
 
 ```
-NightCap is your social journal for nights out. Capture the chaos, spill the tea, and lock in the memory.
+NightCapt is your social journal for nights out. Capture the recap, keep the private bits private, and lock in the memory.
 
-• Write journal entries about your nights out
-• Share with friends and see their stories
-• Build a feed of memories from you and your crew
-• Add photos and details to remember every moment
-• Leaderboard and memories to look back on the best nights
+• Recap the night with photos, video, and prompts
+• Sign in with a UK mobile code, or email if you are outside the UK
+• Share with friends and see their nights
+• Keep any answer private
+• Browse Memories as a photo grid of past nights
 
-Whether it's a wild night out or a chill hang, NightCap helps you document it and share it with the people who matter.
+Whether it was a big night or a quiet one, NightCapt is where the morning-after debrief lives.
 ```
 
 ---
@@ -110,7 +111,7 @@ Capture the chaos. Spill the tea from last night. Your social journal for nights
 
 For first release, you can use:
 ```
-Welcome to NightCap! Your social journal for nights out is ready. Start capturing memories today.
+Welcome to NightCapt. Recap the night, keep private answers private, and share with friends. UK phone login for UK mobiles, email for everyone else.
 ```
 
 ---
@@ -118,7 +119,7 @@ Welcome to NightCap! Your social journal for nights out is ready. Start capturin
 ### Support URL (required)
 
 ```
-https://mynightcap.vercel.app/privacy#support
+https://mynightcap.vercel.app/support
 ```
 
 The Support section is on the Privacy page (which already works). Use this URL – Apple rejects the homepage as a support URL.

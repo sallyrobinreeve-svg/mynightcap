@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { toFriendlyAuthMessage } from "@/lib/auth-errors";
-import { DEFAULT_DIAL_CODE, DIAL_CODES, isValidOtp, maskPhone, toE164 } from "@/lib/phone";
+import { isValidOtp, maskPhone, parseUkLoginPhone } from "@/lib/phone";
+import { UK_DIAL_CODE } from "@/lib/uk-auth";
 import { createClient } from "@/lib/supabase/client";
 
 const inputClass =
@@ -14,6 +15,7 @@ type PhoneOtpFormProps = {
   validateBeforeSend?: () => string | null;
   onVerified?: (userId: string) => Promise<void> | void;
   submitLabel?: string;
+  onRequireEmail?: () => void;
 };
 
 export function PhoneOtpForm({
@@ -22,8 +24,8 @@ export function PhoneOtpForm({
   validateBeforeSend,
   onVerified,
   submitLabel = "Send code",
+  onRequireEmail,
 }: PhoneOtpFormProps) {
-  const [dialCode, setDialCode] = useState(DEFAULT_DIAL_CODE);
   const [nationalNumber, setNationalNumber] = useState("");
   const [otp, setOtp] = useState("");
   const [sentTo, setSentTo] = useState<string | null>(null);
@@ -48,12 +50,19 @@ export function PhoneOtpForm({
       return;
     }
 
-    const phone = toE164(dialCode, nationalNumber);
-    if (!phone) {
-      setError("Enter a valid mobile number.");
+    const parsed = parseUkLoginPhone(nationalNumber);
+    if (parsed.status === "not_uk") {
+      setError("Phone login is for UK numbers only. Use email instead.");
+      setMessage(null);
+      onRequireEmail?.();
+      return;
+    }
+    if (parsed.status !== "ok") {
+      setError("Enter a valid UK mobile number, or use email.");
       setMessage(null);
       return;
     }
+    const phone = parsed.phone;
 
     setLoading(true);
     setError(null);
@@ -125,25 +134,12 @@ export function PhoneOtpForm({
     <form onSubmit={verifyCode} className="space-y-4">
       <div>
         <label htmlFor="phone" className="mb-2 block text-sm text-nightcap-muted">
-          Mobile number
+          UK mobile number
         </label>
         <div className="flex gap-2">
-          <label htmlFor="dial-code" className="sr-only">
-            Country code
-          </label>
-          <select
-            id="dial-code"
-            value={dialCode}
-            onChange={(e) => setDialCode(e.target.value)}
-            disabled={loading || Boolean(sentTo)}
-            className={`${inputClass} max-w-[9.5rem] shrink-0`}
-          >
-            {DIAL_CODES.map((country) => (
-              <option key={country.dial} value={country.dial}>
-                {country.label}
-              </option>
-            ))}
-          </select>
+          <span className="flex shrink-0 items-center rounded-xl border border-white/10 bg-nightcap/80 px-4 py-3 text-sm text-white">
+            {UK_DIAL_CODE}
+          </span>
           <input
             id="phone"
             type="tel"
@@ -194,6 +190,17 @@ export function PhoneOtpForm({
             ? "Verify code"
             : submitLabel}
       </button>
+
+      {onRequireEmail && (
+        <button
+          type="button"
+          disabled={loading}
+          onClick={onRequireEmail}
+          className="w-full text-sm text-nightcap-accent hover:underline disabled:opacity-50"
+        >
+          Outside the UK? Use email instead
+        </button>
+      )}
 
       {sentTo && (
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm">

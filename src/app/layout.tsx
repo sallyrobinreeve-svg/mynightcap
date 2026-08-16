@@ -1,18 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Quicksand, DM_Sans } from "next/font/google";
+import { Inter, Yellowtail } from "next/font/google";
 import "./globals.css";
 import { EnvGate } from "@/components/EnvGate";
 import { AppProviders } from "@/components/AppProviders";
 
-const display = Quicksand({
-  weight: ["400", "500", "600", "700"],
-  subsets: ["latin"],
-  variable: "--font-display",
-});
-
-const body = DM_Sans({
+const body = Inter({
   subsets: ["latin"],
   variable: "--font-body",
+});
+
+const script = Yellowtail({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-script",
 });
 
 export const metadata: Metadata = {
@@ -29,7 +29,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
-  themeColor: "#1e1b24",
+  themeColor: "#000000",
 };
 
 export default function RootLayout({
@@ -38,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${display.variable} ${body.variable}`} style={{ backgroundColor: "#1e1b24" }}>
+    <html lang="en" className={`${body.variable} ${script.variable}`} style={{ backgroundColor: "#000000" }}>
       <body className="font-body antialiased playful-bg min-h-screen safe-area-x">
         <EnvGate>
           <AppProviders>{children}</AppProviders>

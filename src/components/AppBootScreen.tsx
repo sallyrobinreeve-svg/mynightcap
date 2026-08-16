@@ -32,10 +32,13 @@ export function AppBootScreen() {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#1e1b24] safe-area-pt safe-area-pb safe-area-x"
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black safe-area-pt safe-area-pb safe-area-x"
       aria-hidden="true"
     >
-      <p className="font-display text-3xl text-nightcap-accent">NightCapt</p>
+      <p className="font-script text-4xl">
+        <span className="neon-text-pink text-nightcap-accent">Night</span>
+        <span className="neon-text-orange text-nightcap-orange">Capt</span>
+      </p>
       <div className="mt-6 h-8 w-8 animate-spin rounded-full border-2 border-nightcap-accent/30 border-t-nightcap-accent" />
     </div>
   );

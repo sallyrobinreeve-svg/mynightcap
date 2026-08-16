@@ -103,7 +103,7 @@ class _CreateEntryScreenState extends ConsumerState<CreateEntryScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            _label('Rating'),
+            _label('Rate the night'),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -125,13 +125,13 @@ class _CreateEntryScreenState extends ConsumerState<CreateEntryScreen> {
             TextField(
               key: const Key('create_drunkest'),
               controller: _drunkest,
-              decoration: const InputDecoration(hintText: 'Who was drunkest?'),
+              decoration: const InputDecoration(hintText: 'Who was the drunkest'),
             ),
             const SizedBox(height: 12),
             TextField(
               key: const Key('create_funniest'),
               controller: _funniest,
-              decoration: const InputDecoration(hintText: 'Funniest moment'),
+              decoration: const InputDecoration(hintText: 'The funniest bit'),
             ),
             const SizedBox(height: 12),
             TextField(

@@ -26,10 +26,12 @@ If the Supabase values are omitted, the app opens a configuration screen instead
 
 This native client includes:
 
-- Phone SMS verification by default, with email/password as a fallback
-- Support and Terms screens
-- Feed, create entry, memories, and profile tabs
+- UK phone SMS verification, with email for everyone else
+- Instagram-style neon UI: script logo, glowing borders, photo-first feed and grids
+- Feed, Friends, Create, Memories, and Profile tabs
 - Native photo-library picking for entry/profile photos
 - Supabase storage uploads and database writes using existing tables
 
 The existing Next app remains in the repository for web/admin/API support while the Flutter client becomes the App Store target.
+
+Before submitting a new iOS version, follow `docs/APP_STORE_SUBMIT_NOW.md`.

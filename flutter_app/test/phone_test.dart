@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nightcapt_flutter/phone.dart';
 
@@ -39,5 +40,18 @@ void main() {
       friendlyAuthMessage('Signups not allowed for otp'),
       'No account found for this number. Create an account first.',
     );
+  });
+
+  test('preferUkPhoneAuth is true for GB locales', () {
+    expect(preferUkPhoneAuth(const Locale('en', 'GB')), isTrue);
+    expect(preferUkPhoneAuth(const Locale('en', 'US')), isFalse);
+  });
+
+  test('parseUkLoginPhone accepts UK mobiles and rejects US numbers', () {
+    expect(parseUkLoginPhone('07123 456789').status, UkPhoneStatus.ok);
+    expect(parseUkLoginPhone('07123 456789').phone, '+447123456789');
+    expect(parseUkLoginPhone('+1 415 555 2671').status, UkPhoneStatus.notUk);
+    expect(parseUkLoginPhone('4155552671').status, UkPhoneStatus.notUk);
+    expect(parseUkLoginPhone('020 7946 0958').status, UkPhoneStatus.invalid);
   });
 }

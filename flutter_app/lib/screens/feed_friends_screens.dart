@@ -114,10 +114,9 @@ class _FeedScreenState extends State<FeedScreen> {
           ? ErrorCard(message: _error!, onRetry: () => _load(refresh: true))
           : _entries.isEmpty
           ? const EmptyState(
-              icon: Icons.local_fire_department,
+              icon: Icons.home_outlined,
               title: 'No nights yet',
-              body:
-                  'Create your first entry or add friends to fill the feed.',
+              body: 'Create your first entry or add friends to fill the feed.',
             )
           : RefreshIndicator(
               onRefresh: () => _load(refresh: true),
@@ -171,50 +170,61 @@ class FeedEntryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final date = DateTime.tryParse(entry.dateOfNight);
     return NightCard(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.zero,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    entry.displayName ?? 'NightCapt user',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 4, 10),
+              child: Row(
+                children: [
+                  UserAvatar(name: entry.displayName ?? 'N', radius: 16),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          entry.displayName ?? 'NightCapt user',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        if (date != null)
+                          Text(
+                            DateFormat.MMMd().format(date),
+                            style: const TextStyle(
+                              color: NightColors.muted,
+                              fontSize: 12,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-                ReportBlockMenu(
-                  reportedUserId: entry.userId,
-                  entryId: entry.id,
-                  onChanged: onBlocked,
-                ),
-              ],
+                  ReportBlockMenu(
+                    reportedUserId: entry.userId,
+                    entryId: entry.id,
+                    onChanged: onBlocked,
+                  ),
+                ],
+              ),
             ),
-            if (entry.thumbnailUrl != null) ...[
-              const SizedBox(height: 14),
+            if (entry.thumbnailUrl != null)
               ClipRRect(
-                borderRadius: BorderRadius.circular(16),
                 child: Image.network(
                   entry.thumbnailUrl!,
-                  height: 220,
+                  height: 240,
                   width: double.infinity,
                   fit: BoxFit.cover,
                 ),
-              ),
-            ],
-            if (entry.videoUrl != null && entry.thumbnailUrl == null) ...[
-              const SizedBox(height: 14),
+              )
+            else if (entry.videoUrl != null)
               Container(
                 height: 180,
                 width: double.infinity,
                 alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: NightColors.background,
-                  borderRadius: BorderRadius.circular(16),
-                ),
+                color: NightColors.background,
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -223,46 +233,70 @@ class FeedEntryCard extends StatelessWidget {
                     Text('Video attached'),
                   ],
                 ),
-              ),
-            ],
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(
+              )
+            else
+              Container(
+                height: 160,
+                width: double.infinity,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF2A0018), Color(0xFF000000)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+                child: Icon(
                   Icons.star,
-                  color: entry.rating == null
-                      ? NightColors.muted
-                      : NightColors.yellow,
+                  color: NightColors.orange,
+                  size: 36,
+                  shadows: neonShadows(NightColors.orange),
                 ),
-                const SizedBox(width: 6),
-                Text(entry.rating == null ? 'Not rated' : '${entry.rating} / 5'),
-                const Spacer(),
-                Text(
-                  date == null ? '' : DateFormat.yMMMd().format(date),
-                  style: const TextStyle(color: NightColors.muted),
-                ),
-              ],
-            ),
-            if (entry.mission != null && entry.mission!.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Mission: ${entry.mission}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: NightColors.muted),
               ),
-            ],
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                const Icon(Icons.local_fire_department, size: 16, color: NightColors.muted),
-                const SizedBox(width: 4),
-                Text('${entry.reactionCount}'),
-                const SizedBox(width: 16),
-                const Icon(Icons.chat_bubble_outline, size: 16, color: NightColors.muted),
-                const SizedBox(width: 4),
-                Text('${entry.commentCount}'),
-              ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (entry.mission != null && entry.mission!.isNotEmpty)
+                    Text(entry.mission!),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.star,
+                        size: 16,
+                        color: entry.rating == null
+                            ? NightColors.muted
+                            : NightColors.yellow,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        entry.rating == null
+                            ? 'Not rated'
+                            : '${entry.rating} / 5',
+                      ),
+                      const Spacer(),
+                      Icon(
+                        Icons.favorite,
+                        size: 18,
+                        color: NightColors.accent,
+                        shadows: neonShadows(NightColors.accent),
+                      ),
+                      const SizedBox(width: 4),
+                      Text('${entry.reactionCount}'),
+                      const SizedBox(width: 14),
+                      const Icon(
+                        Icons.chat_bubble_outline,
+                        size: 18,
+                        color: NightColors.mint,
+                      ),
+                      const SizedBox(width: 4),
+                      Text('${entry.commentCount}'),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -323,7 +357,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
   void _onQueryChanged(String value) {
     _debounce?.cancel();
     setState(() => _query = value.trim());
-    _debounce = Timer(const Duration(milliseconds: 350), () => _runSearch(value));
+    _debounce = Timer(
+      const Duration(milliseconds: 350),
+      () => _runSearch(value),
+    );
   }
 
   Future<void> _runSearch(String value) async {
@@ -357,7 +394,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 TextField(
                   controller: _search,
                   onChanged: _onQueryChanged,
-                  decoration: nightInputDecoration('Search by name or username'),
+                  decoration: nightInputDecoration(
+                    'Search by name or username',
+                  ),
                 ),
                 const SizedBox(height: 20),
                 if (_query.length >= 2) ...[
@@ -384,17 +423,26 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         children: [
                           TextButton(
                             onPressed: () async {
-                              await friendsService.respond(profile.id, accept: true);
+                              await friendsService.respond(
+                                profile.id,
+                                accept: true,
+                              );
                               _refresh();
                             },
                             child: const Text('Accept'),
                           ),
                           IconButton(
                             onPressed: () async {
-                              await friendsService.respond(profile.id, accept: false);
+                              await friendsService.respond(
+                                profile.id,
+                                accept: false,
+                              );
                               _refresh();
                             },
-                            icon: const Icon(Icons.close, color: NightColors.muted),
+                            icon: const Icon(
+                              Icons.close,
+                              color: NightColors.muted,
+                            ),
                           ),
                         ],
                       ),
@@ -465,11 +513,17 @@ class _FriendTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(profile.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  profile.name,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 if (profile.username != null)
                   Text(
                     '@${profile.username}',
-                    style: const TextStyle(color: NightColors.muted, fontSize: 13),
+                    style: const TextStyle(
+                      color: NightColors.muted,
+                      fontSize: 13,
+                    ),
                   ),
               ],
             ),
@@ -488,7 +542,10 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 8),
-    child: Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+    child: Text(
+      text,
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    ),
   );
 }
 

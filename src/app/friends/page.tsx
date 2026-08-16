@@ -6,6 +6,7 @@ import { FriendsSearch } from "@/components/FriendsSearch";
 import { FollowRequests } from "@/components/FollowButton";
 import { SafeImage } from "@/components/SafeImage";
 import { BottomNav } from "@/components/BottomNav";
+import { NeonLogo } from "@/components/NeonLogo";
 
 export default async function FriendsPage() {
   const supabase = await createClient();
@@ -63,9 +64,7 @@ export default async function FriendsPage() {
           <Link href="/feed" className="text-nightcap-muted hover:text-white text-sm transition">
             ← Back
           </Link>
-          <Link href="/" className="font-display text-xl text-nightcap-accent">
-            NightCapt
-          </Link>
+          <NeonLogo className="text-3xl" />
           <span className="w-12" />
         </div>
       </nav>

@@ -12,7 +12,7 @@ class PromptDefinition {
     this.toggleLabels = const ['Yes', 'No'],
     this.choices = const [],
     this.privateByDefault = false,
-    this.canBePrivate = false,
+    this.canBePrivate = true,
   });
 
   final String id;
@@ -28,8 +28,9 @@ class PromptDefinition {
   final bool canBePrivate;
 }
 
+const hiddenPromptIds = {'chaos'};
+
 const defaultPromptIds = [
-  'chaos',
   'whoWasDrunkest',
   'funniestThing',
   'songOfNight',
@@ -39,41 +40,36 @@ const defaultPromptIds = [
 
 const promptDefinitions = [
   PromptDefinition(
-    id: 'chaos',
-    label: 'Rate the chaos',
-    category: 'Recap',
-    inputType: PromptInputType.slider,
-  ),
-  PromptDefinition(
     id: 'whoWasDrunkest',
-    label: 'MVP of messiness (who was drunkest?)',
+    label: 'Who was the drunkest',
     category: 'Recap',
     inputType: PromptInputType.text,
-    canBePrivate: true,
+    placeholder: 'Name',
   ),
   PromptDefinition(
     id: 'funniestThing',
-    label: 'Funniest moment',
+    label: 'The funniest bit',
     category: 'Recap',
     inputType: PromptInputType.textarea,
-    canBePrivate: true,
+    placeholder: "The one you'll all repeat tomorrow",
   ),
   PromptDefinition(
     id: 'quoteOfNight',
-    label: 'Quote of the night',
+    label: 'Line of the night',
     category: 'Recap',
     inputType: PromptInputType.text,
+    placeholder: 'What someone actually said',
   ),
   PromptDefinition(
     id: 'kissedAnyone',
-    label: 'Did you kiss anyone?',
+    label: 'Anyone get kissed?',
     category: 'Recap',
     inputType: PromptInputType.toggle,
     privateByDefault: true,
   ),
   PromptDefinition(
     id: 'kissedWho',
-    label: 'Who?',
+    label: 'Who with?',
     category: 'Recap',
     inputType: PromptInputType.text,
     placeholder: 'Optional',
@@ -84,25 +80,28 @@ const promptDefinitions = [
     label: 'Home time',
     category: 'Recap',
     inputType: PromptInputType.text,
-    placeholder: 'e.g. 4am',
+    placeholder: '3am, sunrise, no idea',
   ),
   PromptDefinition(
     id: 'songOfNight',
-    label: 'Song of the night',
+    label: 'The song',
     category: 'Party',
     inputType: PromptInputType.text,
+    placeholder: 'What was playing',
   ),
   PromptDefinition(
     id: 'oneWordVibe',
-    label: 'One-word vibe',
+    label: 'One word',
     category: 'Reflection',
     inputType: PromptInputType.text,
+    placeholder: "One word. That's it.",
   ),
   PromptDefinition(
     id: 'tonightsObjective',
     label: 'Mission of the night',
     category: 'Mission',
     inputType: PromptInputType.text,
+    placeholder: 'What was the mission?',
   ),
   PromptDefinition(
     id: 'missionResult',
@@ -115,23 +114,23 @@ const promptDefinitions = [
     label: 'Notable mentions',
     category: 'Reflection',
     inputType: PromptInputType.textarea,
-    canBePrivate: true,
+    placeholder: 'Anyone or anything else worth logging',
   ),
   PromptDefinition(
     id: 'nightMvp',
-    label: 'Night MVP',
+    label: 'Who carried',
     category: 'Social',
     inputType: PromptInputType.text,
   ),
   PromptDefinition(
     id: 'drinkOfChoice',
-    label: 'Drink of choice',
+    label: 'What you were drinking',
     category: 'Party',
     inputType: PromptInputType.text,
   ),
   PromptDefinition(
     id: 'coreMemory',
-    label: 'Core memory',
+    label: "The bit you'll keep",
     category: 'Reflection',
     inputType: PromptInputType.textarea,
   ),
@@ -153,7 +152,8 @@ List<PromptDefinition> extraPrompts() {
   final defaults = defaultPromptIds.toSet();
   return [
     for (final prompt in promptDefinitions)
-      if (!defaults.contains(prompt.id)) prompt,
+      if (!defaults.contains(prompt.id) && !hiddenPromptIds.contains(prompt.id))
+        prompt,
   ];
 }
 

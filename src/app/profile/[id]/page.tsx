@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { deriveFollowStatus } from "@/lib/friends";
 import { FollowButton } from "@/components/FollowButton";
 import { ReportBlockMenu } from "@/components/ReportBlockMenu";
+import { NeonLogo } from "@/components/NeonLogo";
 
 export default async function UserProfilePage({
   params,
@@ -57,9 +58,7 @@ export default async function UserProfilePage({
     <div className="min-h-screen bg-nightcap">
       <nav className="glass sticky top-0 z-10 border-b border-white/5">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <Link href="/" className="font-display text-2xl text-nightcap-accent">
-            NightCapt
-          </Link>
+          <NeonLogo className="text-3xl" />
           <div className="flex items-center gap-4">
             <Link href="/feed" className="text-nightcap-muted hover:text-white transition">
               Feed

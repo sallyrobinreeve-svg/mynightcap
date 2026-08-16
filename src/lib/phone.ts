@@ -62,6 +62,43 @@ export function isValidOtp(token: string): boolean {
   return /^\d{6}$/.test(token.trim());
 }
 
+const UK_MOBILE = /^\+447\d{9}$/;
+
+export function isUkMobile(e164: string): boolean {
+  return UK_MOBILE.test(e164.trim());
+}
+
+export type UkPhoneResult =
+  | { status: "ok"; phone: string }
+  | { status: "invalid" }
+  | { status: "not_uk" };
+
+/** Parse a number for UK phone login. Non-UK numbers should switch to email. */
+export function parseUkLoginPhone(nationalNumber: string): UkPhoneResult {
+  const trimmed = nationalNumber.trim();
+  if (!trimmed) return { status: "invalid" };
+
+  if (trimmed.startsWith("+") && !trimmed.startsWith("+44")) {
+    return { status: "not_uk" };
+  }
+
+  const digits = digitsOnly(trimmed);
+  const withoutLeadingZero = digits.startsWith("0") ? digits.slice(1) : digits;
+  if (digits.startsWith("1") && digits.length === 11) {
+    return { status: "not_uk" };
+  }
+  if (withoutLeadingZero.length === 10 && !withoutLeadingZero.startsWith("7")) {
+    if (/^[12]/.test(withoutLeadingZero)) return { status: "invalid" };
+    return { status: "not_uk" };
+  }
+
+  const phone = toE164(DEFAULT_DIAL_CODE, trimmed);
+  if (!phone) return { status: "invalid" };
+  if (!phone.startsWith(DEFAULT_DIAL_CODE)) return { status: "not_uk" };
+  if (!isUkMobile(phone)) return { status: "invalid" };
+  return { status: "ok", phone };
+}
+
 /** Mask a phone number for UI copy, e.g. +447••••••789. */
 export function maskPhone(e164: string): string {
   const digits = digitsOnly(e164);

@@ -1,5 +1,7 @@
 "use client";
 
+import { UK_PHONE_AUTH_COPY } from "@/lib/uk-auth";
+
 export type AuthMethod = "phone" | "email";
 
 export function AuthMethodToggle({
@@ -15,13 +17,13 @@ export function AuthMethodToggle({
     }`;
 
   return (
-    <div className="mb-6 grid grid-cols-2 rounded-xl border border-white/10 bg-nightcap/80 p-1">
+    <div className="mb-6 grid grid-cols-2 rounded-xl border border-nightcap-accent/30 bg-black p-1">
       <button
         type="button"
         className={tabClass(value === "phone")}
         onClick={() => onChange("phone")}
       >
-        Phone
+        UK phone
       </button>
       <button
         type="button"
@@ -31,5 +33,23 @@ export function AuthMethodToggle({
         Email
       </button>
     </div>
+  );
+}
+
+export function UkAuthNotice({
+  method,
+  intent = "signin",
+}: {
+  method: AuthMethod;
+  intent?: "signin" | "signup";
+}) {
+  return (
+    <p className="mb-6 text-sm text-nightcap-muted">
+      {method === "phone"
+        ? UK_PHONE_AUTH_COPY
+        : intent === "signup"
+          ? "Outside the UK? Create an account with email. Phone login is for UK mobiles only."
+          : "Outside the UK? Sign in with email. Phone login is for UK mobiles only."}
+    </p>
   );
 }

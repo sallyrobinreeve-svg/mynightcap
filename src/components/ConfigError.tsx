@@ -3,7 +3,7 @@ import Link from "next/link";
 export function ConfigError() {
   return (
     <div className="min-h-screen bg-nightcap flex flex-col items-center justify-center px-6 text-center">
-      <h1 className="font-display text-3xl text-white mb-3">NightCapt can’t connect</h1>
+      <h1 className="text-3xl font-semibold text-white mb-3">NightCapt can’t connect</h1>
       <p className="text-nightcap-muted max-w-md mb-6">
         This build is missing configuration (Supabase URL or key). If you’re the developer, set{" "}
         <code className="text-nightcap-accent text-sm">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}

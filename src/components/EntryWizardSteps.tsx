@@ -6,6 +6,7 @@ import Image from "next/image";
 import type { TimelineStep, TimelineStepType } from "@/types/database";
 import { GripVertical, Plus, X } from "lucide-react";
 import { PROMPTS, TIMELINE_EMOJIS } from "@/lib/prompts";
+import { isPromptMetadataKey, isPromptPrivate } from "@/lib/prompt-privacy";
 import { fetchJson } from "@/lib/fetch-client";
 import type { WizardData } from "./EntryWizard";
 import {
@@ -629,7 +630,7 @@ export function StepReview({
           <p className="text-white">{data.dateOfNight}</p>
         </div>
         <div>
-          <span className="text-nightcap-muted text-sm">Rating</span>
+          <span className="text-nightcap-muted text-sm">Rate the night</span>
           <p className="text-white">{data.rating ? `${data.rating} / 5` : "–"}</p>
         </div>
         {data.videoUrl && (
@@ -638,7 +639,7 @@ export function StepReview({
             <p className="text-white truncate">{data.videoUrl ? "Added" : "–"}</p>
           </div>
         )}
-        {Object.entries(data.prompts).filter(([k, v]) => !["missionCompleted", "kissedPrivate"].includes(k) && v !== undefined && v !== "" && v !== null).length > 0 && (
+        {Object.entries(data.prompts).filter(([k, v]) => !isPromptMetadataKey(k) && v !== undefined && v !== "" && v !== null).length > 0 && (
           <div>
             <span className="text-nightcap-muted text-sm">Prompts</span>
             <ul className="list-disc list-inside text-white space-y-1 mt-1">
@@ -653,7 +654,10 @@ export function StepReview({
                       ? p.toggleLabels?.[0] ?? "Yes"
                       : p.toggleLabels?.[1] ?? "No"
                     : String(data.prompts[p.id])}
-                  {(p.id === "kissedAnyone" || p.id === "kissedWho") && data.kissedPrivate && " (private)"}
+                  {isPromptPrivate(
+                    { ...data.prompts, kissedPrivate: data.kissedPrivate },
+                    p.id
+                  ) && " (private)"}
                   {p.id === "tonightsObjective" && data.prompts.missionCompleted !== undefined && (
                     data.prompts.missionCompleted ? " ✓ Completed" : " (not completed)"
                   )}
