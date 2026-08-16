@@ -191,52 +191,76 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     return NightScaffold(
-      child: NightCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const BrandHeader(),
-            const SizedBox(height: 12),
-            Text(
-              showSignUp ? 'Create account' : 'Sign in',
-              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            showSignUp ? const SignUpForm() : const SignInForm(),
-            const SizedBox(height: 16),
-            Center(
-              child: TextButton(
-                onPressed: () => setState(() => showSignUp = !showSignUp),
-                child: Text(
-                  showSignUp
-                      ? 'Already have an account? Sign in'
-                      : 'Need an account? Sign up',
+      child: ListView(
+        children: [
+          NightCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const BrandHeader(),
+                const SizedBox(height: 12),
+                Text(
+                  showSignUp ? 'Create account' : 'Sign in',
+                  style: const TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 20),
+                showSignUp ? const SignUpForm() : const SignInForm(),
+                const SizedBox(height: 16),
+                Center(
+                  child: TextButton(
+                    onPressed: () => setState(() => showSignUp = !showSignUp),
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: showSignUp
+                                ? 'Already have an account? '
+                                : "Don't have an account? ",
+                            style: const TextStyle(color: NightColors.muted),
+                          ),
+                          TextSpan(
+                            text: showSignUp ? 'Sign in' : 'Sign up',
+                            style: const TextStyle(
+                              color: NightColors.accent,
+                              fontWeight: FontWeight.w700,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Center(
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 16,
+                    children: [
+                      TextButton(
+                        onPressed: () =>
+                            Navigator.of(context).pushNamed('/terms'),
+                        child: const Text('Terms'),
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            Navigator.of(context).pushNamed('/privacy'),
+                        child: const Text('Privacy'),
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            Navigator.of(context).pushNamed('/support'),
+                        child: const Text('Support'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            Center(
-              child: Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 16,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pushNamed('/terms'),
-                    child: const Text('Terms'),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pushNamed('/privacy'),
-                    child: const Text('Privacy'),
-                  ),
-                  TextButton(
-                    onPressed: () =>
-                        Navigator.of(context).pushNamed('/support'),
-                    child: const Text('Support'),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -284,14 +308,9 @@ class _SignInFormState extends State<SignInForm> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SegmentedButton<bool>(
-          showSelectedIcon: false,
-          segments: const [
-            ButtonSegment(value: true, label: Text('UK phone')),
-            ButtonSegment(value: false, label: Text('Email')),
-          ],
-          selected: {usePhone},
-          onSelectionChanged: (value) => setState(() => usePhone = value.first),
+        AuthMethodTabs(
+          usePhone: usePhone,
+          onChanged: (value) => setState(() => usePhone = value),
         ),
         const SizedBox(height: 12),
         Text(
@@ -302,7 +321,9 @@ class _SignInFormState extends State<SignInForm> {
         ),
         if (forcedToEmail && !usePhone) ...[
           const SizedBox(height: 12),
-          const Text('Phone login is for UK numbers only. Continue with email.'),
+          const Text(
+            'Phone login is for UK numbers only. Continue with email.',
+          ),
         ],
         const SizedBox(height: 16),
         if (usePhone)
@@ -353,39 +374,31 @@ class _SignInFormState extends State<SignInForm> {
           ),
           if (message != null) StatusText(message!),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton(
-                  onPressed: loading
-                      ? null
-                      : () => runAction(
-                            () => supabase.auth.signInWithPassword(
-                              email: email.text.trim(),
-                              password: password.text,
-                            ),
-                          ),
-                  child: Text(loading ? 'Signing in...' : 'Sign in'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              OutlinedButton(
-                onPressed: loading
-                    ? null
-                    : () => runAction(() async {
-                          await supabase.auth.signInWithOtp(
-                            email: email.text.trim(),
-                            emailRedirectTo:
-                                '${appConfig.siteUrl}/auth/callback',
-                          );
-                          setState(
-                            () => message =
-                                'Check your email for the magic link.',
-                          );
-                        }),
-                child: const Text('Magic link'),
-              ),
-            ],
+          NeonButton(
+            label: loading ? 'Signing in...' : 'Sign in',
+            onPressed: loading
+                ? null
+                : () => runAction(
+                    () => supabase.auth.signInWithPassword(
+                      email: email.text.trim(),
+                      password: password.text,
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: loading
+                ? null
+                : () => runAction(() async {
+                    await supabase.auth.signInWithOtp(
+                      email: email.text.trim(),
+                      emailRedirectTo: '${appConfig.siteUrl}/auth/callback',
+                    );
+                    setState(
+                      () => message = 'Check your email for the magic link.',
+                    );
+                  }),
+            child: const Text('Magic link'),
           ),
         ],
       ],
@@ -440,9 +453,10 @@ class _SignUpFormState extends State<SignUpForm> {
       );
       final userId = response.user?.id;
       if (userId != null) {
-        await supabase.from('profiles').update({
-          'terms_accepted_at': acceptedAt,
-        }).eq('id', userId);
+        await supabase
+            .from('profiles')
+            .update({'terms_accepted_at': acceptedAt})
+            .eq('id', userId);
       }
       setState(() => message = 'Check your email to confirm your account.');
     } on AuthException catch (error) {
@@ -458,14 +472,9 @@ class _SignUpFormState extends State<SignUpForm> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SegmentedButton<bool>(
-          showSelectedIcon: false,
-          segments: const [
-            ButtonSegment(value: true, label: Text('UK phone')),
-            ButtonSegment(value: false, label: Text('Email')),
-          ],
-          selected: {usePhone},
-          onSelectionChanged: (value) => setState(() => usePhone = value.first),
+        AuthMethodTabs(
+          usePhone: usePhone,
+          onChanged: (value) => setState(() => usePhone = value),
         ),
         const SizedBox(height: 12),
         Text(
@@ -476,7 +485,9 @@ class _SignUpFormState extends State<SignUpForm> {
         ),
         if (forcedToEmail && !usePhone) ...[
           const SizedBox(height: 12),
-          const Text('Phone login is for UK numbers only. Continue with email.'),
+          const Text(
+            'Phone login is for UK numbers only. Continue with email.',
+          ),
         ],
         const SizedBox(height: 16),
         NightTextField(controller: displayName, label: 'Display name'),
@@ -516,9 +527,14 @@ class _SignUpFormState extends State<SignUpForm> {
             onVerified: () async {
               final userId = supabase.auth.currentUser?.id;
               if (userId == null) return;
-              await supabase.from('profiles').update({
-                'terms_accepted_at': DateTime.now().toUtc().toIso8601String(),
-              }).eq('id', userId);
+              await supabase
+                  .from('profiles')
+                  .update({
+                    'terms_accepted_at': DateTime.now()
+                        .toUtc()
+                        .toIso8601String(),
+                  })
+                  .eq('id', userId);
             },
             onRequireEmail: () => setState(() {
               usePhone = false;
@@ -528,12 +544,9 @@ class _SignUpFormState extends State<SignUpForm> {
         else ...[
           if (message != null) StatusText(message!),
           const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: loading ? null : signUp,
-              child: Text(loading ? 'Creating account...' : 'Sign up'),
-            ),
+          NeonButton(
+            label: loading ? 'Creating account...' : 'Sign up',
+            onPressed: loading ? null : signUp,
           ),
         ],
       ],
@@ -603,7 +616,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         } on AuthException catch (error) {
                           setState(() => message = error.message);
                         } catch (_) {
-                          setState(() => message = 'Could not update password.');
+                          setState(
+                            () => message = 'Could not update password.',
+                          );
                         } finally {
                           if (mounted) setState(() => loading = false);
                         }

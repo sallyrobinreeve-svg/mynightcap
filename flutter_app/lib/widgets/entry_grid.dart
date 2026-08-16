@@ -27,12 +27,13 @@ class EntryGrid extends StatelessWidget {
 
     return GridView.builder(
       shrinkWrap: shrinkWrap,
-      physics: physics ?? (shrinkWrap ? const NeverScrollableScrollPhysics() : null),
+      physics:
+          physics ?? (shrinkWrap ? const NeverScrollableScrollPhysics() : null),
       itemCount: entries.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
-        mainAxisSpacing: 4,
-        crossAxisSpacing: 4,
+        mainAxisSpacing: 2,
+        crossAxisSpacing: 2,
       ),
       itemBuilder: (context, index) {
         final entry = entries[index];

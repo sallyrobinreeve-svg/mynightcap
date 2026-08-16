@@ -219,11 +219,22 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const Text(
+                  'DATE OF NIGHT',
+                  style: TextStyle(
+                    color: NightColors.muted,
+                    fontSize: 11,
+                    letterSpacing: 1.1,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Date of night'),
-                  subtitle: Text(DateFormat.yMMMMd().format(date)),
-                  trailing: const Icon(Icons.calendar_today),
+                  title: Text(DateFormat.yMMMMd().format(date)),
+                  trailing: const Icon(
+                    Icons.calendar_today,
+                    color: NightColors.accent,
+                  ),
                   onTap: () async {
                     final picked = await showDatePicker(
                       context: context,
@@ -235,36 +246,37 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
                   },
                 ),
                 const SizedBox(height: 12),
-                const Text('Rate the night'),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: List.generate(5, (i) {
-                    final value = i + 1;
-                    return ChoiceChip(
-                      label: Text('$value'),
-                      selected: rating == value,
-                      onSelected: (_) => setState(() => rating = value),
-                    );
-                  }),
+                const Text(
+                  'RATE THE NIGHT',
+                  style: TextStyle(
+                    color: NightColors.muted,
+                    fontSize: 11,
+                    letterSpacing: 1.1,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                StarRating(
+                  value: rating,
+                  onChanged: (value) => setState(() => rating = value),
                 ),
                 const SizedBox(height: 18),
                 Row(
                   children: [
                     Expanded(
                       child: PhotoButton(
-                        label: outfitUrl == null ? 'Outfit photo' : 'Outfit added',
-                        icon: Icons.checkroom,
+                        label: 'Outfit photo',
+                        icon: Icons.camera_alt_outlined,
+                        filled: outfitUrl != null,
                         onTap: () => pickPhoto('outfit'),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: PhotoButton(
-                        label: favouriteUrl == null
-                            ? 'Favourite photo'
-                            : 'Favourite added',
-                        icon: Icons.favorite,
+                        label: 'Favourite photo',
+                        icon: Icons.camera_alt_outlined,
+                        filled: favouriteUrl != null,
                         onTap: () => pickPhoto('favourite'),
                       ),
                     ),
@@ -274,6 +286,7 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
                 PhotoButton(
                   label: videoUrl == null ? 'Add video' : 'Video added',
                   icon: Icons.videocam_outlined,
+                  filled: videoUrl != null,
                   onTap: pickVideo,
                 ),
                 const SizedBox(height: 18),
@@ -282,7 +295,10 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
                   onChanged: () => setState(() {}),
                 ),
                 const SizedBox(height: 18),
-                const Text('Tag friends', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'Tag friends',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
                 if (friends.isEmpty)
                   const Text(
@@ -311,10 +327,14 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
                 const SizedBox(height: 18),
                 Row(
                   children: [
-                    const Text('Prompts', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Prompts',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     const Spacer(),
                     TextButton(
-                      onPressed: () => setState(() => showAllPrompts = !showAllPrompts),
+                      onPressed: () =>
+                          setState(() => showAllPrompts = !showAllPrompts),
                       child: Text(showAllPrompts ? 'Show fewer' : 'Show all'),
                     ),
                   ],
@@ -351,18 +371,13 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
                 ),
                 if (message != null) StatusText(message!),
                 const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: saving ? null : saveEntry,
-                    child: Text(
-                      saving
-                          ? 'Saving...'
-                          : widget.isEditing
-                          ? 'Save changes'
-                          : 'Post entry',
-                    ),
-                  ),
+                NeonButton(
+                  onPressed: saving ? null : saveEntry,
+                  label: saving
+                      ? 'Saving...'
+                      : widget.isEditing
+                      ? 'Save changes'
+                      : 'Post night',
                 ),
               ],
             ),

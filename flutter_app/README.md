@@ -27,8 +27,8 @@ If the Supabase values are omitted, the app opens a configuration screen instead
 This native client includes:
 
 - UK phone SMS verification, with email for everyone else
-- Support and Terms screens
-- Feed, create entry, memories, and profile tabs
+- Instagram-style neon UI: script logo, glowing borders, photo-first feed and grids
+- Feed, Friends, Create, Memories, and Profile tabs
 - Native photo-library picking for entry/profile photos
 - Supabase storage uploads and database writes using existing tables
 

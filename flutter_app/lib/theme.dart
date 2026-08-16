@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class NightColors {
   static const background = Color(0xFF000000);
-  static const card = Color(0xFF0A0A0A);
+  static const card = Color(0xFF050505);
   static const accent = Color(0xFFFF2E9A);
   static const orange = Color(0xFFFF8A3C);
   static const mint = Color(0xFF7AF0C2);
@@ -11,23 +11,33 @@ class NightColors {
 }
 
 List<Shadow> neonShadows(Color color) => [
-  Shadow(color: color.withValues(alpha: 0.95), blurRadius: 8),
-  Shadow(color: color.withValues(alpha: 0.45), blurRadius: 22),
+  Shadow(color: color, blurRadius: 4),
+  Shadow(color: color.withValues(alpha: 0.95), blurRadius: 14),
+  Shadow(color: color.withValues(alpha: 0.55), blurRadius: 28),
 ];
 
-InputDecoration nightInputDecoration(String label) {
+List<BoxShadow> neonGlow([Color color = NightColors.accent]) => [
+  BoxShadow(color: color.withValues(alpha: 0.75), blurRadius: 16),
+  BoxShadow(color: color.withValues(alpha: 0.35), blurRadius: 32),
+];
+
+InputDecoration nightInputDecoration(String label, {bool glowing = true}) {
+  final border = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(14),
+    borderSide: BorderSide(
+      color: NightColors.accent.withValues(alpha: glowing ? 0.85 : 0.35),
+      width: 1.4,
+    ),
+  );
   return InputDecoration(
     labelText: label,
     filled: true,
-    fillColor: Colors.black.withValues(alpha: 0.72),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide(color: NightColors.accent.withValues(alpha: 0.28)),
-    ),
+    fillColor: Colors.black,
+    border: border,
+    enabledBorder: border,
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: NightColors.accent, width: 1.4),
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: NightColors.accent, width: 1.8),
     ),
   );
 }
@@ -58,37 +68,42 @@ ThemeData buildNightTheme() {
       titleTextStyle: baseText.titleLarge?.copyWith(
         color: Colors.white,
         fontSize: 20,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
       ),
     ),
-    navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: Colors.black,
-      indicatorColor: NightColors.accent.withValues(alpha: 0.18),
-      elevation: 0,
-      labelTextStyle: WidgetStateProperty.resolveWith((states) {
-        final selected = states.contains(WidgetState.selected);
-        return TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w500,
-          color: selected ? NightColors.accent : NightColors.muted,
-        );
-      }),
-      iconTheme: WidgetStateProperty.resolveWith((states) {
-        final selected = states.contains(WidgetState.selected);
-        return IconThemeData(
-          color: selected ? NightColors.accent : NightColors.muted,
-        );
-      }),
-    ),
+    dividerColor: Colors.white.withValues(alpha: 0.08),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         backgroundColor: NightColors.accent,
         foregroundColor: Colors.white,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+        textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.white,
+        side: const BorderSide(color: NightColors.accent, width: 1.4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(foregroundColor: NightColors.accent),
+    ),
+    checkboxTheme: CheckboxThemeData(
+      fillColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) return NightColors.accent;
+        return Colors.transparent;
+      }),
+      checkColor: const WidgetStatePropertyAll(Colors.white),
+      side: const BorderSide(color: NightColors.accent, width: 1.4),
+    ),
     chipTheme: ChipThemeData(
-      selectedColor: NightColors.accent.withValues(alpha: 0.28),
-      side: BorderSide(color: NightColors.accent.withValues(alpha: 0.35)),
+      selectedColor: NightColors.orange,
+      side: BorderSide(color: NightColors.accent.withValues(alpha: 0.7)),
+      labelStyle: const TextStyle(color: Colors.white),
     ),
   );
 }

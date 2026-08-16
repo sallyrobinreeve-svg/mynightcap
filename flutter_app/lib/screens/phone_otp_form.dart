@@ -73,7 +73,10 @@ class _PhoneOtpFormState extends State<PhoneOtpForm> {
 
     final parsed = parseUkLoginPhone(number.text);
     if (parsed.status == UkPhoneStatus.notUk) {
-      setState(() => message = 'Phone login is for UK numbers only. Use email instead.');
+      setState(
+        () =>
+            message = 'Phone login is for UK numbers only. Use email instead.',
+      );
       widget.onRequireEmail?.call();
       return;
     }
@@ -149,13 +152,20 @@ class _PhoneOtpFormState extends State<PhoneOtpForm> {
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
               decoration: BoxDecoration(
-                color: NightColors.background.withValues(alpha: 0.68),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: NightColors.accent, width: 1.4),
+                boxShadow: neonGlow(NightColors.accent.withValues(alpha: 0.45)),
               ),
-              child: const Text('+44'),
+              child: const Row(
+                children: [
+                  Icon(Icons.lock_outline, size: 16),
+                  SizedBox(width: 6),
+                  Text('+44'),
+                ],
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -186,19 +196,23 @@ class _PhoneOtpFormState extends State<PhoneOtpForm> {
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
-          child: FilledButton(
+          child: NeonButton(
             onPressed: loading ? null : verifyCode,
-            child: Text(
-              loading
-                  ? (sentTo == null ? 'Sending code...' : 'Verifying...')
-                  : (sentTo == null ? widget.submitLabel : 'Verify code'),
-            ),
+            label: loading
+                ? (sentTo == null ? 'Sending code...' : 'Verifying...')
+                : (sentTo == null ? widget.submitLabel : 'Verify code'),
           ),
         ),
         if (widget.onRequireEmail != null)
           TextButton(
             onPressed: loading ? null : widget.onRequireEmail,
-            child: const Text('Outside the UK? Use email instead'),
+            child: const Text(
+              'Outside the UK? Use email instead',
+              style: TextStyle(
+                color: NightColors.orange,
+                decoration: TextDecoration.underline,
+              ),
+            ),
           ),
         if (sentTo != null)
           Row(
@@ -214,12 +228,12 @@ class _PhoneOtpFormState extends State<PhoneOtpForm> {
                 onPressed: loading
                     ? null
                     : () => setState(() {
-                          sentTo = null;
-                          otp.text = '';
-                          message = null;
-                          cooldown = 0;
-                          _timer?.cancel();
-                        }),
+                        sentTo = null;
+                        otp.text = '';
+                        message = null;
+                        cooldown = 0;
+                        _timer?.cancel();
+                      }),
                 child: const Text('Change number'),
               ),
             ],
