@@ -37,10 +37,12 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>NightCapt needs photo library access for profile pictures and journal entries.</string>
+	<string>NightCapt uses your photo library so you can add outfit photos, favourite photos, videos, and a profile picture to your recaps.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>NightCapt saves selected photos to your journal entries.</string>
+	<string>NightCapt may save recap photos you choose to keep on this device.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

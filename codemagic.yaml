@@ -32,11 +32,11 @@ workflows:
           echo "SUPABASE_URL is ${SUPABASE_URL:+set}${SUPABASE_URL:-MISSING}"
           echo "SUPABASE_ANON_KEY is ${SUPABASE_ANON_KEY:+set}${SUPABASE_ANON_KEY:-MISSING}"
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
-            echo "WARNING: SUPABASE_URL or SUPABASE_ANON_KEY is not set in Codemagic."
-            echo "The app will fetch public config from $SITE_URL/api/mobile-config at runtime."
-          else
-            echo "Supabase credentials are set for compile-time embedding."
+            echo "ERROR: SUPABASE_URL or SUPABASE_ANON_KEY is not set in the Codemagic nightcapt group."
+            echo "App Store builds must embed these or reviewers see Unable to connect."
+            exit 1
           fi
+          echo "Supabase credentials are set for compile-time embedding."
       - name: Build Flutter IPA for App Store
         script: |
           cd flutter_app

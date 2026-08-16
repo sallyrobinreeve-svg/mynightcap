@@ -77,9 +77,11 @@ https://mynightcap.vercel.app/support
 
 ## 6. Before Resubmitting
 
+Follow **[APP_STORE_SUBMIT_NOW.md](APP_STORE_SUBMIT_NOW.md)** instead of this shorter list.
+
 1. [ ] Deploy the latest code to Vercel
-2. [ ] Run all pending Supabase migrations through `011_terms_acceptance_profile_trigger.sql`
-3. [ ] Update Support URL in App Store Connect to `https://mynightcap.vercel.app/support`
-4. [ ] Upload new iPad screenshot (app-in-use, not login)
-5. [ ] Confirm `package.json` version, push, and run Codemagic build (build number is generated automatically)
-6. [ ] Test on iPad: Profile → Edit → tap profile picture (should open photo library, not crash)
+2. [ ] Run pending Supabase migrations through `012_phone_auth_profile.sql`
+3. [ ] Support URL `https://mynightcap.vercel.app/support`
+4. [ ] Upload new iPhone and iPad screenshots (app-in-use, not login-only)
+5. [ ] Confirm Codemagic `nightcapt` group has `SUPABASE_ANON_KEY`, then run **NightCapt Flutter iOS**
+6. [ ] TestFlight as an email user, plus iPad if you have one

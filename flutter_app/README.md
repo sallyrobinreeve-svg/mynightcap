@@ -33,3 +33,5 @@ This native client includes:
 - Supabase storage uploads and database writes using existing tables
 
 The existing Next app remains in the repository for web/admin/API support while the Flutter client becomes the App Store target.
+
+Before submitting a new iOS version, follow `docs/APP_STORE_SUBMIT_NOW.md`.

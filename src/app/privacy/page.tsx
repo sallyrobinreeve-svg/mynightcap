@@ -75,7 +75,7 @@ export default function PrivacyPage() {
                 Data Storage & Third Parties
               </h2>
               <p>
-                Your data is stored and processed using Supabase, which provides our database and authentication services. Photos and media are stored in Supabase Storage. We use Vercel for hosting the app. These services have their own privacy policies and security measures.
+                Your data is stored and processed using Supabase, which provides our database and authentication services. Photos and media are stored in Supabase Storage. We use Vercel for hosting the app. UK phone sign-in sends a one-time code by SMS through Twilio. These services have their own privacy policies and security measures.
               </p>
             </section>
 
