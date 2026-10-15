@@ -14,7 +14,14 @@ describe("toFriendlyAuthMessage", () => {
   it("explains expired codes", () => {
     assert.equal(
       toFriendlyAuthMessage("Token has expired or is invalid"),
-      "That code is invalid or expired. Request a new one."
+      "That code is invalid or expired. Request a new one and enter the latest text."
+    );
+  });
+
+  it("includes the provider wait time on rate limits", () => {
+    assert.equal(
+      toFriendlyAuthMessage("For security purposes, you can only request this after 42 seconds."),
+      "Too many attempts. Wait 42 seconds, then try again."
     );
   });
 });

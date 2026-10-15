@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { toFriendlyAuthMessage } from "@/lib/auth-errors";
-import { isValidOtp, maskPhone, parseUkLoginPhone } from "@/lib/phone";
+import { useEffect, useRef, useState } from "react";
+import {
+  isTransientAuthError,
+  retryAfterSeconds,
+  toFriendlyAuthMessage,
+} from "@/lib/auth-errors";
+import { digitsOnly, isValidOtp, maskPhone, parseUkLoginPhone } from "@/lib/phone";
 import { UK_DIAL_CODE } from "@/lib/uk-auth";
 import { createClient } from "@/lib/supabase/client";
 
@@ -17,6 +21,15 @@ type PhoneOtpFormProps = {
   submitLabel?: string;
   onRequireEmail?: () => void;
 };
+
+function samePhone(a?: string | null, b?: string | null): boolean {
+  if (!a || !b) return false;
+  return digitsOnly(a) === digitsOnly(b);
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
 
 export function PhoneOtpForm({
   shouldCreateUser,
@@ -33,6 +46,13 @@ export function PhoneOtpForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const verifyLock = useRef(false);
+  const attemptedOtp = useRef<string | null>(null);
+  const sentToRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    sentToRef.current = sentTo;
+  }, [sentTo]);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -58,7 +78,7 @@ export function PhoneOtpForm({
       return;
     }
     if (parsed.status !== "ok") {
-      setError("Enter a valid UK mobile number, or use email.");
+      setError("Enter a valid UK mobile number, like 07123 456789, or use email.");
       setMessage(null);
       return;
     }
@@ -70,65 +90,122 @@ export function PhoneOtpForm({
 
     const supabase = createClient();
     const data = typeof metadata === "function" ? metadata() : metadata;
-    const { error: sendError } = await supabase.auth.signInWithOtp({
-      phone,
-      options: {
-        channel: "sms",
-        shouldCreateUser,
-        data,
-      },
-    });
+    let lastMessage = "We couldn't send a verification text. Try again in a moment.";
 
-    if (sendError) {
-      setError(toFriendlyAuthMessage(sendError.message));
-      setLoading(false);
-      return;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const { error: sendError } = await supabase.auth.signInWithOtp({
+          phone,
+          options: {
+            channel: "sms",
+            shouldCreateUser,
+            data,
+          },
+        });
+        if (!sendError) {
+          attemptedOtp.current = null;
+          setSentTo(phone);
+          setCooldown(60);
+          setOtp("");
+          setMessage(`We sent a 6-digit code to ${maskPhone(phone)}. It can take up to a minute.`);
+          setLoading(false);
+          return;
+        }
+        lastMessage = sendError.message;
+        if (attempt === 0 && isTransientAuthError(sendError.message)) continue;
+        break;
+      } catch (sendError) {
+        lastMessage = sendError instanceof Error ? sendError.message : "Network error";
+        if (attempt === 0 && isTransientAuthError(lastMessage)) continue;
+        break;
+      }
     }
 
-    setSentTo(phone);
-    setCooldown(60);
-    setOtp("");
-    setMessage(`We sent a 6-digit code to ${maskPhone(phone)}.`);
+    const wait = retryAfterSeconds(lastMessage);
+    if (wait) setCooldown(wait);
+    setError(toFriendlyAuthMessage(lastMessage));
     setLoading(false);
   };
 
-  const verifyCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!sentTo) {
+  const verifyCode = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (verifyLock.current) return;
+
+    const phone = sentToRef.current;
+    if (!phone) {
       await sendCode();
       return;
     }
 
-    if (!isValidOtp(otp)) {
+    const token = otp.trim();
+    if (!isValidOtp(token)) {
       setError("Enter the 6-digit code from your text message.");
       setMessage(null);
       return;
     }
 
+    verifyLock.current = true;
     setLoading(true);
     setError(null);
     setMessage(null);
 
     const supabase = createClient();
-    const { data, error: verifyError } = await supabase.auth.verifyOtp({
-      phone: sentTo,
-      token: otp.trim(),
-      type: "sms",
-    });
+    try {
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
+        phone,
+        token,
+        type: "sms",
+      });
 
-    if (verifyError) {
-      setError(toFriendlyAuthMessage(verifyError.message));
+      let user = data.user ?? null;
+      if (verifyError || !user) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const sessionUser = sessionData.session?.user ?? null;
+        if (sessionUser && samePhone(sessionUser.phone, phone)) {
+          user = sessionUser;
+        } else if (verifyError) {
+          setError(toFriendlyAuthMessage(verifyError.message));
+          return;
+        }
+      }
+
+      for (let attempt = 0; attempt < 3 && !user; attempt += 1) {
+        await sleep(250);
+        const { data: sessionData } = await supabase.auth.getSession();
+        user = sessionData.session?.user ?? null;
+      }
+
+      if (!user || !samePhone(user.phone, phone)) {
+        setError("The code was accepted but sign-in didn't finish. Request a new code and try again.");
+        return;
+      }
+
+      try {
+        if (onVerified) await onVerified(user.id);
+      } catch {
+        // The code already signed the user in. A profile side effect can be retried later.
+      }
+
+      setMessage("Verified! Redirecting...");
+      window.location.href = "/";
+    } catch (verifyError) {
+      const message = verifyError instanceof Error ? verifyError.message : "Network error";
+      setError(toFriendlyAuthMessage(message));
+    } finally {
+      verifyLock.current = false;
       setLoading(false);
-      return;
     }
-
-    if (data.user && onVerified) {
-      await onVerified(data.user.id);
-    }
-
-    setMessage("Verified! Redirecting...");
-    window.location.href = "/";
   };
+
+  useEffect(() => {
+    if (!sentTo || !isValidOtp(otp) || verifyLock.current) return;
+    const key = `${sentTo}:${otp}`;
+    if (attemptedOtp.current === key) return;
+    attemptedOtp.current = key;
+    void verifyCode();
+    // verifyCode reads the latest otp and sentTo refs; listing it would retrigger every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otp, sentTo]);
 
   return (
     <form onSubmit={verifyCode} className="space-y-4">
@@ -171,6 +248,9 @@ export function PhoneOtpForm({
             className={`${inputClass} tracking-[0.4em]`}
             placeholder="123456"
           />
+          <p className="mt-2 text-xs text-nightcap-muted">
+            Enter the newest 6-digit text. The code fills in automatically on most phones.
+          </p>
         </div>
       )}
 
@@ -221,6 +301,7 @@ export function PhoneOtpForm({
               setMessage(null);
               setError(null);
               setCooldown(0);
+              attemptedOtp.current = null;
             }}
             className="text-nightcap-muted hover:text-white"
           >

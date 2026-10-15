@@ -38,27 +38,42 @@ final _e164 = RegExp(r'^\+[1-9]\d{7,14}$');
 
 String digitsOnly(String value) => value.replaceAll(RegExp(r'\D'), '');
 
+String nationalSignificantNumber(String value, String dialCode) {
+  var digits = digitsOnly(value);
+  if (digits.startsWith('00')) {
+    digits = digits.substring(2);
+  }
+  final dialDigits = digitsOnly(dialCode);
+  if (dialDigits.isNotEmpty &&
+      digits.startsWith(dialDigits) &&
+      digits.length > dialDigits.length + 6) {
+    digits = digits.substring(dialDigits.length);
+  }
+  if (digits.startsWith('0')) {
+    digits = digits.substring(1);
+  }
+  return digits;
+}
+
 String? toE164(String dialCode, String nationalNumber) {
   final trimmed = nationalNumber.trim();
   if (trimmed.isEmpty) return null;
 
-  if (trimmed.startsWith('+')) {
+  final dialDigits = digitsOnly(dialCode);
+  if (dialDigits.isEmpty && !trimmed.startsWith('+')) return null;
+
+  if (trimmed.startsWith('+') &&
+      dialDigits.isNotEmpty &&
+      !digitsOnly(trimmed).startsWith(dialDigits)) {
     final e164 = '+${digitsOnly(trimmed)}';
     return _e164.hasMatch(e164) ? e164 : null;
   }
 
-  final dialDigits = digitsOnly(dialCode);
-  if (dialDigits.isEmpty) return null;
-
-  var national = digitsOnly(trimmed);
-  if (national.startsWith('0')) {
-    national = national.substring(1);
-  }
-  if (national.startsWith(dialDigits) &&
-      national.length > dialDigits.length + 6) {
-    national = national.substring(dialDigits.length);
-  }
-
+  final national = nationalSignificantNumber(
+    trimmed,
+    dialDigits.isEmpty ? dialCode : '+$dialDigits',
+  );
+  if (dialDigits.isEmpty || national.isEmpty) return null;
   final e164 = '+$dialDigits$national';
   return _e164.hasMatch(e164) ? e164 : null;
 }
@@ -73,29 +88,61 @@ String maskPhone(String e164) {
   return '+$start${'•' * (digits.length - 6)}$end';
 }
 
+int? retryAfterSeconds(String message) {
+  final match = RegExp(r'(\d+)\s*seconds?', caseSensitive: false).firstMatch(message);
+  if (match == null) return null;
+  final seconds = int.tryParse(match.group(1)!);
+  if (seconds == null || seconds <= 0 || seconds > 3600) return null;
+  return seconds;
+}
+
+bool isTransientAuthError(String message) {
+  final m = message.toLowerCase();
+  return m.contains('failed to fetch') ||
+      m.contains('network') ||
+      m.contains('timeout') ||
+      m.contains('timed out') ||
+      m.contains('load failed') ||
+      m.contains('socket');
+}
+
 String friendlyAuthMessage(String message) {
   final m = message.toLowerCase();
+  final wait = retryAfterSeconds(message);
   if (m.contains('signups not allowed') ||
       m.contains('user not found') ||
       m.contains('unable to find user')) {
     return 'No account found for this number. Create an account first.';
   }
-  if (m.contains('error sending') || (m.contains('sms') && m.contains('error'))) {
-    return "We couldn't send a verification text. Try again in a moment.";
+  if (m.contains('error sending') ||
+      m.contains('sms_send_failed') ||
+      (m.contains('sms') && m.contains('error'))) {
+    return "We couldn't send a verification text. Wait a moment, then tap resend. If it keeps failing, use email.";
   }
-  if (m.contains('token') && (m.contains('expired') || m.contains('invalid'))) {
-    return 'That code is invalid or expired. Request a new one.';
+  if (m.contains('otp_expired') ||
+      (m.contains('token') && (m.contains('expired') || m.contains('invalid')))) {
+    return 'That code is invalid or expired. Request a new one and enter the latest text.';
   }
   if (m.contains('rate') ||
       m.contains('too many') ||
-      m.contains('over_sms_send_rate_limit')) {
-    return 'Too many attempts. Wait a minute and try again.';
+      m.contains('security purposes') ||
+      m.contains('over_sms_send_rate_limit') ||
+      m.contains('over_request_rate_limit')) {
+    return wait == null
+        ? 'Too many attempts. Wait a minute and try again.'
+        : 'Too many attempts. Wait $wait seconds, then try again.';
   }
   if (m.contains('phone') && m.contains('invalid')) {
-    return 'Enter a valid mobile number including country code.';
+    return 'Enter a valid UK mobile, like 07123 456789.';
   }
-  if (m.contains('unsupported phone provider') || m.contains('phone provider')) {
+  if (m.contains('unsupported phone provider') ||
+      m.contains('phone provider') ||
+      m.contains('phone_provider_disabled') ||
+      m.contains('sms provider')) {
     return 'Phone sign-in is not set up yet. Use email, or try again later.';
+  }
+  if (isTransientAuthError(message)) {
+    return "We couldn't reach the verification service. Check your connection and try again.";
   }
   return message;
 }
@@ -124,29 +171,29 @@ UkPhoneResult parseUkLoginPhone(String nationalNumber) {
   if (trimmed.isEmpty) {
     return const UkPhoneResult._(UkPhoneStatus.invalid);
   }
-  if (trimmed.startsWith('+') && !trimmed.startsWith('+44')) {
-    return const UkPhoneResult._(UkPhoneStatus.notUk);
-  }
+
   final digits = digitsOnly(trimmed);
-  final withoutLeadingZero =
-      digits.startsWith('0') ? digits.substring(1) : digits;
-  if (digits.startsWith('1') && digits.length == 11) {
+  final international = trimmed.startsWith('+') || digits.startsWith('00');
+  if (international && !digits.startsWith('44') && !digits.startsWith('0044')) {
     return const UkPhoneResult._(UkPhoneStatus.notUk);
   }
-  if (withoutLeadingZero.length == 10 && !withoutLeadingZero.startsWith('7')) {
-    if (withoutLeadingZero.startsWith('1') ||
-        withoutLeadingZero.startsWith('2')) {
+  if (!international && digits.startsWith('1') && digits.length == 11) {
+    return const UkPhoneResult._(UkPhoneStatus.notUk);
+  }
+
+  final national = nationalSignificantNumber(trimmed, kDefaultDialCode);
+  if (!international && national.length == 10 && !national.startsWith('7')) {
+    if (national.startsWith('1') || national.startsWith('2')) {
       return const UkPhoneResult._(UkPhoneStatus.invalid);
     }
     return const UkPhoneResult._(UkPhoneStatus.notUk);
   }
-  final phone = toE164(kDefaultDialCode, trimmed);
-  if (phone == null) {
+  if (national.length == 10 &&
+      (national.startsWith('1') || national.startsWith('2'))) {
     return const UkPhoneResult._(UkPhoneStatus.invalid);
   }
-  if (!phone.startsWith(kDefaultDialCode)) {
-    return const UkPhoneResult._(UkPhoneStatus.notUk);
-  }
+
+  final phone = '+44$national';
   if (!isUkMobile(phone)) {
     return const UkPhoneResult._(UkPhoneStatus.invalid);
   }

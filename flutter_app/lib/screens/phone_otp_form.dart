@@ -38,18 +38,42 @@ class _PhoneOtpFormState extends State<PhoneOtpForm> {
   bool loading = false;
   int cooldown = 0;
   Timer? _timer;
+  String? _attemptedOtp;
+  bool _verifyLock = false;
+
+  @override
+  void initState() {
+    super.initState();
+    otp.addListener(_onOtpChanged);
+  }
 
   @override
   void dispose() {
     _timer?.cancel();
+    otp.removeListener(_onOtpChanged);
     number.dispose();
     otp.dispose();
     super.dispose();
   }
 
-  void _startCooldown() {
+  void _onOtpChanged() {
+    final phone = sentTo;
+    final code = otp.text.trim();
+    if (phone == null || !isValidOtp(code) || _verifyLock || loading) return;
+    final key = '$phone:$code';
+    if (_attemptedOtp == key) return;
+    _attemptedOtp = key;
+    verifyCode();
+  }
+
+  bool _samePhone(String? a, String? b) {
+    if (a == null || b == null) return false;
+    return digitsOnly(a) == digitsOnly(b);
+  }
+
+  void _startCooldown([int seconds = 60]) {
     _timer?.cancel();
-    setState(() => cooldown = 60);
+    setState(() => cooldown = seconds);
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
@@ -90,27 +114,48 @@ class _PhoneOtpFormState extends State<PhoneOtpForm> {
       loading = true;
       message = null;
     });
-    try {
-      await Supabase.instance.client.auth.signInWithOtp(
-        phone: phone,
-        shouldCreateUser: widget.shouldCreateUser,
-        data: widget.userMetadata?.call(),
-        channel: OtpChannel.sms,
-      );
-      if (!mounted) return;
-      setState(() {
-        sentTo = phone;
-        otp.text = '';
-        message = 'We sent a 6-digit code to ${maskPhone(phone)}.';
-      });
-      _startCooldown();
-    } on AuthException catch (error) {
-      setState(() => message = friendlyAuthMessage(error.message));
-    } catch (_) {
-      setState(() => message = 'Something went wrong. Please try again.');
-    } finally {
-      if (mounted) setState(() => loading = false);
+    Object? lastError;
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try {
+        await Supabase.instance.client.auth.signInWithOtp(
+          phone: phone,
+          shouldCreateUser: widget.shouldCreateUser,
+          data: widget.userMetadata?.call(),
+          channel: OtpChannel.sms,
+        );
+        if (!mounted) return;
+        _attemptedOtp = null;
+        setState(() {
+          sentTo = phone;
+          otp.text = '';
+          message =
+              'We sent a 6-digit code to ${maskPhone(phone)}. It can take up to a minute.';
+        });
+        _startCooldown();
+        setState(() => loading = false);
+        return;
+      } on AuthException catch (error) {
+        lastError = error;
+        if (attempt == 0 && isTransientAuthError(error.message)) continue;
+        break;
+      } catch (error) {
+        lastError = error;
+        final text = error.toString();
+        if (attempt == 0 && isTransientAuthError(text)) continue;
+        break;
+      }
     }
+
+    if (!mounted) return;
+    final raw = lastError is AuthException
+        ? (lastError as AuthException).message
+        : 'Network error';
+    final wait = retryAfterSeconds(raw);
+    setState(() {
+      message = friendlyAuthMessage(raw);
+      loading = false;
+    });
+    if (wait != null) _startCooldown(wait);
   }
 
   Future<void> verifyCode() async {
@@ -125,22 +170,54 @@ class _PhoneOtpFormState extends State<PhoneOtpForm> {
       return;
     }
 
+    if (_verifyLock) return;
+    _verifyLock = true;
     setState(() {
       loading = true;
       message = null;
     });
     try {
-      await Supabase.instance.client.auth.verifyOTP(
-        phone: sentTo,
-        token: otp.text.trim(),
-        type: OtpType.sms,
-      );
-      await widget.onVerified?.call();
-    } on AuthException catch (error) {
-      setState(() => message = friendlyAuthMessage(error.message));
+      User? user;
+      try {
+        final response = await Supabase.instance.client.auth.verifyOTP(
+          phone: sentTo,
+          token: otp.text.trim(),
+          type: OtpType.sms,
+        );
+        user = response.user;
+      } on AuthException catch (error) {
+        user = Supabase.instance.client.auth.currentUser;
+        if (!_samePhone(user?.phone, sentTo)) {
+          if (mounted) setState(() => message = friendlyAuthMessage(error.message));
+          return;
+        }
+      }
+
+      user ??= Supabase.instance.client.auth.currentUser;
+      if (user == null || !_samePhone(user.phone, sentTo)) {
+        if (mounted) {
+          setState(
+            () => message =
+                "The code was accepted but sign-in didn't finish. Request a new code and try again.",
+          );
+        }
+        return;
+      }
+
+      try {
+        await widget.onVerified?.call();
+      } catch (_) {
+        // The code already signed the user in.
+      }
     } catch (_) {
-      setState(() => message = 'Something went wrong. Please try again.');
+      if (mounted) {
+        setState(
+          () => message =
+              "We couldn't reach the verification service. Check your connection and try again.",
+        );
+      }
     } finally {
+      _verifyLock = false;
       if (mounted) setState(() => loading = false);
     }
   }
