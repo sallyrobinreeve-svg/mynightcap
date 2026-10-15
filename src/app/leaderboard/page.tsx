@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { acceptedFriendIdsFromRows } from "@/lib/friends";
 import { BottomNav } from "@/components/BottomNav";
+import { PageBackButton } from "@/components/PageBackButton";
 import { Trophy } from "lucide-react";
-import { NeonLogo } from "@/components/NeonLogo";
 
 export default async function LeaderboardPage() {
   const supabase = await createClient();
@@ -62,18 +62,12 @@ export default async function LeaderboardPage() {
   const byClubVisits = [...entries].sort((a, b) => b.top_club_visits - a.top_club_visits);
 
   return (
-    <div className="min-h-screen bg-nightcap pb-24">
-      <nav className="glass sticky top-0 z-10 border-b border-white/5">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <NeonLogo className="text-3xl" />
-          <div className="flex items-center gap-4">
-            <Link href="/profile" className="text-nightcap-muted hover:text-white transition">
-              Profile
-            </Link>
-            <Link href="/friends" className="text-nightcap-muted hover:text-white transition">
-              Friends
-            </Link>
-          </div>
+    <div className="min-h-screen bg-nightcap page-with-nav">
+      <nav className="glass sticky top-0 z-10 border-b border-white/5 safe-area-pt">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+          <PageBackButton fallbackHref="/profile" />
+          <span className="font-display text-xl text-nightcap-accent">Leaderboard</span>
+          <span className="w-12" />
         </div>
       </nav>
 
