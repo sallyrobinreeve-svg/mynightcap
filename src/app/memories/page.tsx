@@ -4,6 +4,8 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { formatDateSafe } from "@/lib/format-date";
 import { BottomNav } from "@/components/BottomNav";
+import { entryThumbnailUrl } from "@/lib/entry-media";
+import { loadPhotosForEntries } from "@/lib/load-entry-photos";
 
 export default async function MemoriesPage() {
   const supabase = await createClient();
@@ -21,21 +23,21 @@ export default async function MemoriesPage() {
     .eq("user_id", user.id)
     .order("date_of_night", { ascending: false });
 
-  const { data: photos } = entries?.length
-    ? await supabase
-        .from("photos")
-        .select("entry_id, url, type")
-        .in(
-          "entry_id",
-          (entries || []).map((e) => e.id)
-        )
-    : { data: [] };
+  const photos = await loadPhotosForEntries(
+    supabase,
+    (entries || []).map((e) => e.id)
+  );
 
+  const photosByEntry = new Map<string, typeof photos>();
+  photos.forEach((p) => {
+    const list = photosByEntry.get(p.entry_id) ?? [];
+    list.push(p);
+    photosByEntry.set(p.entry_id, list);
+  });
   const entryPhotos = new Map<string, string>();
-  (photos || []).forEach((p) => {
-    if ((p.type === "favourite" || p.type === "outfit") && !entryPhotos.has(p.entry_id)) {
-      entryPhotos.set(p.entry_id, p.url);
-    }
+  photosByEntry.forEach((rows, entryId) => {
+    const thumb = entryThumbnailUrl(rows);
+    if (thumb) entryPhotos.set(entryId, thumb);
   });
 
   return (

@@ -19,6 +19,11 @@ describe("toE164", () => {
     assert.equal(toE164("+44", "07123"), null);
   });
 
+  it("strips a trunk zero inside an international UK number", () => {
+    assert.equal(toE164("+44", "+44 (0) 7123 456789"), "+447123456789");
+    assert.equal(toE164("+44", "0044 7123 456789"), "+447123456789");
+  });
+
   it("rejects empty input", () => {
     assert.equal(toE164("+44", "   "), null);
   });
@@ -56,5 +61,21 @@ describe("parseUkLoginPhone", () => {
 
   it("rejects a UK landline-shaped number", () => {
     assert.deepEqual(parseUkLoginPhone("020 7946 0958"), { status: "invalid" });
+  });
+
+  it("accepts common pasted UK formats", () => {
+    for (const input of [
+      "07123 456789",
+      "7123456789",
+      "+447123456789",
+      "+44 (0) 7123 456789",
+      "00447123456789",
+      "447123456789",
+    ]) {
+      assert.deepEqual(parseUkLoginPhone(input), {
+        status: "ok",
+        phone: "+447123456789",
+      });
+    }
   });
 });

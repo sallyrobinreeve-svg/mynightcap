@@ -7,6 +7,8 @@ import { MissionsHighlight } from "@/components/MissionsHighlight";
 import { BottomNav } from "@/components/BottomNav";
 import { NotificationBell } from "@/components/NotificationBell";
 import { NeonLogo } from "@/components/NeonLogo";
+import { entryThumbnailUrl } from "@/lib/entry-media";
+import { loadPhotosForEntries } from "@/lib/load-entry-photos";
 
 export default async function FeedPage() {
   const supabase = await createClient();
@@ -51,14 +53,12 @@ export default async function FeedPage() {
   const entryIds = (entries || []).map((e) => e.id);
   const userIds = Array.from(new Set((entries || []).map((e) => e.user_id)));
 
-  const [{ data: profiles }, { data: photos }, { data: reactions }, { data: commentCounts }] =
+  const [{ data: profiles }, photos, { data: reactions }, { data: commentCounts }] =
     await Promise.all([
       userIds.length > 0
         ? supabase.from("profiles").select("id, display_name, avatar_url").in("id", userIds)
         : Promise.resolve({ data: [] as { id: string; display_name: string | null; avatar_url: string | null }[] }),
-      entryIds.length > 0
-        ? supabase.from("photos").select("entry_id, type, url").in("entry_id", entryIds)
-        : Promise.resolve({ data: [] as { entry_id: string; type: string; url: string }[] }),
+      loadPhotosForEntries(supabase, entryIds),
       entryIds.length > 0
         ? supabase.from("reactions").select("entry_id, type").in("entry_id", entryIds)
         : Promise.resolve({ data: [] as { entry_id: string; type: string }[] }),
@@ -69,11 +69,16 @@ export default async function FeedPage() {
 
   const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
 
+  const photosByEntry = new Map<string, typeof photos>();
+  photos.forEach((p) => {
+    const list = photosByEntry.get(p.entry_id) ?? [];
+    list.push(p);
+    photosByEntry.set(p.entry_id, list);
+  });
   const photoMap = new Map<string, string>();
-  (photos || []).forEach((p) => {
-    if ((p.type === "favourite" || p.type === "outfit") && !photoMap.has(p.entry_id)) {
-      photoMap.set(p.entry_id, p.url);
-    }
+  photosByEntry.forEach((rows, entryId) => {
+    const thumb = entryThumbnailUrl(rows);
+    if (thumb) photoMap.set(entryId, thumb);
   });
 
   const reactionCountMap = new Map<string, number>();

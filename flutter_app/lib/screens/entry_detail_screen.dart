@@ -299,9 +299,9 @@ class _DetailBody extends StatelessWidget {
                   ),
                 ),
               ],
-              if (detail.videoUrl != null) ...[
+              for (final url in detail.videoUrls) ...[
                 const SizedBox(height: 16),
-                NightVideoPlayer(url: detail.videoUrl!),
+                NightVideoPlayer(url: url),
               ],
               for (final (label, value) in promptEntries) ...[
                 const SizedBox(height: 16),

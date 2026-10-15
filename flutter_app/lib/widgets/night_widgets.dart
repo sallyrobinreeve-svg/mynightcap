@@ -45,7 +45,19 @@ class NightScaffold extends StatelessWidget {
                           IgHeader(
                             title: title!,
                             actions: actions,
-                            showBrand: showBrandInHeader,
+                            showBrand: showBrandInHeader && !Navigator.of(context).canPop(),
+                            leading: Navigator.of(context).canPop()
+                                ? IconButton(
+                                    tooltip: 'Back',
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(
+                                      minWidth: 40,
+                                      minHeight: 40,
+                                    ),
+                                    onPressed: () => Navigator.of(context).pop(),
+                                    icon: const Icon(Icons.arrow_back),
+                                  )
+                                : null,
                           ),
                           const SizedBox(height: 12),
                           Expanded(child: child),
@@ -64,35 +76,38 @@ class IgHeader extends StatelessWidget {
   const IgHeader({
     required this.title,
     this.actions,
+    this.leading,
     this.showBrand = true,
     super.key,
   });
 
   final String title;
   final List<Widget>? actions;
+  final Widget? leading;
   final bool showBrand;
 
   @override
   Widget build(BuildContext context) {
+    final start = leading ??
+        (showBrand ? const NeonWordmark(fontSize: 28) : const SizedBox(width: 40));
+    final end = actions == null || actions!.isEmpty
+        ? const SizedBox(width: 40)
+        : Row(mainAxisSize: MainAxisSize.min, children: actions!);
     return SizedBox(
       height: 44,
       child: Row(
         children: [
-          if (showBrand)
-            const NeonWordmark(fontSize: 28)
-          else
-            const SizedBox(width: 28),
+          start,
           Expanded(
             child: Text(
               title,
               textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
           ),
-          if (actions == null || actions!.isEmpty)
-            const SizedBox(width: 28)
-          else
-            Row(mainAxisSize: MainAxisSize.min, children: actions!),
+          end,
         ],
       ),
     );

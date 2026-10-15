@@ -1,5 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../entry_media.dart';
+import 'photo_rows.dart';
+
 class UserEntryTile {
   const UserEntryTile({
     required this.id,
@@ -29,19 +32,17 @@ class UserEntriesService {
     if (entryRows.isEmpty) return [];
 
     final entryIds = [for (final row in entryRows) row['id'] as String];
-    final photos = await _client
-        .from('photos')
-        .select('entry_id, url, type')
-        .inFilter('entry_id', entryIds);
+    final photos = await fetchPhotoRows(_client, entryIds);
 
-    final photoByEntry = <String, String>{};
-    for (final photo in (photos as List).cast<Map<String, dynamic>>()) {
+    final photosByEntry = <String, List<Map<String, dynamic>>>{};
+    for (final photo in photos) {
       final entryId = photo['entry_id'] as String;
-      final type = photo['type'] as String?;
-      if ((type == 'favourite' || type == 'outfit') &&
-          !photoByEntry.containsKey(entryId)) {
-        photoByEntry[entryId] = photo['url'] as String;
-      }
+      photosByEntry.putIfAbsent(entryId, () => []).add(photo);
+    }
+    final photoByEntry = <String, String>{};
+    for (final entry in photosByEntry.entries) {
+      final thumb = entryThumbnailUrl(storedMediaFromRows(entry.value));
+      if (thumb != null) photoByEntry[entry.key] = thumb;
     }
 
     return [

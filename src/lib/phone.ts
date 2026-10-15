@@ -29,26 +29,37 @@ export function digitsOnly(value: string): string {
   return value.replace(/\D/g, "");
 }
 
+/**
+ * Strip international prefixes and a trunk 0 so "0044 (0) 7123..." and
+ * "+44 7123..." share one national significant number.
+ */
+export function nationalSignificantNumber(value: string, dialCode: string): string {
+  let digits = digitsOnly(value);
+  if (digits.startsWith("00")) digits = digits.slice(2);
+
+  const dialDigits = digitsOnly(dialCode);
+  if (dialDigits && digits.startsWith(dialDigits) && digits.length > dialDigits.length + 6) {
+    digits = digits.slice(dialDigits.length);
+  }
+  if (digits.startsWith("0")) digits = digits.slice(1);
+  return digits;
+}
+
 /** Normalize a national or pasted number into E.164, or null if invalid. */
 export function toE164(dialCode: string, nationalNumber: string): string | null {
   const trimmed = nationalNumber.trim();
   if (!trimmed) return null;
 
-  if (trimmed.startsWith("+")) {
+  const dialDigits = digitsOnly(dialCode);
+  if (!dialDigits && !trimmed.startsWith("+")) return null;
+
+  if (trimmed.startsWith("+") && dialDigits && !digitsOnly(trimmed).startsWith(dialDigits)) {
     const e164 = `+${digitsOnly(trimmed)}`;
     return E164_RE.test(e164) ? e164 : null;
   }
 
-  const dialDigits = digitsOnly(dialCode);
-  if (!dialDigits) return null;
-
-  let national = digitsOnly(trimmed);
-  if (national.startsWith("0")) {
-    national = national.slice(1);
-  }
-  if (national.startsWith(dialDigits) && national.length > dialDigits.length + 6) {
-    national = national.slice(dialDigits.length);
-  }
+  const national = nationalSignificantNumber(trimmed, dialDigits ? `+${dialDigits}` : dialCode);
+  if (!dialDigits || !national) return null;
 
   const e164 = `+${dialDigits}${national}`;
   return E164_RE.test(e164) ? e164 : null;
@@ -78,23 +89,25 @@ export function parseUkLoginPhone(nationalNumber: string): UkPhoneResult {
   const trimmed = nationalNumber.trim();
   if (!trimmed) return { status: "invalid" };
 
-  if (trimmed.startsWith("+") && !trimmed.startsWith("+44")) {
-    return { status: "not_uk" };
-  }
-
   const digits = digitsOnly(trimmed);
-  const withoutLeadingZero = digits.startsWith("0") ? digits.slice(1) : digits;
-  if (digits.startsWith("1") && digits.length === 11) {
-    return { status: "not_uk" };
-  }
-  if (withoutLeadingZero.length === 10 && !withoutLeadingZero.startsWith("7")) {
-    if (/^[12]/.test(withoutLeadingZero)) return { status: "invalid" };
+  const international = trimmed.startsWith("+") || digits.startsWith("00");
+  if (international && !digits.startsWith("44") && !digits.startsWith("0044")) {
     return { status: "not_uk" };
   }
 
-  const phone = toE164(DEFAULT_DIAL_CODE, trimmed);
-  if (!phone) return { status: "invalid" };
-  if (!phone.startsWith(DEFAULT_DIAL_CODE)) return { status: "not_uk" };
+  if (!international && digits.startsWith("1") && digits.length === 11) {
+    return { status: "not_uk" };
+  }
+
+  const national = nationalSignificantNumber(trimmed, DEFAULT_DIAL_CODE);
+  if (!international && national.length === 10 && !national.startsWith("7")) {
+    if (/^[12]/.test(national)) return { status: "invalid" };
+    return { status: "not_uk" };
+  }
+
+  if (national.length === 10 && /^[12]/.test(national)) return { status: "invalid" };
+
+  const phone = `+44${national}`;
   if (!isUkMobile(phone)) return { status: "invalid" };
   return { status: "ok", phone };
 }

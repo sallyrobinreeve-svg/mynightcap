@@ -45,8 +45,9 @@ export interface TimelineStep {
 export interface Photo {
   id: string;
   entry_id: string;
-  type: "outfit" | "favourite" | "step";
+  type: "outfit" | "favourite" | "step" | "photo" | "video";
   url: string;
+  sort_order: number;
   timeline_step_id: string | null;
   created_at: string;
 }

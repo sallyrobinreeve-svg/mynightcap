@@ -1,6 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../entry_media.dart';
 import '../models/feed_models.dart';
+import 'photo_rows.dart';
 
 class FeedService {
   static const pageSize = 20;
@@ -74,13 +76,13 @@ class FeedService {
           .from('profiles')
           .select('id, display_name, username, avatar_url')
           .inFilter('id', userIds),
-      _client.from('photos').select('entry_id, type, url').inFilter('entry_id', entryIds),
+      fetchPhotoRows(_client, entryIds),
       _client.from('reactions').select('entry_id').inFilter('entry_id', entryIds),
       _client.from('comments').select('entry_id').inFilter('entry_id', entryIds),
     ]);
 
     final profiles = (results[0] as List).cast<Map<String, dynamic>>();
-    final photos = (results[1] as List).cast<Map<String, dynamic>>();
+    final photos = results[1] as List<Map<String, dynamic>>;
     final reactions = (results[2] as List).cast<Map<String, dynamic>>();
     final comments = (results[3] as List).cast<Map<String, dynamic>>();
 
@@ -94,14 +96,15 @@ class FeedService {
           : (username?.trim().isNotEmpty == true ? '@$username' : null);
     }
 
-    final thumbByEntry = <String, String>{};
+    final photosByEntry = <String, List<Map<String, dynamic>>>{};
     for (final photo in photos) {
-      final type = photo['type'] as String?;
       final entryId = photo['entry_id'] as String;
-      if ((type == 'favourite' || type == 'outfit') &&
-          !thumbByEntry.containsKey(entryId)) {
-        thumbByEntry[entryId] = photo['url'] as String;
-      }
+      photosByEntry.putIfAbsent(entryId, () => []).add(photo);
+    }
+    final thumbByEntry = <String, String>{};
+    for (final entry in photosByEntry.entries) {
+      final thumb = entryThumbnailUrl(storedMediaFromRows(entry.value));
+      if (thumb != null) thumbByEntry[entry.key] = thumb;
     }
 
     final reactionCounts = <String, int>{};
