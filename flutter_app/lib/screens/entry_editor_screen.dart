@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../data/prompts.dart';
+import '../entry_media.dart';
 import '../models/entry_models.dart';
 import '../models/friend_models.dart';
 import '../services/content_filter.dart';
@@ -29,11 +30,8 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
   DateTime date = DateTime.now();
   int? rating;
   String visibility = 'friends';
-  PickedUpload? outfit;
-  PickedUpload? favourite;
-  String? outfitUrl;
-  String? favouriteUrl;
-  String? videoUrl;
+  List<String> photoUrls = [];
+  List<String> videoUrls = [];
   bool saving = false;
   bool loading = false;
   String? message;
@@ -61,9 +59,8 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
         promptValues
           ..clear()
           ..addAll(data.prompts);
-        outfitUrl = data.outfitUrl;
-        favouriteUrl = data.favouriteUrl;
-        videoUrl = data.videoUrl;
+        photoUrls = [...data.photoUrls];
+        videoUrls = [...data.videoUrls];
         timelineSteps
           ..clear()
           ..addAll(data.timeline);
@@ -79,41 +76,52 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
     }
   }
 
-  Future<void> pickPhoto(String type) async {
+  Future<void> addPhotos() async {
+    final remaining = maxEntryPhotos - photoUrls.length;
+    if (remaining <= 0) {
+      setState(() => message = 'You can add up to 10 photos.');
+      return;
+    }
     final picker = ImagePicker();
-    final file = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 88,
-    );
-    if (file == null) return;
+    final files = await picker.pickMultiImage(imageQuality: 88, limit: remaining);
+    if (files.isEmpty) return;
     setState(() => message = null);
     try {
-      final upload = await uploadPickedFile(file, type);
-      setState(() {
-        if (type == 'outfit') {
-          outfit = upload;
-          outfitUrl = upload.url;
-        } else {
-          favourite = upload;
-          favouriteUrl = upload.url;
-        }
-      });
+      final added = <String>[];
+      for (final file in files.take(remaining)) {
+        final upload = await uploadPickedFile(file, 'photo');
+        added.add(upload.url);
+      }
+      if (!mounted) return;
+      setState(() => photoUrls = [...photoUrls, ...added]);
     } catch (_) {
       setState(() => message = 'Photo upload failed. Please try again.');
     }
   }
 
-  Future<void> pickVideo() async {
+  Future<void> addVideo() async {
+    if (videoUrls.length >= maxEntryVideos) {
+      setState(() => message = 'You can add up to 5 videos.');
+      return;
+    }
     final picker = ImagePicker();
     final file = await picker.pickVideo(source: ImageSource.gallery);
     if (file == null) return;
     setState(() => message = null);
     try {
       final upload = await uploadVideoFile(file);
-      setState(() => videoUrl = upload.url);
+      if (!mounted) return;
+      setState(() => videoUrls = [...videoUrls, upload.url]);
     } catch (_) {
       setState(() => message = 'Video upload failed. Please try again.');
     }
+  }
+
+  void _move(List<String> urls, int index, int direction) {
+    final next = index + direction;
+    if (next < 0 || next >= urls.length) return;
+    final item = urls.removeAt(index);
+    urls.insert(next, item);
   }
 
   void _normalizePromptValues() {
@@ -144,11 +152,8 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
           rating: rating!,
           visibility: visibility,
           prompts: promptValues,
-          outfit: outfit,
-          favourite: favourite,
-          existingOutfitUrl: outfit == null ? outfitUrl : null,
-          existingFavouriteUrl: favourite == null ? favouriteUrl : null,
-          videoUrl: videoUrl,
+          photoUrls: photoUrls,
+          videoUrls: videoUrls,
           timeline: timelineSteps,
           taggedUserIds: taggedUserIds.toList(),
         );
@@ -158,9 +163,8 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
           rating: rating!,
           visibility: visibility,
           prompts: promptValues,
-          outfit: outfit,
-          favourite: favourite,
-          videoUrl: videoUrl,
+          photoUrls: photoUrls,
+          videoUrls: videoUrls,
           timeline: timelineSteps,
           taggedUserIds: taggedUserIds.toList(),
         );
@@ -176,11 +180,8 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
       } else {
         setState(() {
           rating = null;
-          outfit = null;
-          favourite = null;
-          outfitUrl = null;
-          favouriteUrl = null;
-          videoUrl = null;
+          photoUrls = [];
+          videoUrls = [];
           promptValues.clear();
           timelineSteps.clear();
           taggedUserIds.clear();
@@ -261,33 +262,30 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
                   onChanged: (value) => setState(() => rating = value),
                 ),
                 const SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: PhotoButton(
-                        label: 'Outfit photo',
-                        icon: Icons.camera_alt_outlined,
-                        filled: outfitUrl != null,
-                        onTap: () => pickPhoto('outfit'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: PhotoButton(
-                        label: 'Favourite photo',
-                        icon: Icons.camera_alt_outlined,
-                        filled: favouriteUrl != null,
-                        onTap: () => pickPhoto('favourite'),
-                      ),
-                    ),
-                  ],
+                _MediaSection(
+                  title: 'Photos',
+                  countLabel: '${photoUrls.length} / $maxEntryPhotos',
+                  urls: photoUrls,
+                  emptyLabel: 'Add photos',
+                  icon: Icons.photo_library_outlined,
+                  onAdd: photoUrls.length >= maxEntryPhotos ? null : addPhotos,
+                  onMove: (index, direction) =>
+                      setState(() => _move(photoUrls, index, direction)),
+                  onRemove: (index) =>
+                      setState(() => photoUrls.removeAt(index)),
                 ),
                 const SizedBox(height: 12),
-                PhotoButton(
-                  label: videoUrl == null ? 'Add video' : 'Video added',
+                _MediaSection(
+                  title: 'Videos',
+                  countLabel: '${videoUrls.length} / $maxEntryVideos',
+                  urls: videoUrls,
+                  emptyLabel: 'Add video',
                   icon: Icons.videocam_outlined,
-                  filled: videoUrl != null,
-                  onTap: pickVideo,
+                  onAdd: videoUrls.length >= maxEntryVideos ? null : addVideo,
+                  onMove: (index, direction) =>
+                      setState(() => _move(videoUrls, index, direction)),
+                  onRemove: (index) =>
+                      setState(() => videoUrls.removeAt(index)),
                 ),
                 const SizedBox(height: 18),
                 TimelineEditor(
@@ -384,6 +382,81 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MediaSection extends StatelessWidget {
+  const _MediaSection({
+    required this.title,
+    required this.countLabel,
+    required this.urls,
+    required this.emptyLabel,
+    required this.icon,
+    required this.onAdd,
+    required this.onMove,
+    required this.onRemove,
+  });
+
+  final String title;
+  final String countLabel;
+  final List<String> urls;
+  final String emptyLabel;
+  final IconData icon;
+  final VoidCallback? onAdd;
+  final void Function(int index, int direction) onMove;
+  final void Function(int index) onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            const Spacer(),
+            Text(countLabel, style: const TextStyle(color: NightColors.muted)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        for (var i = 0; i < urls.length; i++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '$title ${i + 1}',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Move up',
+                  onPressed: i == 0 ? null : () => onMove(i, -1),
+                  icon: const Icon(Icons.arrow_upward),
+                ),
+                IconButton(
+                  tooltip: 'Move down',
+                  onPressed: i == urls.length - 1 ? null : () => onMove(i, 1),
+                  icon: const Icon(Icons.arrow_downward),
+                ),
+                IconButton(
+                  tooltip: 'Remove',
+                  onPressed: () => onRemove(i),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+          ),
+        if (onAdd != null)
+          PhotoButton(
+            label: emptyLabel,
+            icon: icon,
+            filled: urls.isNotEmpty,
+            onTap: onAdd!,
+          ),
+      ],
     );
   }
 }

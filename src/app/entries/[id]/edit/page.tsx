@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { EntryWizard } from "@/components/EntryWizard";
 import type { WizardData } from "@/components/EntryWizard";
 import type { TimelineStep } from "@/types/database";
+import { entryPhotoUrls, entryVideoUrls } from "@/lib/entry-media";
+import { loadPhotosForEntries } from "@/lib/load-entry-photos";
 
 export default async function EditEntryPage({
   params,
@@ -31,8 +33,7 @@ export default async function EditEntryPage({
       prompts,
       video_url,
       visibility,
-      timeline_steps (id, type, emoji, location_name, time_at, notes, photo_url, sort_order),
-      photos (type, url)
+      timeline_steps (id, type, emoji, location_name, time_at, notes, photo_url, sort_order)
     `
     )
     .eq("id", id)
@@ -46,9 +47,9 @@ export default async function EditEntryPage({
     notFound();
   }
 
-  const photos = (entry.photos as { type: string; url: string }[]) || [];
-  const outfitPhoto = photos.find((p) => p.type === "outfit");
-  const favouritePhoto = photos.find((p) => p.type === "favourite");
+  const photos = await loadPhotosForEntries(supabase, [id]);
+  const photoUrls = entryPhotoUrls(photos);
+  const videoUrls = entryVideoUrls(photos, (entry as { video_url?: string | null }).video_url);
 
   const timelineSteps = (
     (entry.timeline_steps as {
@@ -74,9 +75,8 @@ export default async function EditEntryPage({
 
   const initialData: Partial<WizardData> = {
     dateOfNight: entry.date_of_night,
-    outfitPhotoUrl: outfitPhoto?.url ?? null,
-    favouritePhotoUrl: favouritePhoto?.url ?? null,
-    videoUrl: (entry as { video_url?: string | null }).video_url ?? null,
+    photoUrls,
+    videoUrls,
     rating: entry.rating ?? null,
     prompts: prompts as WizardData["prompts"],
     kissedPrivate,

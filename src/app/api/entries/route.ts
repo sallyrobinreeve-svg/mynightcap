@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { containsObjectionableContentInObject } from "@/lib/content-filter";
+import { resolveSubmittedMedia } from "@/lib/entry-media";
+import { saveEntryMedia } from "@/lib/save-entry-media";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -16,9 +18,6 @@ export async function POST(request: NextRequest) {
   const {
     userId,
     dateOfNight,
-    outfitPhotoUrl,
-    favouritePhotoUrl,
-    videoUrl,
     rating,
     prompts,
     kissedPrivate,
@@ -26,6 +25,14 @@ export async function POST(request: NextRequest) {
     taggedUserIds,
     visibility,
   } = body;
+
+  const media = resolveSubmittedMedia(body, {
+    photosProvided: Object.prototype.hasOwnProperty.call(body, "photoUrls"),
+    videosProvided: Object.prototype.hasOwnProperty.call(body, "videoUrls"),
+  });
+  if ("error" in media) {
+    return NextResponse.json({ error: media.error }, { status: 400 });
+  }
 
   if (userId !== user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -63,7 +70,7 @@ export async function POST(request: NextRequest) {
       date_of_night: dateOfNight,
       rating: rating ?? null,
       prompts: promptsData,
-      video_url: videoUrl || null,
+      video_url: media.videoUrls?.[0] ?? null,
       visibility: visibility || "friends",
     })
     .select("id")
@@ -78,20 +85,12 @@ export async function POST(request: NextRequest) {
 
   const entryId = entry.id;
 
-  if (outfitPhotoUrl) {
-    await supabase.from("photos").insert({
-      entry_id: entryId,
-      type: "outfit",
-      url: outfitPhotoUrl,
-    });
-  }
-
-  if (favouritePhotoUrl) {
-    await supabase.from("photos").insert({
-      entry_id: entryId,
-      type: "favourite",
-      url: favouritePhotoUrl,
-    });
+  const mediaError = await saveEntryMedia(supabase, entryId, user.id, {
+    photoUrls: media.photoUrls ?? [],
+    videoUrls: media.videoUrls ?? [],
+  });
+  if (mediaError) {
+    return NextResponse.json({ error: mediaError }, { status: 500 });
   }
 
   if (timelineSteps?.length > 0) {

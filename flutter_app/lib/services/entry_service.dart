@@ -3,8 +3,10 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../data/prompt_privacy.dart';
+import '../entry_media.dart';
 import '../models/entry_models.dart';
 import 'content_filter.dart';
+import 'photo_rows.dart';
 
 class EntryService {
   SupabaseClient get _client => Supabase.instance.client;
@@ -34,7 +36,7 @@ class EntryService {
           .select('display_name, username')
           .eq('id', authorId)
           .maybeSingle(),
-      _client.from('photos').select('type, url').eq('entry_id', entryId),
+      fetchPhotoRowsForEntry(_client, entryId),
       _client
           .from('timeline_steps')
           .select('type, location_name, time_at, notes, emoji, sort_order')
@@ -56,11 +58,9 @@ class EntryService {
     final commentRows = (results[4] as List).cast<Map<String, dynamic>>();
     final tagRows = (results[5] as List).cast<Map<String, dynamic>>();
 
-    final photoUrls = [
-      for (final photo in photos)
-        if (photo['type'] == 'favourite' || photo['type'] == 'outfit')
-          photo['url'] as String,
-    ];
+    final stored = storedMediaFromRows(photos);
+    final photoUrls = entryPhotoUrls(stored);
+    final videoUrls = entryVideoUrls(stored, entry['video_url'] as String?);
 
     final timeline = [
       for (final step in timelineRows)
@@ -125,7 +125,7 @@ class EntryService {
       comments: comments,
       isMine: isMine,
       taggedProfiles: taggedProfiles,
-      videoUrl: entry['video_url'] as String?,
+      videoUrls: videoUrls,
       currentUserId: userId,
     );
   }
@@ -145,7 +145,7 @@ class EntryService {
     }
 
     final results = await Future.wait([
-      _client.from('photos').select('type, url').eq('entry_id', entryId),
+      fetchPhotoRowsForEntry(_client, entryId),
       _client
           .from('timeline_steps')
           .select('type, location_name, time_at, notes, emoji, sort_order')
@@ -157,13 +157,7 @@ class EntryService {
     final photos = (results[0] as List).cast<Map<String, dynamic>>();
     final timelineRows = (results[1] as List).cast<Map<String, dynamic>>();
     final tagRows = (results[2] as List).cast<Map<String, dynamic>>();
-
-    String? outfitUrl;
-    String? favouriteUrl;
-    for (final photo in photos) {
-      if (photo['type'] == 'outfit') outfitUrl = photo['url'] as String;
-      if (photo['type'] == 'favourite') favouriteUrl = photo['url'] as String;
-    }
+    final stored = storedMediaFromRows(photos);
 
     final timeline = [
       for (final step in timelineRows)
@@ -182,9 +176,8 @@ class EntryService {
       rating: entry['rating'] as int?,
       visibility: entry['visibility'] as String? ?? 'friends',
       prompts: (entry['prompts'] as Map?)?.cast<String, dynamic>() ?? {},
-      outfitUrl: outfitUrl,
-      favouriteUrl: favouriteUrl,
-      videoUrl: entry['video_url'] as String?,
+      photoUrls: entryPhotoUrls(stored),
+      videoUrls: entryVideoUrls(stored, entry['video_url'] as String?),
       timeline: timeline,
       taggedUserIds: [
         for (final tag in tagRows) tag['user_id'] as String,
@@ -197,9 +190,8 @@ class EntryService {
     required int rating,
     required String visibility,
     required Map<String, dynamic> prompts,
-    PickedUpload? outfit,
-    PickedUpload? favourite,
-    String? videoUrl,
+    List<String> photoUrls = const [],
+    List<String> videoUrls = const [],
     List<EditableTimelineStep> timeline = const [],
     List<String> taggedUserIds = const [],
   }) async {
@@ -217,7 +209,7 @@ class EntryService {
           'rating': rating,
           'prompts': prompts,
           'visibility': visibility,
-          if (videoUrl != null) 'video_url': videoUrl,
+          'video_url': videoUrls.isEmpty ? null : videoUrls.first,
         })
         .select('id')
         .single();
@@ -225,8 +217,8 @@ class EntryService {
     final entryId = entry['id'] as String;
     await _saveRelated(
       entryId: entryId,
-      outfit: outfit,
-      favourite: favourite,
+      photoUrls: photoUrls,
+      videoUrls: videoUrls,
       timeline: timeline,
       taggedUserIds: taggedUserIds,
     );
@@ -239,11 +231,8 @@ class EntryService {
     required int rating,
     required String visibility,
     required Map<String, dynamic> prompts,
-    PickedUpload? outfit,
-    PickedUpload? favourite,
-    String? existingOutfitUrl,
-    String? existingFavouriteUrl,
-    String? videoUrl,
+    List<String> photoUrls = const [],
+    List<String> videoUrls = const [],
     List<EditableTimelineStep> timeline = const [],
     List<String> taggedUserIds = const [],
   }) async {
@@ -260,29 +249,24 @@ class EntryService {
           'rating': rating,
           'prompts': prompts,
           'visibility': visibility,
-          'video_url': videoUrl,
+          'video_url': videoUrls.isEmpty ? null : videoUrls.first,
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         })
         .eq('id', entryId)
         .eq('user_id', userId);
 
     await _client.from('timeline_steps').delete().eq('entry_id', entryId);
-    await _client.from('photos').delete().eq('entry_id', entryId);
+    await _client
+        .from('photos')
+        .delete()
+        .eq('entry_id', entryId)
+        .inFilter('type', ['outfit', 'favourite', 'photo', 'video']);
     await _client.from('entry_tags').delete().eq('entry_id', entryId);
-
-    PickedUpload? outfitUpload = outfit;
-    PickedUpload? favouriteUpload = favourite;
-    if (outfitUpload == null && existingOutfitUrl != null) {
-      outfitUpload = PickedUpload(path: '', url: existingOutfitUrl);
-    }
-    if (favouriteUpload == null && existingFavouriteUrl != null) {
-      favouriteUpload = PickedUpload(path: '', url: existingFavouriteUrl);
-    }
 
     await _saveRelated(
       entryId: entryId,
-      outfit: outfitUpload,
-      favourite: favouriteUpload,
+      photoUrls: photoUrls,
+      videoUrls: videoUrls,
       timeline: timeline,
       taggedUserIds: taggedUserIds,
     );
@@ -295,17 +279,12 @@ class EntryService {
 
   Future<void> _saveRelated({
     required String entryId,
-    PickedUpload? outfit,
-    PickedUpload? favourite,
+    required List<String> photoUrls,
+    required List<String> videoUrls,
     required List<EditableTimelineStep> timeline,
     required List<String> taggedUserIds,
   }) async {
-    final photoRows = [
-      if (outfit != null)
-        {'entry_id': entryId, 'type': 'outfit', 'url': outfit.url},
-      if (favourite != null)
-        {'entry_id': entryId, 'type': 'favourite', 'url': favourite.url},
-    ];
+    final photoRows = mediaInsertRows(entryId, photoUrls, videoUrls);
     if (photoRows.isNotEmpty) {
       await _client.from('photos').insert(photoRows);
     }

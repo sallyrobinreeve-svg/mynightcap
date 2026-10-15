@@ -17,9 +17,8 @@ import { fetchJson } from "@/lib/fetch-client";
 
 export interface WizardData {
   dateOfNight: string;
-  outfitPhotoUrl: string | null;
-  favouritePhotoUrl: string | null;
-  videoUrl: string | null;
+  photoUrls: string[];
+  videoUrls: string[];
   rating: number | null;
   prompts: EntryPrompts;
   kissedPrivate: boolean;
@@ -40,9 +39,8 @@ const STEPS = [
 
 const initialData: WizardData = {
   dateOfNight: new Date().toISOString().slice(0, 10),
-  outfitPhotoUrl: null,
-  favouritePhotoUrl: null,
-  videoUrl: null,
+  photoUrls: [],
+  videoUrls: [],
   rating: null,
   prompts: {},
   kissedPrivate: true,
@@ -112,9 +110,8 @@ export function EntryWizard({ userId, entryId, initialData: customInitial }: Ent
         body: JSON.stringify({
           userId,
           dateOfNight: data.dateOfNight,
-          outfitPhotoUrl: data.outfitPhotoUrl,
-          favouritePhotoUrl: data.favouritePhotoUrl,
-          videoUrl: data.videoUrl,
+          photoUrls: data.photoUrls,
+          videoUrls: data.videoUrls,
           rating: data.rating,
           prompts: data.prompts,
           kissedPrivate: data.kissedPrivate,
@@ -168,12 +165,9 @@ export function EntryWizard({ userId, entryId, initialData: customInitial }: Ent
         )}
         {step === 1 && (
           <StepPhotos
-            outfitPhotoUrl={data.outfitPhotoUrl}
-            favouritePhotoUrl={data.favouritePhotoUrl}
-            videoUrl={data.videoUrl}
-            onChange={(outfitPhotoUrl, favouritePhotoUrl, videoUrl) =>
-              updateData({ outfitPhotoUrl, favouritePhotoUrl, videoUrl })
-            }
+            photoUrls={data.photoUrls}
+            videoUrls={data.videoUrls}
+            onChange={(photoUrls, videoUrls) => updateData({ photoUrls, videoUrls })}
             userId={userId}
           />
         )}

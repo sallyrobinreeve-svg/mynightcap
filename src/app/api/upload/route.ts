@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   const file = formData.get("file") as File | null;
   const type = formData.get("type") as string | null;
 
-  if (!file || !type || !["outfit", "favourite", "step", "video", "avatar"].includes(type)) {
+  if (!file || !type || !["outfit", "favourite", "photo", "step", "video", "avatar"].includes(type)) {
     return NextResponse.json(
       { error: "Invalid file or type" },
       { status: 400 }

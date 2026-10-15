@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { resolveSubmittedMedia } from "@/lib/entry-media";
+import { saveEntryMedia } from "@/lib/save-entry-media";
 
 export async function PATCH(
   request: NextRequest,
@@ -28,9 +30,6 @@ export async function PATCH(
   const body = await request.json();
   const {
     dateOfNight,
-    outfitPhotoUrl,
-    favouritePhotoUrl,
-    videoUrl,
     rating,
     prompts,
     kissedPrivate,
@@ -38,6 +37,14 @@ export async function PATCH(
     taggedUserIds,
     visibility,
   } = body;
+
+  const media = resolveSubmittedMedia(body, {
+    photosProvided: Object.prototype.hasOwnProperty.call(body, "photoUrls"),
+    videosProvided: Object.prototype.hasOwnProperty.call(body, "videoUrls"),
+  });
+  if ("error" in media) {
+    return NextResponse.json({ error: media.error }, { status: 400 });
+  }
 
   if (!dateOfNight) {
     return NextResponse.json(
@@ -57,7 +64,7 @@ export async function PATCH(
       date_of_night: dateOfNight,
       ...(rating !== undefined && { rating: rating ?? null }),
       ...(promptsData !== undefined && { prompts: promptsData }),
-      ...(videoUrl !== undefined && { video_url: videoUrl || null }),
+      ...(media.videoUrls && { video_url: media.videoUrls[0] ?? null }),
       ...(visibility !== undefined && { visibility: visibility || "friends" }),
       updated_at: new Date().toISOString(),
     })
@@ -99,22 +106,9 @@ export async function PATCH(
     }
   }
 
-  if (outfitPhotoUrl !== undefined || favouritePhotoUrl !== undefined) {
-    await supabase.from("photos").delete().eq("entry_id", entryId);
-    if (outfitPhotoUrl) {
-      await supabase.from("photos").insert({
-        entry_id: entryId,
-        type: "outfit",
-        url: outfitPhotoUrl,
-      });
-    }
-    if (favouritePhotoUrl) {
-      await supabase.from("photos").insert({
-        entry_id: entryId,
-        type: "favourite",
-        url: favouritePhotoUrl,
-      });
-    }
+  const mediaError = await saveEntryMedia(supabase, entryId, user.id, media);
+  if (mediaError) {
+    return NextResponse.json({ error: mediaError }, { status: 500 });
   }
 
   if (taggedUserIds !== undefined) {

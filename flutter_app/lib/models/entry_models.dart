@@ -63,9 +63,8 @@ class EntryEditData {
     required this.rating,
     required this.visibility,
     required this.prompts,
-    this.outfitUrl,
-    this.favouriteUrl,
-    this.videoUrl,
+    this.photoUrls = const [],
+    this.videoUrls = const [],
     required this.timeline,
     required this.taggedUserIds,
   });
@@ -75,9 +74,8 @@ class EntryEditData {
   final int? rating;
   final String visibility;
   final Map<String, dynamic> prompts;
-  final String? outfitUrl;
-  final String? favouriteUrl;
-  final String? videoUrl;
+  final List<String> photoUrls;
+  final List<String> videoUrls;
   final List<EditableTimelineStep> timeline;
   final List<String> taggedUserIds;
 }
@@ -97,7 +95,7 @@ class EntryDetail {
     required this.comments,
     required this.isMine,
     required this.taggedProfiles,
-    this.videoUrl,
+    this.videoUrls = const [],
     this.currentUserId,
   });
 
@@ -114,7 +112,7 @@ class EntryDetail {
   final List<EntryComment> comments;
   final bool isMine;
   final List<TaggedProfile> taggedProfiles;
-  final String? videoUrl;
+  final List<String> videoUrls;
   final String? currentUserId;
 }
 

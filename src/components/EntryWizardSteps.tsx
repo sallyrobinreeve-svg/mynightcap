@@ -1,14 +1,13 @@
 "use client";
 
-import { useCallback, useState, useEffect } from "react";
-import { useDropzone } from "react-dropzone";
-import Image from "next/image";
+import { useState, useEffect } from "react";
 import type { TimelineStep, TimelineStepType } from "@/types/database";
 import { GripVertical, Plus, X } from "lucide-react";
 import { PROMPTS, TIMELINE_EMOJIS } from "@/lib/prompts";
 import { isPromptMetadataKey, isPromptPrivate } from "@/lib/prompt-privacy";
 import { fetchJson } from "@/lib/fetch-client";
 import type { WizardData } from "./EntryWizard";
+import { EntryMediaFields } from "./EntryMediaFields";
 import {
   DndContext,
   closestCenter,
@@ -56,250 +55,26 @@ export function StepDate({
 }
 
 export function StepPhotos({
-  outfitPhotoUrl,
-  favouritePhotoUrl,
-  videoUrl,
+  photoUrls,
+  videoUrls,
   onChange,
   userId,
 }: {
-  outfitPhotoUrl: string | null;
-  favouritePhotoUrl: string | null;
-  videoUrl: string | null;
-  onChange: (outfit: string | null, favourite: string | null, video: string | null) => void;
+  photoUrls: string[];
+  videoUrls: string[];
+  onChange: (photos: string[], videos: string[]) => void;
   userId: string;
 }) {
-  const [uploading, setUploading] = useState<string | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [isNative, setIsNative] = useState(false);
-
-  useEffect(() => {
-    import("@capacitor/core").then(({ Capacitor }) => {
-      setIsNative(Capacitor.isNativePlatform());
-    });
-  }, []);
-
-  const uploadFile = useCallback(
-    async (file: File, type: "outfit" | "favourite" | "video"): Promise<string | null> => {
-      setUploading(type);
-      setUploadError(null);
-      try {
-        const formData = new FormData();
-        formData.set("file", file);
-        formData.set("type", type);
-        formData.set("userId", userId);
-        const res = await fetch("/api/upload", { method: "POST", body: formData });
-        if (!res.ok) throw new Error("Upload failed");
-        const { url } = await res.json();
-        return url;
-      } catch {
-        setUploadError("Failed to upload. Please try again.");
-        return null;
-      } finally {
-        setUploading(null);
-      }
-    },
-    [userId]
-  );
-
-  const onDropOutfit = useCallback(
-    async (acceptedFiles: File[]) => {
-      const file = acceptedFiles[0];
-      if (!file) return;
-      const url = await uploadFile(file, "outfit");
-      if (url) onChange(url, favouritePhotoUrl, videoUrl);
-    },
-    [favouritePhotoUrl, videoUrl, onChange, uploadFile]
-  );
-
-  const onDropFavourite = useCallback(
-    async (acceptedFiles: File[]) => {
-      const file = acceptedFiles[0];
-      if (!file) return;
-      const url = await uploadFile(file, "favourite");
-      if (url) onChange(outfitPhotoUrl, url, videoUrl);
-    },
-    [outfitPhotoUrl, videoUrl, onChange, uploadFile]
-  );
-
-  const onDropVideo = useCallback(
-    async (acceptedFiles: File[]) => {
-      const file = acceptedFiles[0];
-      if (!file) return;
-      const url = await uploadFile(file, "video");
-      if (url) onChange(outfitPhotoUrl, favouritePhotoUrl, url);
-    },
-    [outfitPhotoUrl, favouritePhotoUrl, onChange, uploadFile]
-  );
-
-  const pickNativePhoto = useCallback(
-    async (type: "outfit" | "favourite") => {
-      if (uploading) return;
-      try {
-        const { Camera, CameraResultType, CameraSource } = await import("@capacitor/camera");
-        const photo = await Camera.getPhoto({
-          quality: 90,
-          allowEditing: false,
-          resultType: CameraResultType.Base64,
-          source: CameraSource.Photos,
-        });
-        if (!photo.base64String) return;
-        const binary = atob(photo.base64String);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        const format = photo.format || "jpeg";
-        const blob = new Blob([bytes], { type: `image/${format}` });
-        const file = new File([blob], `${type}.${format === "jpeg" ? "jpg" : format}`, {
-          type: blob.type,
-        });
-        const url = await uploadFile(file, type);
-        if (!url) return;
-        if (type === "outfit") {
-          onChange(url, favouritePhotoUrl, videoUrl);
-        } else {
-          onChange(outfitPhotoUrl, url, videoUrl);
-        }
-      } catch {
-        setUploadError("Failed to upload. Please try again.");
-      }
-    },
-    [favouritePhotoUrl, outfitPhotoUrl, onChange, uploadFile, uploading, videoUrl]
-  );
-
-  const { getRootProps: getOutfitProps, getInputProps: getOutfitInputProps } =
-    useDropzone({
-      onDrop: onDropOutfit,
-      accept: { "image/*": [".jpeg", ".jpg", ".png", ".webp", ".gif"] },
-      maxFiles: 1,
-      disabled: uploading !== null,
-    });
-
-  const { getRootProps: getFavouriteProps, getInputProps: getFavouriteInputProps } =
-    useDropzone({
-      onDrop: onDropFavourite,
-      accept: { "image/*": [".jpeg", ".jpg", ".png", ".webp", ".gif"] },
-      maxFiles: 1,
-      disabled: uploading !== null,
-    });
-
-  const { getRootProps: getVideoProps, getInputProps: getVideoInputProps } =
-    useDropzone({
-      onDrop: onDropVideo,
-      accept: { "video/*": [".mp4", ".webm", ".mov", ".avi"] },
-      maxFiles: 1,
-      disabled: uploading !== null,
-    });
-
   return (
-    <div>
-      <h2 className="font-display text-2xl text-white mb-4">Photos</h2>
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div>
-          <p className="text-nightcap-muted text-sm mb-2">Outfit of the night</p>
-          <div
-            {...(isNative ? { onClick: () => pickNativePhoto("outfit") } : getOutfitProps())}
-            className="rounded-xl border-2 border-dashed border-nightcap-muted p-6 text-center cursor-pointer hover:border-nightcap-accent/50 transition min-h-[160px] flex items-center justify-center"
-          >
-            {!isNative && <input {...getOutfitInputProps()} />}
-            {outfitPhotoUrl ? (
-              <div className="relative w-full max-h-64 flex items-center justify-center">
-                <Image
-                  src={outfitPhotoUrl}
-                  alt="Outfit"
-                  width={800}
-                  height={600}
-                  className="max-h-64 w-auto h-auto object-contain rounded-lg"
-                />
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onChange(null, favouritePhotoUrl, videoUrl);
-                  }}
-                  className="absolute top-1 right-1 rounded-full bg-nightcap-accent p-1 text-white"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            ) : uploading === "outfit" ? (
-              <p className="text-nightcap-muted">Uploading...</p>
-            ) : (
-              <p className="text-nightcap-muted">{isNative ? "Tap to choose from library" : "Drop or click to upload"}</p>
-            )}
-          </div>
-        </div>
-        <div>
-          <p className="text-nightcap-muted text-sm mb-2">Favourite photo of the night</p>
-          <div
-            {...(isNative ? { onClick: () => pickNativePhoto("favourite") } : getFavouriteProps())}
-            className="rounded-xl border-2 border-dashed border-nightcap-muted p-6 text-center cursor-pointer hover:border-nightcap-accent/50 transition min-h-[160px] flex items-center justify-center"
-          >
-            {!isNative && <input {...getFavouriteInputProps()} />}
-            {favouritePhotoUrl ? (
-              <div className="relative w-full max-h-64 flex items-center justify-center">
-                <Image
-                  src={favouritePhotoUrl}
-                  alt="Favourite"
-                  width={800}
-                  height={600}
-                  className="max-h-64 w-auto h-auto object-contain rounded-lg"
-                />
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onChange(outfitPhotoUrl, null, videoUrl);
-                  }}
-                  className="absolute top-1 right-1 rounded-full bg-nightcap-accent p-1 text-white"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            ) : uploading === "favourite" ? (
-              <p className="text-nightcap-muted">Uploading...</p>
-            ) : (
-              <p className="text-nightcap-muted">{isNative ? "Tap to choose from library" : "Drop or click to upload"}</p>
-            )}
-          </div>
-        </div>
-        <div className="sm:col-span-2">
-          <p className="text-nightcap-muted text-sm mb-2">Video highlight (optional)</p>
-          <div
-            {...(isNative ? {} : getVideoProps())}
-            className="rounded-xl border-2 border-dashed border-nightcap-muted p-6 text-center cursor-pointer hover:border-nightcap-accent/50 transition min-h-[120px] flex items-center justify-center"
-          >
-            {!isNative && <input {...getVideoInputProps()} />}
-            {videoUrl ? (
-              <div className="flex items-center gap-3 w-full">
-                <div className="w-24 h-16 rounded-lg bg-nightcap-card flex items-center justify-center flex-shrink-0">
-                  <span className="text-2xl">🎬</span>
-                </div>
-                <p className="text-nightcap-muted text-sm flex-1 truncate">Video added</p>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onChange(outfitPhotoUrl, favouritePhotoUrl, null);
-                  }}
-                  className="rounded-full bg-nightcap-accent p-1 text-white flex-shrink-0"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            ) : uploading === "video" ? (
-              <p className="text-nightcap-muted">Uploading...</p>
-            ) : (
-              <p className="text-nightcap-muted">
-                {isNative ? "Video upload is available on the web app" : "Drop or click for video (mp4, webm, mov)"}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-      {uploadError && <p className="text-red-400 text-sm mt-3">{uploadError}</p>}
-      <p className="text-nightcap-muted text-sm mt-2">All optional. Add what you have!</p>
-    </div>
+    <EntryMediaFields
+      photoUrls={photoUrls}
+      videoUrls={videoUrls}
+      onChange={onChange}
+      userId={userId}
+    />
   );
 }
+
 
 export function StepRating({
   rating,
@@ -633,10 +408,14 @@ export function StepReview({
           <span className="text-nightcap-muted text-sm">Rate the night</span>
           <p className="text-white">{data.rating ? `${data.rating} / 5` : "–"}</p>
         </div>
-        {data.videoUrl && (
+        {(data.photoUrls.length > 0 || data.videoUrls.length > 0) && (
           <div>
-            <span className="text-nightcap-muted text-sm">Video</span>
-            <p className="text-white truncate">{data.videoUrl ? "Added" : "–"}</p>
+            <span className="text-nightcap-muted text-sm">Media</span>
+            <p className="text-white">
+              {data.photoUrls.length} {data.photoUrls.length === 1 ? "photo" : "photos"}
+              {" · "}
+              {data.videoUrls.length} {data.videoUrls.length === 1 ? "video" : "videos"}
+            </p>
           </div>
         )}
         {Object.entries(data.prompts).filter(([k, v]) => !isPromptMetadataKey(k) && v !== undefined && v !== "" && v !== null).length > 0 && (

@@ -11,6 +11,8 @@ import { EntryMediaImage } from "@/components/EntryMediaImage";
 import { BottomNav } from "@/components/BottomNav";
 import { PROMPTS } from "@/lib/prompts";
 import { isPromptMetadataKey, isPromptPrivate } from "@/lib/prompt-privacy";
+import { entryPhotoUrls, entryVideoUrls } from "@/lib/entry-media";
+import { loadPhotosForEntries } from "@/lib/load-entry-photos";
 import { NeonLogo } from "@/components/NeonLogo";
 
 export default async function EntryDetailPage({
@@ -49,11 +51,6 @@ export default async function EntryDetailPage({
         notes,
         photo_url,
         sort_order
-      ),
-      photos (
-        id,
-        type,
-        url
       )
     `
     )
@@ -144,10 +141,9 @@ export default async function EntryDetailPage({
     }[]) || []
   ).sort((a, b) => a.sort_order - b.sort_order);
 
-  const photos = (entry.photos as { type: string; url: string }[]) || [];
-  const outfitPhoto = photos.find((p) => p.type === "outfit");
-  const favouritePhoto = photos.find((p) => p.type === "favourite");
-  const videoUrl = (entry as { video_url?: string | null }).video_url;
+  const photos = await loadPhotosForEntries(supabase, [id]);
+  const photoUrls = entryPhotoUrls(photos);
+  const videoUrls = entryVideoUrls(photos, (entry as { video_url?: string | null }).video_url);
   const prompts = (entry.prompts as Record<string, unknown>) || {};
   const isOwner = entry.user_id === user.id;
 
@@ -222,34 +218,31 @@ export default async function EntryDetailPage({
         </header>
 
         <div className="space-y-10">
-          {(outfitPhoto || favouritePhoto || videoUrl) && (
+          {(photoUrls.length > 0 || videoUrls.length > 0) && (
             <section>
               <h2 className="font-display text-xl text-nightcap-accent mb-4">Media</h2>
               <div className="grid gap-6">
-                {outfitPhoto && (
+                {photoUrls.map((url, index) => (
                   <EntryMediaImage
-                    src={outfitPhoto.url}
-                    alt="Outfit"
-                    label="Outfit of the night"
+                    key={url}
+                    src={url}
+                    alt={`Photo ${index + 1}`}
+                    label={`Photo ${index + 1}`}
                   />
-                )}
-                {favouritePhoto && (
-                  <EntryMediaImage
-                    src={favouritePhoto.url}
-                    alt="Favourite"
-                    label="Favourite photo"
-                  />
-                )}
-                {videoUrl && (
-                  <div className="sm:col-span-2">
-                    <p className="text-nightcap-muted text-sm mb-2">Video</p>
+                ))}
+                {videoUrls.map((url, index) => (
+                  <div key={url}>
+                    <p className="text-nightcap-muted text-sm mb-2">
+                      Video {videoUrls.length > 1 ? index + 1 : ""}
+                    </p>
                     <video
-                      src={videoUrl}
+                      src={url}
                       controls
+                      playsInline
                       className="w-full max-h-96 rounded-2xl bg-nightcap-card"
                     />
                   </div>
-                )}
+                ))}
               </div>
             </section>
           )}
