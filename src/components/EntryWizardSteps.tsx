@@ -58,11 +58,13 @@ export function StepPhotos({
   photoUrls,
   videoUrls,
   onChange,
+  onUploadingChange,
   userId,
 }: {
   photoUrls: string[];
   videoUrls: string[];
   onChange: (photos: string[], videos: string[]) => void;
+  onUploadingChange?: (uploading: boolean) => void;
   userId: string;
 }) {
   return (
@@ -70,6 +72,7 @@ export function StepPhotos({
       photoUrls={photoUrls}
       videoUrls={videoUrls}
       onChange={onChange}
+      onUploadingChange={onUploadingChange}
       userId={userId}
     />
   );

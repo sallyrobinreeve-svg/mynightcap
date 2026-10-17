@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { toFriendlyAuthMessage } from "./auth-errors.ts";
+import { isImmediateNetworkError, toFriendlyAuthMessage } from "./auth-errors.ts";
 import { accountFallbackName, accountInitial } from "./account-identity.ts";
 
 describe("toFriendlyAuthMessage", () => {
@@ -16,6 +16,11 @@ describe("toFriendlyAuthMessage", () => {
       toFriendlyAuthMessage("Token has expired or is invalid"),
       "That code is invalid or expired. Request a new one and enter the latest text."
     );
+  });
+
+  it("retries dropped connections but not a slow timeout", () => {
+    assert.equal(isImmediateNetworkError("Failed to fetch"), true);
+    assert.equal(isImmediateNetworkError("The request timed out"), false);
   });
 
   it("includes the provider wait time on rate limits", () => {

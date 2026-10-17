@@ -1,6 +1,10 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:video_player/video_player.dart';
 
 import '../data/prompts.dart';
 import '../entry_media.dart';
@@ -30,8 +34,9 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
   DateTime date = DateTime.now();
   int? rating;
   String visibility = 'friends';
-  List<String> photoUrls = [];
-  List<String> videoUrls = [];
+  List<_DraftMedia> photos = [];
+  List<_DraftMedia> videos = [];
+  int _mediaSeq = 0;
   bool saving = false;
   bool loading = false;
   String? message;
@@ -59,8 +64,14 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
         promptValues
           ..clear()
           ..addAll(data.prompts);
-        photoUrls = [...data.photoUrls];
-        videoUrls = [...data.videoUrls];
+        photos = [
+          for (final url in data.photoUrls)
+            _DraftMedia(id: url, kind: 'photo', url: url),
+        ];
+        videos = [
+          for (final url in data.videoUrls)
+            _DraftMedia(id: url, kind: 'video', url: url),
+        ];
         timelineSteps
           ..clear()
           ..addAll(data.timeline);
@@ -76,52 +87,105 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
     }
   }
 
+  bool get _mediaBusy =>
+      photos.any((item) => item.uploading) || videos.any((item) => item.uploading);
+
+  List<String> _readyUrls(List<_DraftMedia> items) => [
+        for (final item in items)
+          if (item.url != null) item.url!,
+      ];
+
   Future<void> addPhotos() async {
-    final remaining = maxEntryPhotos - photoUrls.length;
+    final remaining = maxEntryPhotos - photos.length;
     if (remaining <= 0) {
       setState(() => message = 'You can add up to 10 photos.');
       return;
     }
     final picker = ImagePicker();
-    final files = await picker.pickMultiImage(imageQuality: 88, limit: remaining);
-    if (files.isEmpty) return;
-    setState(() => message = null);
-    try {
-      final added = <String>[];
-      for (final file in files.take(remaining)) {
-        final upload = await uploadPickedFile(file, 'photo');
-        added.add(upload.url);
-      }
-      if (!mounted) return;
-      setState(() => photoUrls = [...photoUrls, ...added]);
-    } catch (_) {
-      setState(() => message = 'Photo upload failed. Please try again.');
+    final files = await picker.pickMultiImage(
+      imageQuality: 70,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      limit: remaining,
+    );
+    if (files.isEmpty || !mounted) return;
+    final added = <_DraftMedia>[];
+    for (final file in files.take(remaining)) {
+      added.add(
+        _DraftMedia(
+          id: 'photo-${_mediaSeq++}',
+          kind: 'photo',
+          localPath: file.path,
+          contentType: file.mimeType ?? 'image/jpeg',
+          uploading: true,
+        ),
+      );
+    }
+    setState(() {
+      message = null;
+      photos = [...photos, ...added];
+    });
+    for (final draft in added) {
+      unawaited(_uploadDraft(draft));
     }
   }
 
   Future<void> addVideo() async {
-    if (videoUrls.length >= maxEntryVideos) {
+    if (videos.length >= maxEntryVideos) {
       setState(() => message = 'You can add up to 5 videos.');
       return;
     }
     final picker = ImagePicker();
     final file = await picker.pickVideo(source: ImageSource.gallery);
-    if (file == null) return;
-    setState(() => message = null);
+    if (file == null || !mounted) return;
+    final draft = _DraftMedia(
+      id: 'video-${_mediaSeq++}',
+      kind: 'video',
+      localPath: file.path,
+      contentType: file.mimeType ?? 'video/mp4',
+      uploading: true,
+    );
+    setState(() {
+      message = null;
+      videos = [...videos, draft];
+    });
+    unawaited(_uploadDraft(draft));
+  }
+
+  Future<void> _uploadDraft(_DraftMedia draft) async {
+    final path = draft.localPath;
+    if (path == null) return;
     try {
-      final upload = await uploadVideoFile(file);
+      final upload = await uploadLocalFile(
+        path,
+        draft.kind,
+        contentType: draft.contentType,
+      );
       if (!mounted) return;
-      setState(() => videoUrls = [...videoUrls, upload.url]);
+      setState(() {
+        draft
+          ..url = upload.url
+          ..uploading = false
+          ..failed = false;
+      });
     } catch (_) {
-      setState(() => message = 'Video upload failed. Please try again.');
+      if (!mounted) return;
+      setState(() {
+        draft
+          ..uploading = false
+          ..failed = true;
+        message = draft.kind == 'video'
+            ? 'A video did not upload. Retry it below.'
+            : 'A photo did not upload. Retry it below.';
+      });
     }
   }
 
-  void _move(List<String> urls, int index, int direction) {
+  void _move(List<_DraftMedia> items, int index, int direction) {
     final next = index + direction;
-    if (next < 0 || next >= urls.length) return;
-    final item = urls.removeAt(index);
-    urls.insert(next, item);
+    if (next < 0 || next >= items.length) return;
+    final item = items.removeAt(index);
+    items.insert(next, item);
   }
 
   void _normalizePromptValues() {
@@ -140,6 +204,16 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
       setState(() => message = 'Choose a rating before posting.');
       return;
     }
+    if (_mediaBusy) {
+      setState(() => message = 'Wait for photos and videos to finish uploading.');
+      return;
+    }
+    if (photos.any((item) => item.failed) || videos.any((item) => item.failed)) {
+      setState(
+        () => message = 'Retry or remove media that failed to upload.',
+      );
+      return;
+    }
     setState(() {
       saving = true;
       message = null;
@@ -152,8 +226,8 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
           rating: rating!,
           visibility: visibility,
           prompts: promptValues,
-          photoUrls: photoUrls,
-          videoUrls: videoUrls,
+          photoUrls: _readyUrls(photos),
+          videoUrls: _readyUrls(videos),
           timeline: timelineSteps,
           taggedUserIds: taggedUserIds.toList(),
         );
@@ -163,8 +237,8 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
           rating: rating!,
           visibility: visibility,
           prompts: promptValues,
-          photoUrls: photoUrls,
-          videoUrls: videoUrls,
+          photoUrls: _readyUrls(photos),
+          videoUrls: _readyUrls(videos),
           timeline: timelineSteps,
           taggedUserIds: taggedUserIds.toList(),
         );
@@ -180,8 +254,8 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
       } else {
         setState(() {
           rating = null;
-          photoUrls = [];
-          videoUrls = [];
+          photos = [];
+          videos = [];
           promptValues.clear();
           timelineSteps.clear();
           taggedUserIds.clear();
@@ -264,28 +338,46 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
                 const SizedBox(height: 18),
                 _MediaSection(
                   title: 'Photos',
-                  countLabel: '${photoUrls.length} / $maxEntryPhotos',
-                  urls: photoUrls,
+                  countLabel: '${photos.length} / $maxEntryPhotos',
+                  items: photos,
                   emptyLabel: 'Add photos',
                   icon: Icons.photo_library_outlined,
-                  onAdd: photoUrls.length >= maxEntryPhotos ? null : addPhotos,
+                  onAdd: photos.length >= maxEntryPhotos ? null : addPhotos,
                   onMove: (index, direction) =>
-                      setState(() => _move(photoUrls, index, direction)),
-                  onRemove: (index) =>
-                      setState(() => photoUrls.removeAt(index)),
+                      setState(() => _move(photos, index, direction)),
+                  onRemove: (index) => setState(() => photos.removeAt(index)),
+                  onRetry: (index) {
+                    final item = photos[index];
+                    setState(() {
+                      item
+                        ..failed = false
+                        ..uploading = true;
+                      message = null;
+                    });
+                    unawaited(_uploadDraft(item));
+                  },
                 ),
                 const SizedBox(height: 12),
                 _MediaSection(
                   title: 'Videos',
-                  countLabel: '${videoUrls.length} / $maxEntryVideos',
-                  urls: videoUrls,
+                  countLabel: '${videos.length} / $maxEntryVideos',
+                  items: videos,
                   emptyLabel: 'Add video',
                   icon: Icons.videocam_outlined,
-                  onAdd: videoUrls.length >= maxEntryVideos ? null : addVideo,
+                  onAdd: videos.length >= maxEntryVideos ? null : addVideo,
                   onMove: (index, direction) =>
-                      setState(() => _move(videoUrls, index, direction)),
-                  onRemove: (index) =>
-                      setState(() => videoUrls.removeAt(index)),
+                      setState(() => _move(videos, index, direction)),
+                  onRemove: (index) => setState(() => videos.removeAt(index)),
+                  onRetry: (index) {
+                    final item = videos[index];
+                    setState(() {
+                      item
+                        ..failed = false
+                        ..uploading = true;
+                      message = null;
+                    });
+                    unawaited(_uploadDraft(item));
+                  },
                 ),
                 const SizedBox(height: 18),
                 TimelineEditor(
@@ -386,26 +478,48 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
   }
 }
 
+class _DraftMedia {
+  _DraftMedia({
+    required this.id,
+    required this.kind,
+    this.localPath,
+    this.url,
+    this.contentType,
+    this.uploading = false,
+    this.failed = false,
+  });
+
+  final String id;
+  final String kind;
+  final String? localPath;
+  String? url;
+  final String? contentType;
+  bool uploading;
+  bool failed;
+}
+
 class _MediaSection extends StatelessWidget {
   const _MediaSection({
     required this.title,
     required this.countLabel,
-    required this.urls,
+    required this.items,
     required this.emptyLabel,
     required this.icon,
     required this.onAdd,
     required this.onMove,
     required this.onRemove,
+    required this.onRetry,
   });
 
   final String title;
   final String countLabel;
-  final List<String> urls;
+  final List<_DraftMedia> items;
   final String emptyLabel;
   final IconData icon;
   final VoidCallback? onAdd;
   final void Function(int index, int direction) onMove;
   final void Function(int index) onRemove;
+  final void Function(int index) onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -420,17 +534,29 @@ class _MediaSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        for (var i = 0; i < urls.length; i++)
+        for (var i = 0; i < items.length; i++)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Row(
               children: [
+                _ClipThumb(item: items[i]),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    '$title ${i + 1}',
+                    items[i].failed
+                        ? '$title ${i + 1} failed'
+                        : items[i].uploading
+                            ? 'Uploading ${title.toLowerCase()} ${i + 1}'
+                            : '$title ${i + 1}',
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),
+                if (items[i].failed)
+                  IconButton(
+                    tooltip: 'Retry upload',
+                    onPressed: () => onRetry(i),
+                    icon: const Icon(Icons.refresh),
+                  ),
                 IconButton(
                   tooltip: 'Move up',
                   onPressed: i == 0 ? null : () => onMove(i, -1),
@@ -438,7 +564,7 @@ class _MediaSection extends StatelessWidget {
                 ),
                 IconButton(
                   tooltip: 'Move down',
-                  onPressed: i == urls.length - 1 ? null : () => onMove(i, 1),
+                  onPressed: i == items.length - 1 ? null : () => onMove(i, 1),
                   icon: const Icon(Icons.arrow_downward),
                 ),
                 IconButton(
@@ -453,10 +579,176 @@ class _MediaSection extends StatelessWidget {
           PhotoButton(
             label: emptyLabel,
             icon: icon,
-            filled: urls.isNotEmpty,
+            filled: items.isNotEmpty,
             onTap: onAdd!,
           ),
       ],
+    );
+  }
+}
+
+class _ClipThumb extends StatelessWidget {
+  const _ClipThumb({required this.item});
+
+  final _DraftMedia item;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        width: 76,
+        height: 76,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ColoredBox(
+              color: NightColors.card,
+              child: item.kind == 'video'
+                  ? _VideoStill(item: item)
+                  : _PhotoStill(item: item),
+            ),
+            if (item.uploading)
+              const ColoredBox(
+                color: Color(0x88000000),
+                child: Center(
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PhotoStill extends StatelessWidget {
+  const _PhotoStill({required this.item});
+
+  final _DraftMedia item;
+
+  @override
+  Widget build(BuildContext context) {
+    final local = item.localPath;
+    if (local != null && local.isNotEmpty) {
+      return Image.file(
+        File(local),
+        fit: BoxFit.cover,
+        cacheWidth: 228,
+        errorBuilder: (_, _, _) =>
+            const _MissingThumb(icon: Icons.image_not_supported_outlined),
+      );
+    }
+    final url = item.url;
+    if (url != null && url.isNotEmpty) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        cacheWidth: 228,
+        errorBuilder: (_, _, _) =>
+            const _MissingThumb(icon: Icons.image_not_supported_outlined),
+      );
+    }
+    return const _MissingThumb(icon: Icons.photo_outlined);
+  }
+}
+
+class _VideoStill extends StatefulWidget {
+  const _VideoStill({required this.item});
+
+  final _DraftMedia item;
+
+  @override
+  State<_VideoStill> createState() => _VideoStillState();
+}
+
+class _VideoStillState extends State<_VideoStill> {
+  VideoPlayerController? _controller;
+  bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _open();
+  }
+
+  Future<void> _open() async {
+    final local = widget.item.localPath;
+    final url = widget.item.url;
+    final VideoPlayerController controller;
+    if (local != null && local.isNotEmpty) {
+      controller = VideoPlayerController.file(File(local));
+    } else if (url != null && url.isNotEmpty) {
+      controller = VideoPlayerController.networkUrl(Uri.parse(url));
+    } else {
+      return;
+    }
+    _controller = controller;
+    try {
+      await controller.initialize();
+      if (!mounted) return;
+      await controller.setVolume(0);
+      await controller.pause();
+      if (mounted) setState(() => _ready = true);
+    } catch (_) {
+      if (!mounted) return;
+      await controller.dispose();
+      if (identical(_controller, controller)) _controller = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    final controller = _controller;
+    _controller = null;
+    controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = _controller;
+    final size = controller?.value.size;
+    if (!_ready || controller == null || size == null || size.width == 0 || size.height == 0) {
+      return const _MissingThumb(icon: Icons.videocam_outlined);
+    }
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        FittedBox(
+          fit: BoxFit.cover,
+          child: SizedBox(
+            width: controller.value.size.width,
+            height: controller.value.size.height,
+            child: VideoPlayer(controller),
+          ),
+        ),
+        const Align(
+          alignment: Alignment.bottomRight,
+          child: Padding(
+            padding: EdgeInsets.all(4),
+            child: Icon(Icons.play_arrow, color: Colors.white, size: 18),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MissingThumb extends StatelessWidget {
+  const _MissingThumb({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: NightColors.card,
+      child: Icon(icon, color: NightColors.muted),
     );
   }
 }

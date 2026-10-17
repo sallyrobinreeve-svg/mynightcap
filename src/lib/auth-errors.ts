@@ -20,6 +20,19 @@ export function isTransientAuthError(message: string): boolean {
   );
 }
 
+/** Connection failures that return immediately. Timeouts are excluded so a slow text is not sent twice. */
+export function isImmediateNetworkError(message: string): boolean {
+  const m = message.toLowerCase();
+  if (m.includes("timeout") || m.includes("timed out")) return false;
+  return (
+    m.includes("failed to fetch") ||
+    m.includes("load failed") ||
+    m.includes("econnreset") ||
+    m.includes("socket") ||
+    m.includes("network")
+  );
+}
+
 /** Map Supabase Auth errors into short, user-facing copy. */
 export function toFriendlyAuthMessage(message: string): string {
   const m = message.toLowerCase();

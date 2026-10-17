@@ -282,6 +282,8 @@ class NightTextField extends StatelessWidget {
     this.enabled = true,
     this.autofillHints,
     this.inputFormatters,
+    this.focusNode,
+    this.autofocus = false,
     super.key,
   });
 
@@ -293,11 +295,15 @@ class NightTextField extends StatelessWidget {
   final bool enabled;
   final Iterable<String>? autofillHints;
   final List<TextInputFormatter>? inputFormatters;
+  final FocusNode? focusNode;
+  final bool autofocus;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
+      focusNode: focusNode,
+      autofocus: autofocus,
       obscureText: obscureText,
       keyboardType: keyboardType,
       maxLines: maxLines,

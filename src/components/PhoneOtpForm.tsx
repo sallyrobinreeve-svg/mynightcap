@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  isTransientAuthError,
+  isImmediateNetworkError,
   retryAfterSeconds,
   toFriendlyAuthMessage,
 } from "@/lib/auth-errors";
@@ -42,6 +42,7 @@ export function PhoneOtpForm({
   const [nationalNumber, setNationalNumber] = useState("");
   const [otp, setOtp] = useState("");
   const [sentTo, setSentTo] = useState<string | null>(null);
+  const [codeVisible, setCodeVisible] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +50,7 @@ export function PhoneOtpForm({
   const verifyLock = useRef(false);
   const attemptedOtp = useRef<string | null>(null);
   const sentToRef = useRef<string | null>(null);
+  const otpRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     sentToRef.current = sentTo;
@@ -83,40 +85,60 @@ export function PhoneOtpForm({
       return;
     }
     const phone = parsed.phone;
+    const resending = Boolean(sentTo);
+    if (resending) setOtp("");
 
     setLoading(true);
     setError(null);
-    setMessage(null);
+    setCodeVisible(true);
+    setMessage("Sending the code. Enter it as soon as the text arrives.");
+    window.setTimeout(() => otpRef.current?.focus(), 0);
 
     const supabase = createClient();
     const data = typeof metadata === "function" ? metadata() : metadata;
     let lastMessage = "We couldn't send a verification text. Try again in a moment.";
 
+    const sendOnce = () => {
+      const request = supabase.auth.signInWithOtp({
+        phone,
+        options: {
+          channel: "sms",
+          shouldCreateUser,
+          data,
+        },
+      });
+      void request.catch(() => undefined);
+      const timeout = new Promise<never>((_, reject) => {
+        window.setTimeout(() => reject(new Error("timeout")), 20000);
+      });
+      return Promise.race([request, timeout]);
+    };
+
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
-        const { error: sendError } = await supabase.auth.signInWithOtp({
-          phone,
-          options: {
-            channel: "sms",
-            shouldCreateUser,
-            data,
-          },
-        });
+        const { error: sendError } = await sendOnce();
         if (!sendError) {
           attemptedOtp.current = null;
           setSentTo(phone);
           setCooldown(60);
-          setOtp("");
-          setMessage(`We sent a 6-digit code to ${maskPhone(phone)}. It can take up to a minute.`);
+          setMessage(`Code sent to ${maskPhone(phone)}. Enter it here when the text arrives.`);
           setLoading(false);
           return;
         }
         lastMessage = sendError.message;
-        if (attempt === 0 && isTransientAuthError(sendError.message)) continue;
+        if (attempt === 0 && isImmediateNetworkError(sendError.message)) continue;
         break;
       } catch (sendError) {
         lastMessage = sendError instanceof Error ? sendError.message : "Network error";
-        if (attempt === 0 && isTransientAuthError(lastMessage)) continue;
+        if (lastMessage.toLowerCase().includes("timeout")) {
+          attemptedOtp.current = null;
+          setSentTo(phone);
+          setCooldown(30);
+          setMessage("The text is taking a moment. Enter the code if it arrives, or tap resend.");
+          setLoading(false);
+          return;
+        }
+        if (attempt === 0 && isImmediateNetworkError(lastMessage)) continue;
         break;
       }
     }
@@ -124,6 +146,10 @@ export function PhoneOtpForm({
     const wait = retryAfterSeconds(lastMessage);
     if (wait) setCooldown(wait);
     setError(toFriendlyAuthMessage(lastMessage));
+    if (!resending) {
+      setCodeVisible(false);
+      setSentTo(null);
+    }
     setLoading(false);
   };
 
@@ -133,7 +159,7 @@ export function PhoneOtpForm({
 
     const phone = sentToRef.current;
     if (!phone) {
-      await sendCode();
+      if (!codeVisible) await sendCode();
       return;
     }
 
@@ -224,7 +250,7 @@ export function PhoneOtpForm({
             autoComplete="tel"
             value={nationalNumber}
             onChange={(e) => setNationalNumber(e.target.value)}
-            disabled={loading || Boolean(sentTo)}
+            disabled={loading || codeVisible}
             required
             className={inputClass}
             placeholder="7123 456789"
@@ -232,12 +258,13 @@ export function PhoneOtpForm({
         </div>
       </div>
 
-      {sentTo && (
+      {codeVisible && (
         <div>
           <label htmlFor="otp" className="mb-2 block text-sm text-nightcap-muted">
             Verification code
           </label>
           <input
+            ref={otpRef}
             id="otp"
             type="text"
             inputMode="numeric"
@@ -266,7 +293,7 @@ export function PhoneOtpForm({
           ? sentTo
             ? "Verifying..."
             : "Sending code..."
-          : sentTo
+          : sentTo || codeVisible
             ? "Verify code"
             : submitLabel}
       </button>
@@ -282,7 +309,7 @@ export function PhoneOtpForm({
         </button>
       )}
 
-      {sentTo && (
+      {codeVisible && (
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
           <button
             type="button"
@@ -297,6 +324,7 @@ export function PhoneOtpForm({
             disabled={loading}
             onClick={() => {
               setSentTo(null);
+              setCodeVisible(false);
               setOtp("");
               setMessage(null);
               setError(null);

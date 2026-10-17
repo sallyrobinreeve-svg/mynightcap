@@ -109,6 +109,17 @@ bool isTransientAuthError(String message) {
       m.contains('socket');
 }
 
+/// Connection failures that return immediately. Timeouts are excluded so a
+/// slow text is not sent a second time.
+bool isImmediateNetworkError(String message) {
+  final m = message.toLowerCase();
+  if (m.contains('timeout') || m.contains('timed out')) return false;
+  return m.contains('failed to fetch') ||
+      m.contains('load failed') ||
+      m.contains('socket') ||
+      m.contains('network');
+}
+
 String friendlyAuthMessage(String message) {
   final m = message.toLowerCase();
   final wait = retryAfterSeconds(message);
