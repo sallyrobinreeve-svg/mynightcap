@@ -60,6 +60,7 @@ export function EntryWizard({ userId, entryId, initialData: customInitial }: Ent
   const [step, setStep] = useState(0);
   const [data, setData] = useState<WizardData>({ ...initialData, ...customInitial });
   const [saving, setSaving] = useState(false);
+  const [mediaUploading, setMediaUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const updateData = (updates: Partial<WizardData>) => {
@@ -168,6 +169,7 @@ export function EntryWizard({ userId, entryId, initialData: customInitial }: Ent
             photoUrls={data.photoUrls}
             videoUrls={data.videoUrls}
             onChange={(photoUrls, videoUrls) => updateData({ photoUrls, videoUrls })}
+            onUploadingChange={setMediaUploading}
             userId={userId}
           />
         )}
@@ -224,12 +226,14 @@ export function EntryWizard({ userId, entryId, initialData: customInitial }: Ent
         <button
           type="button"
           onClick={handleNext}
-          disabled={!canProceed() || saving}
+          disabled={!canProceed() || saving || mediaUploading}
           className="rounded-xl bg-nightcap-accent px-6 py-3 font-medium text-white transition hover:opacity-90 disabled:opacity-50"
         >
           {saving
             ? "Saving..."
-            : step === STEPS.length - 1
+            : mediaUploading
+              ? "Uploading..."
+              : step === STEPS.length - 1
               ? (entryId ? "Update entry" : "Post entry")
               : "Next"}
         </button>

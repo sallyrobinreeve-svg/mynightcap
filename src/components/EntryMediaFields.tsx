@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import Image from "next/image";
 import { ChevronDown, ChevronUp, GripVertical, X } from "lucide-react";
 import {
   DndContext,
@@ -25,22 +24,69 @@ import { MAX_ENTRY_PHOTOS, MAX_ENTRY_VIDEOS } from "@/lib/entry-media";
 
 const PHOTO_ACCEPT = { "image/*": [".jpeg", ".jpg", ".png", ".webp", ".gif"] };
 const VIDEO_ACCEPT = { "video/*": [".mp4", ".webm", ".mov", ".avi"] };
+const PHOTO_EDGE = 1600;
 
-function moveItem(urls: string[], index: number, direction: -1 | 1): string[] {
-  const next = index + direction;
-  if (next < 0 || next >= urls.length) return urls;
-  return arrayMove(urls, index, next);
+type MediaSlot = {
+  key: string;
+  preview: string;
+  remoteUrl: string | null;
+  uploading: boolean;
+};
+
+function slotsFromUrls(urls: string[]): MediaSlot[] {
+  return urls.map((url) => ({
+    key: url,
+    preview: url,
+    remoteUrl: url,
+    uploading: false,
+  }));
+}
+
+function readyUrls(slots: MediaSlot[]): string[] {
+  return slots.flatMap((slot) => (slot.remoteUrl ? [slot.remoteUrl] : []));
+}
+
+function revokePreview(preview: string) {
+  if (preview.startsWith("blob:")) URL.revokeObjectURL(preview);
+}
+
+async function shrinkImage(file: File): Promise<File> {
+  if (!file.type.startsWith("image/") || file.type === "image/gif") return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, PHOTO_EDGE / Math.max(bitmap.width, bitmap.height));
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      bitmap.close();
+      return file;
+    }
+    context.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/jpeg", 0.72);
+    });
+    if (!blob) return file;
+    const name = file.name.replace(/\.\w+$/, "") || "photo";
+    return new File([blob], `${name}.jpg`, { type: "image/jpeg" });
+  } catch {
+    return file;
+  }
 }
 
 function SortableMediaRow({
-  id,
+  slot,
   index,
   total,
   kind,
   onMove,
   onRemove,
 }: {
-  id: string;
+  slot: MediaSlot;
   index: number;
   total: number;
   kind: "photo" | "video";
@@ -48,7 +94,7 @@ function SortableMediaRow({
   onRemove: (index: number) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id,
+    id: slot.key,
   });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -72,22 +118,33 @@ function SortableMediaRow({
       >
         <GripVertical size={18} />
       </button>
-      {kind === "photo" ? (
-        <Image
-          src={id}
-          alt=""
-          width={72}
-          height={72}
-          className="h-16 w-16 rounded-lg object-cover"
-        />
-      ) : (
-        <video src={id} className="h-16 w-16 rounded-lg bg-black object-cover" muted playsInline />
-      )}
+      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-black">
+        {kind === "photo" ? (
+          // Local previews are blob URLs, which next/image cannot render.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={slot.preview} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <video
+            src={slot.preview}
+            className="h-full w-full object-cover"
+            muted
+            playsInline
+            preload="metadata"
+          />
+        )}
+        {slot.uploading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/55">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+          </div>
+        )}
+      </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm text-white">
           {kind === "photo" ? "Photo" : "Video"} {index + 1}
         </p>
-        <p className="text-xs text-nightcap-muted">Drag or use the arrows</p>
+        <p className="text-xs text-nightcap-muted">
+          {slot.uploading ? "Uploading in the background" : "Drag or use the arrows"}
+        </p>
       </div>
       <div className="flex items-center gap-1">
         <button
@@ -125,20 +182,61 @@ export function EntryMediaFields({
   photoUrls,
   videoUrls,
   onChange,
+  onUploadingChange,
   userId,
 }: {
   photoUrls: string[];
   videoUrls: string[];
   onChange: (photos: string[], videos: string[]) => void;
+  onUploadingChange?: (uploading: boolean) => void;
   userId: string;
 }) {
-  const [uploading, setUploading] = useState<"photo" | "video" | null>(null);
+  const [photoSlots, setPhotoSlots] = useState<MediaSlot[]>(() => slotsFromUrls(photoUrls));
+  const [videoSlots, setVideoSlots] = useState<MediaSlot[]>(() => slotsFromUrls(videoUrls));
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isNative, setIsNative] = useState(false);
+  const photoSlotsRef = useRef(photoSlots);
+  const videoSlotsRef = useRef(videoSlots);
+  const emittedPhotos = useRef(photoUrls.join("|"));
+  const emittedVideos = useRef(videoUrls.join("|"));
+  useEffect(() => {
+    photoSlotsRef.current = photoSlots;
+  }, [photoSlots]);
+
+  useEffect(() => {
+    videoSlotsRef.current = videoSlots;
+  }, [videoSlots]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  const publish = useCallback(
+    (photos: MediaSlot[], videos: MediaSlot[]) => {
+      const photoList = readyUrls(photos);
+      const videoList = readyUrls(videos);
+      emittedPhotos.current = photoList.join("|");
+      emittedVideos.current = videoList.join("|");
+      onChange(photoList, videoList);
+      onUploadingChange?.(photos.some((slot) => slot.uploading) || videos.some((slot) => slot.uploading));
+    },
+    [onChange, onUploadingChange]
+  );
+
+  useEffect(() => {
+    const incoming = photoUrls.join("|");
+    if (incoming === emittedPhotos.current) return;
+    emittedPhotos.current = incoming;
+    setPhotoSlots(slotsFromUrls(photoUrls));
+  }, [photoUrls]);
+
+  useEffect(() => {
+    const incoming = videoUrls.join("|");
+    if (incoming === emittedVideos.current) return;
+    emittedVideos.current = incoming;
+    setVideoSlots(slotsFromUrls(videoUrls));
+  }, [videoUrls]);
 
   useEffect(() => {
     import("@capacitor/core").then(({ Capacitor }) => {
@@ -160,10 +258,58 @@ export function EntryMediaFields({
     [userId]
   );
 
+  const uploadSlot = useCallback(
+    async (key: string, file: File, type: "photo" | "video") => {
+      try {
+        const prepared = type === "photo" ? await shrinkImage(file) : file;
+        const url = await uploadFile(prepared, type);
+        if (!url) throw new Error("Upload failed");
+        const apply = (slots: MediaSlot[]) =>
+          slots.map((slot) =>
+            slot.key === key ? { ...slot, remoteUrl: url, uploading: false } : slot
+          );
+        if (type === "photo") {
+          const next = apply(photoSlotsRef.current);
+          photoSlotsRef.current = next;
+          setPhotoSlots(next);
+          publish(next, videoSlotsRef.current);
+        } else {
+          const next = apply(videoSlotsRef.current);
+          videoSlotsRef.current = next;
+          setVideoSlots(next);
+          publish(photoSlotsRef.current, next);
+        }
+      } catch {
+        const drop = (slots: MediaSlot[]) => {
+          const removed = slots.find((slot) => slot.key === key);
+          if (removed) revokePreview(removed.preview);
+          return slots.filter((slot) => slot.key !== key);
+        };
+        if (type === "photo") {
+          const next = drop(photoSlotsRef.current);
+          photoSlotsRef.current = next;
+          setPhotoSlots(next);
+          publish(next, videoSlotsRef.current);
+        } else {
+          const next = drop(videoSlotsRef.current);
+          videoSlotsRef.current = next;
+          setVideoSlots(next);
+          publish(photoSlotsRef.current, next);
+        }
+        setUploadError(
+          type === "photo"
+            ? "A photo did not upload. It was removed so you can try it again."
+            : "A video did not upload. It was removed so you can try it again."
+        );
+      }
+    },
+    [publish, uploadFile]
+  );
+
   const addFiles = useCallback(
     async (files: File[], type: "photo" | "video") => {
       const max = type === "photo" ? MAX_ENTRY_PHOTOS : MAX_ENTRY_VIDEOS;
-      const current = type === "photo" ? photoUrls : videoUrls;
+      const current = type === "photo" ? photoSlotsRef.current : videoSlotsRef.current;
       const room = max - current.length;
       if (room <= 0) {
         setUploadError(
@@ -172,39 +318,35 @@ export function EntryMediaFields({
         return;
       }
       const batch = files.slice(0, room);
-      setUploading(type);
+      const added: MediaSlot[] = batch.map((file) => ({
+        key: `${type}-${crypto.randomUUID()}`,
+        preview: URL.createObjectURL(file),
+        remoteUrl: null,
+        uploading: true,
+      }));
       setUploadError(null);
-      const added: string[] = [];
-      try {
-        for (const file of batch) {
-          const url = await uploadFile(file, type);
-          if (url) added.push(url);
-        }
-        if (added.length === 0) {
-          setUploadError("Failed to upload. Please try again.");
-          return;
-        }
-        if (type === "photo") onChange([...photoUrls, ...added], videoUrls);
-        else onChange(photoUrls, [...videoUrls, ...added]);
-      } catch {
-        setUploadError("Failed to upload. Please try again.");
-        if (added.length > 0) {
-          if (type === "photo") onChange([...photoUrls, ...added], videoUrls);
-          else onChange(photoUrls, [...videoUrls, ...added]);
-        }
-      } finally {
-        setUploading(null);
+      if (type === "photo") {
+        const next = [...photoSlotsRef.current, ...added];
+        photoSlotsRef.current = next;
+        setPhotoSlots(next);
+        publish(next, videoSlotsRef.current);
+      } else {
+        const next = [...videoSlotsRef.current, ...added];
+        videoSlotsRef.current = next;
+        setVideoSlots(next);
+        publish(photoSlotsRef.current, next);
       }
+      await Promise.all(added.map((slot, index) => uploadSlot(slot.key, batch[index], type)));
     },
-    [onChange, photoUrls, uploadFile, videoUrls]
+    [publish, uploadSlot]
   );
 
   const pickNativePhotos = useCallback(async () => {
-    const room = MAX_ENTRY_PHOTOS - photoUrls.length;
-    if (room <= 0 || uploading) return;
+    const room = MAX_ENTRY_PHOTOS - photoSlotsRef.current.length;
+    if (room <= 0) return;
     try {
       const { Camera } = await import("@capacitor/camera");
-      const gallery = await Camera.pickImages({ quality: 90, limit: room });
+      const gallery = await Camera.pickImages({ quality: 70, width: 1600, height: 1600, limit: room });
       const files: File[] = [];
       for (const photo of gallery.photos) {
         const src = photo.webPath;
@@ -226,7 +368,7 @@ export function EntryMediaFields({
     } catch {
       setUploadError("Failed to upload. Please try again.");
     }
-  }, [addFiles, photoUrls.length, uploading]);
+  }, [addFiles]);
 
   const onDropPhotos = useCallback(
     (accepted: File[]) => {
@@ -241,30 +383,68 @@ export function EntryMediaFields({
     [addFiles]
   );
 
+  const photoRoom = Math.max(0, MAX_ENTRY_PHOTOS - photoSlots.length);
+  const videoRoom = Math.max(0, MAX_ENTRY_VIDEOS - videoSlots.length);
   const { getRootProps: getPhotoRoot, getInputProps: getPhotoInput } = useDropzone({
     onDrop: onDropPhotos,
     accept: PHOTO_ACCEPT,
-    maxFiles: Math.max(1, MAX_ENTRY_PHOTOS - photoUrls.length),
-    disabled: uploading !== null || photoUrls.length >= MAX_ENTRY_PHOTOS,
+    maxFiles: Math.max(1, photoRoom),
+    disabled: photoRoom === 0,
   });
   const { getRootProps: getVideoRoot, getInputProps: getVideoInput } = useDropzone({
     onDrop: onDropVideos,
     accept: VIDEO_ACCEPT,
-    maxFiles: Math.max(1, MAX_ENTRY_VIDEOS - videoUrls.length),
-    disabled: uploading !== null || videoUrls.length >= MAX_ENTRY_VIDEOS,
+    maxFiles: Math.max(1, videoRoom),
+    disabled: videoRoom === 0,
   });
+
+  const moveSlots = (kind: "photo" | "video", index: number, direction: -1 | 1) => {
+    const list = kind === "photo" ? photoSlots : videoSlots;
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= list.length) return;
+    const next = arrayMove(list, index, nextIndex);
+    if (kind === "photo") {
+      setPhotoSlots(next);
+      publish(next, videoSlots);
+    } else {
+      setVideoSlots(next);
+      publish(photoSlots, next);
+    }
+  };
+
+  const removeSlot = (kind: "photo" | "video", index: number) => {
+    const list = kind === "photo" ? photoSlots : videoSlots;
+    const removed = list[index];
+    if (removed) revokePreview(removed.preview);
+    const next = list.filter((_, itemIndex) => itemIndex !== index);
+    if (kind === "photo") {
+      setPhotoSlots(next);
+      publish(next, videoSlots);
+    } else {
+      setVideoSlots(next);
+      publish(photoSlots, next);
+    }
+  };
 
   const onDragEnd = (kind: "photo" | "video") => (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const list = kind === "photo" ? photoUrls : videoUrls;
-    const oldIndex = list.indexOf(String(active.id));
-    const newIndex = list.indexOf(String(over.id));
+    const list = kind === "photo" ? photoSlots : videoSlots;
+    const oldIndex = list.findIndex((slot) => slot.key === String(active.id));
+    const newIndex = list.findIndex((slot) => slot.key === String(over.id));
     if (oldIndex < 0 || newIndex < 0) return;
     const next = arrayMove(list, oldIndex, newIndex);
-    if (kind === "photo") onChange(next, videoUrls);
-    else onChange(photoUrls, next);
+    if (kind === "photo") {
+      setPhotoSlots(next);
+      publish(next, videoSlots);
+    } else {
+      setVideoSlots(next);
+      publish(photoSlots, next);
+    }
   };
+
+  const uploadingPhotos = photoSlots.some((slot) => slot.uploading);
+  const uploadingVideos = videoSlots.some((slot) => slot.uploading);
 
   return (
     <div className="space-y-8">
@@ -272,44 +452,37 @@ export function EntryMediaFields({
         <div className="mb-3 flex items-baseline justify-between gap-3">
           <h2 className="font-display text-2xl text-white">Photos</h2>
           <p className="text-sm text-nightcap-muted">
-            {photoUrls.length} / {MAX_ENTRY_PHOTOS}
+            {photoSlots.length} / {MAX_ENTRY_PHOTOS}
           </p>
         </div>
-        {photoUrls.length > 0 && (
+        {photoSlots.length > 0 && (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd("photo")}>
-            <SortableContext items={photoUrls} strategy={verticalListSortingStrategy}>
+            <SortableContext items={photoSlots.map((slot) => slot.key)} strategy={verticalListSortingStrategy}>
               <div className="mb-3 space-y-2">
-                {photoUrls.map((url, index) => (
+                {photoSlots.map((slot, index) => (
                   <SortableMediaRow
-                    key={url}
-                    id={url}
+                    key={slot.key}
+                    slot={slot}
                     index={index}
-                    total={photoUrls.length}
+                    total={photoSlots.length}
                     kind="photo"
-                    onMove={(itemIndex, direction) =>
-                      onChange(moveItem(photoUrls, itemIndex, direction), videoUrls)
-                    }
-                    onRemove={(itemIndex) =>
-                      onChange(
-                        photoUrls.filter((_, i) => i !== itemIndex),
-                        videoUrls
-                      )
-                    }
+                    onMove={(itemIndex, direction) => moveSlots("photo", itemIndex, direction)}
+                    onRemove={(itemIndex) => removeSlot("photo", itemIndex)}
                   />
                 ))}
               </div>
             </SortableContext>
           </DndContext>
         )}
-        {photoUrls.length < MAX_ENTRY_PHOTOS && (
+        {photoRoom > 0 && (
           <div
             {...(isNative ? { onClick: () => void pickNativePhotos() } : getPhotoRoot())}
             className="cursor-pointer rounded-xl border-2 border-dashed border-nightcap-muted p-6 text-center transition hover:border-nightcap-accent/50"
           >
             {!isNative && <input {...getPhotoInput()} />}
             <p className="text-nightcap-muted">
-              {uploading === "photo"
-                ? "Uploading..."
+              {uploadingPhotos
+                ? "Uploading in the background. You can still reorder."
                 : isNative
                   ? "Tap to add photos from your library"
                   : "Drop or click to add photos"}
@@ -322,43 +495,38 @@ export function EntryMediaFields({
         <div className="mb-3 flex items-baseline justify-between gap-3">
           <h2 className="font-display text-2xl text-white">Videos</h2>
           <p className="text-sm text-nightcap-muted">
-            {videoUrls.length} / {MAX_ENTRY_VIDEOS}
+            {videoSlots.length} / {MAX_ENTRY_VIDEOS}
           </p>
         </div>
-        {videoUrls.length > 0 && (
+        {videoSlots.length > 0 && (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd("video")}>
-            <SortableContext items={videoUrls} strategy={verticalListSortingStrategy}>
+            <SortableContext items={videoSlots.map((slot) => slot.key)} strategy={verticalListSortingStrategy}>
               <div className="mb-3 space-y-2">
-                {videoUrls.map((url, index) => (
+                {videoSlots.map((slot, index) => (
                   <SortableMediaRow
-                    key={url}
-                    id={url}
+                    key={slot.key}
+                    slot={slot}
                     index={index}
-                    total={videoUrls.length}
+                    total={videoSlots.length}
                     kind="video"
-                    onMove={(itemIndex, direction) =>
-                      onChange(photoUrls, moveItem(videoUrls, itemIndex, direction))
-                    }
-                    onRemove={(itemIndex) =>
-                      onChange(
-                        photoUrls,
-                        videoUrls.filter((_, i) => i !== itemIndex)
-                      )
-                    }
+                    onMove={(itemIndex, direction) => moveSlots("video", itemIndex, direction)}
+                    onRemove={(itemIndex) => removeSlot("video", itemIndex)}
                   />
                 ))}
               </div>
             </SortableContext>
           </DndContext>
         )}
-        {videoUrls.length < MAX_ENTRY_VIDEOS && (
+        {videoRoom > 0 && (
           <div
             {...getVideoRoot()}
             className="cursor-pointer rounded-xl border-2 border-dashed border-nightcap-muted p-6 text-center transition hover:border-nightcap-accent/50"
           >
             <input {...getVideoInput()} />
             <p className="text-nightcap-muted">
-              {uploading === "video" ? "Uploading..." : "Drop or click to add videos (mp4, webm, mov)"}
+              {uploadingVideos
+                ? "Uploading in the background. You can still reorder."
+                : "Drop or click to add videos (mp4, webm, mov)"}
             </p>
           </div>
         )}

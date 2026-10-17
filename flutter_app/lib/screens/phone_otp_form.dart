@@ -33,9 +33,11 @@ class PhoneOtpForm extends StatefulWidget {
 class _PhoneOtpFormState extends State<PhoneOtpForm> {
   final number = TextEditingController();
   final otp = TextEditingController();
+  final otpFocus = FocusNode();
   String? sentTo;
   String? message;
   bool loading = false;
+  bool codeVisible = false;
   int cooldown = 0;
   Timer? _timer;
   String? _attemptedOtp;
@@ -53,6 +55,7 @@ class _PhoneOtpFormState extends State<PhoneOtpForm> {
     otp.removeListener(_onOtpChanged);
     number.dispose();
     otp.dispose();
+    otpFocus.dispose();
     super.dispose();
   }
 
@@ -109,39 +112,58 @@ class _PhoneOtpFormState extends State<PhoneOtpForm> {
       return;
     }
     final phone = parsed.phone!;
+    final resend = sentTo != null;
+    if (resend) otp.text = '';
 
     setState(() {
       loading = true;
-      message = null;
+      message = 'Sending the code. Enter it as soon as the text arrives.';
+      codeVisible = true;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) otpFocus.requestFocus();
     });
     Object? lastError;
     for (var attempt = 0; attempt < 2; attempt++) {
       try {
-        await Supabase.instance.client.auth.signInWithOtp(
+        final pending = Supabase.instance.client.auth.signInWithOtp(
           phone: phone,
           shouldCreateUser: widget.shouldCreateUser,
           data: widget.userMetadata?.call(),
           channel: OtpChannel.sms,
         );
+        unawaited(pending.then<void>((_) {}, onError: (_) {}));
+        await pending.timeout(const Duration(seconds: 20));
         if (!mounted) return;
         _attemptedOtp = null;
         setState(() {
           sentTo = phone;
-          otp.text = '';
           message =
-              'We sent a 6-digit code to ${maskPhone(phone)}. It can take up to a minute.';
+              'Code sent to ${maskPhone(phone)}. Enter it here when the text arrives.';
+          loading = false;
         });
         _startCooldown();
-        setState(() => loading = false);
+        if (isValidOtp(otp.text)) unawaited(verifyCode());
+        return;
+      } on TimeoutException {
+        if (!mounted) return;
+        setState(() {
+          sentTo = phone;
+          message =
+              'The text is taking a moment. Enter the code if it arrives, or tap resend.';
+          loading = false;
+        });
+        _startCooldown(30);
+        if (isValidOtp(otp.text)) unawaited(verifyCode());
         return;
       } on AuthException catch (error) {
         lastError = error;
-        if (attempt == 0 && isTransientAuthError(error.message)) continue;
+        if (attempt == 0 && isImmediateNetworkError(error.message)) continue;
         break;
       } catch (error) {
         lastError = error;
         final text = error.toString();
-        if (attempt == 0 && isTransientAuthError(text)) continue;
+        if (attempt == 0 && isImmediateNetworkError(text)) continue;
         break;
       }
     }
@@ -154,6 +176,10 @@ class _PhoneOtpFormState extends State<PhoneOtpForm> {
     setState(() {
       message = friendlyAuthMessage(raw);
       loading = false;
+      if (!resend) {
+        codeVisible = false;
+        sentTo = null;
+      }
     });
     if (wait != null) _startCooldown(wait);
   }
@@ -250,16 +276,17 @@ class _PhoneOtpFormState extends State<PhoneOtpForm> {
                 controller: number,
                 label: 'UK mobile number',
                 keyboardType: TextInputType.phone,
-                enabled: sentTo == null && !loading,
+                enabled: !codeVisible && !loading,
                 autofillHints: const [AutofillHints.telephoneNumber],
               ),
             ),
           ],
         ),
-        if (sentTo != null) ...[
+        if (codeVisible) ...[
           const SizedBox(height: 12),
           NightTextField(
             controller: otp,
+            focusNode: otpFocus,
             label: 'Verification code',
             keyboardType: TextInputType.number,
             autofillHints: const [AutofillHints.oneTimeCode],
@@ -277,7 +304,9 @@ class _PhoneOtpFormState extends State<PhoneOtpForm> {
             onPressed: loading ? null : verifyCode,
             label: loading
                 ? (sentTo == null ? 'Sending code...' : 'Verifying...')
-                : (sentTo == null ? widget.submitLabel : 'Verify code'),
+                : (sentTo == null && !codeVisible
+                      ? widget.submitLabel
+                      : 'Verify code'),
           ),
         ),
         if (widget.onRequireEmail != null)
@@ -291,7 +320,7 @@ class _PhoneOtpFormState extends State<PhoneOtpForm> {
               ),
             ),
           ),
-        if (sentTo != null)
+        if (codeVisible)
           Row(
             children: [
               TextButton(
@@ -306,6 +335,7 @@ class _PhoneOtpFormState extends State<PhoneOtpForm> {
                     ? null
                     : () => setState(() {
                         sentTo = null;
+                        codeVisible = false;
                         otp.text = '';
                         message = null;
                         cooldown = 0;

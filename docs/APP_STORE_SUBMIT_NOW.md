@@ -45,7 +45,7 @@ Codemagic → environment group `nightcapt`:
 - `SUPABASE_ANON_KEY` = the **anon / public** key (same as the website)
 - `SITE_URL` = `https://mynightcap.vercel.app`
 
-Then run workflow **NightCapt Flutter iOS**. It should upload a TestFlight build. Version is `1.9.0`; the build number is generated automatically.
+Then run workflow **NightCapt Flutter iOS**. It should upload a TestFlight build. Version is `1.9.1`; the build number is generated automatically.
 
 ### 5. Create a reviewer demo account
 
