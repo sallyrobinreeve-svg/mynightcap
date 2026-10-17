@@ -98,15 +98,24 @@ Description and keywords: see `docs/APP_STORE_LISTING_GUIDE.md`.
 - Other user content — recaps, comments
 - No tracking
 
-### 8. Screenshots
+### 8. What's New and screenshots
 
-Upload **logged-in** screens, not only Sign in.
+**What's New** (paste):
 
-iPhone 6.9" (1320 × 2868): Feed, Create, Memories, Profile, UK phone sign-in.
+```
+UK phone login for UK mobiles, email for everyone else. New neon look. Recap prompts including Rate the night, mission, and Keep this private on every answer.
+```
 
-iPad 13" (2048 × 2732): at least one in-app screen (Feed or Profile). Apple previously rejected a login-only iPad shot.
+**Screenshots:** yes, new ones. The old login-only / pre-neon shots will get you rejected again.
 
-Best: capture from TestFlight. Starter frames from the neon mockups are in the agent artifacts folder as `app_store_iphone_*.png` and `app_store_ipad_feed.png`.
+Upload **logged-in** screens first, not Sign in.
+
+Files are in `app_store_screenshots/` (see the README there for order and captions).
+
+- iPhone 6.5" (**1284 × 2778**): `01_iphone_feed.png` → Create → Memories → Profile → Friends → UK phone sign-in last. If Connect wants 1242 × 2688, use `iphone_1242x2688/`.
+- iPad 12.9" / 13": Feed → Create → Profile. Try `ipad_2064x2752/` (2064 × 2752) first; if Connect wants 2048 × 2732 use `ipad_2048x2732/`. No login shot on iPad. Skip app previews (videos). Apple previously rejected a login-only iPad shot.
+
+Best: recapture the same screens from TestFlight on a real iPhone and replace the mockups.
 
 ### 9. Review Notes (paste this)
 
